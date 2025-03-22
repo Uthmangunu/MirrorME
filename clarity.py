@@ -1,4 +1,3 @@
-st.write("🚧 Clarity page loaded...")
 import streamlit as st
 import matplotlib.pyplot as plt
 import os
