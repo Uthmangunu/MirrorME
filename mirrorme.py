@@ -17,7 +17,7 @@ with open("uthmanprompt.txt", "r") as f:
 def get_gpt_reply(user_input):
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_input}
@@ -41,7 +41,7 @@ def speak_with_elevenlabs(text):
             "model_id": "eleven_monolingual_v1",
             "voice_settings": {
                 "stability": 0.5,
-                "similarity_boost": 0.75
+                "similarity_boost": 0.99
             }
         }
 
@@ -69,3 +69,29 @@ while True:
     reply = get_gpt_reply(user_input)
     print("UthmanGPT:", reply)
     speak_with_elevenlabs(reply)
+chat_history = [
+    {"role": "system", "content": system_prompt}
+]
+
+while True:
+    user_input = input("You: ")
+    if user_input.strip().lower() in ["exit", "quit"]:
+        print("👋 Exiting MirrorMe.")
+        break
+    if not user_input.strip():
+        continue
+
+    chat_history.append({"role": "user", "content": user_input})
+    
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4o",
+            messages=chat_history[-10:]  # only keep last 10 messages
+        )
+        reply = response.choices[0].message.content.strip()
+        print("UthmanGPT:", reply)
+        chat_history.append({"role": "assistant", "content": reply})
+        speak_with_elevenlabs(reply)
+
+    except Exception as e:
+        print("❌ OpenAI Error:", e)
