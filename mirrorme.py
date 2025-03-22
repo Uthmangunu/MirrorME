@@ -17,7 +17,7 @@ with open("uthmanprompt.txt", "r") as f:
 def get_gpt_reply(user_input):
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-4",
+            model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_input}
@@ -47,12 +47,10 @@ def speak_with_elevenlabs(text):
 
         response = requests.post(url, headers=headers, json=payload)
         if response.status_code == 200:
-            with open("response.mp3", "wb") as f:
+            output_file = "uthman_response.mp3"
+            with open(output_file, "wb") as f:
                 f.write(response.content)
-            audio = AudioSegment.from_file("response.mp3", format="mp3")
-            print("🔊 Speaking...")
-            play(audio)
-            os.remove("response.mp3")
+            print(f"🎧 Voice saved as '{output_file}'. Download it and play locally.")
         else:
             print("❌ ElevenLabs Error:", response.text)
 
