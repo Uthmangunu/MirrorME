@@ -139,4 +139,30 @@ def apply_feedback(tweak, clarity):
 # Usage example (in app.py or another file):
 # clarity = load_clarity()
 # feedback_ui(latest_reply, clarity)
+# === FEEDBACK AFTER EACH REPLY ===
+if msg["role"] == "assistant":
+    speak_text(msg["content"])
+    
+    # Only show feedback UI for latest assistant message
+    if msg == st.session_state.messages[-1]:
+        st.markdown("### 🤖 Was this reply accurate to your personality?")
+        feedback = st.radio("Feedback:", ["✅ Yes", "❌ No - Needs Tweaking"], key=f"feedback_{len(st.session_state.messages)}")
+
+        if feedback == "❌ No - Needs Tweaking":
+            issue = st.selectbox("What was off?", [
+                "Too blunt",
+                "Too robotic",
+                "Not witty enough",
+                "Too emotional",
+                "Too shallow",
+                "Other"
+            ], key=f"issue_{len(st.session_state.messages)}")
+            notes = st.text_input("Optional: Add a short note (e.g. 'sound more like me')", key=f"note_{len(st.session_state.messages)}")
+
+            if st.button("💾 Submit Feedback"):
+                # Save feedback to file or apply adjustments
+                with open("mirror_feedback.txt", "a") as f:
+                    f.write(f"\n[Feedback #{len(st.session_state.messages)}]\n")
+                    f.write(f"Message: {msg['content']}\nIssue: {issue}\nNotes: {notes}\n\n")
+                st.success("✅ Feedback received. Mirror will evolve.")
 
