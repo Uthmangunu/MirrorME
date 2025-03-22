@@ -32,19 +32,22 @@ clarity_data["depth"] = st.selectbox("🧠 Depth", ["Surface-level", "Balanced",
 
 # === RADAR CHART ===
 if st.button("🌈 Visualize Personality"):
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})  # ✅ THIS LINE IS CRUCIAL
     labels = ["Humor", "Empathy", "Ambition", "Flirtiness"]
     values = [clarity_data["humor"], clarity_data["empathy"], clarity_data["ambition"], clarity_data["flirtiness"]]
-    values += values[:1]  # repeat first value to close the radar chart
+    values += values[:1]  # Close the radar chart loop
     angles = [n / float(len(labels)) * 2 * 3.14159 for n in range(len(labels))]
     angles += angles[:1]
 
     ax.set_theta_offset(3.14159 / 2)
     ax.set_theta_direction(-1)
-    plt.xticks(angles[:-1], labels)
     ax.plot(angles, values, linewidth=1, linestyle='solid')
     ax.fill(angles, values, alpha=0.3)
+    ax.set_xticks(angles[:-1])
+    ax.set_xticklabels(labels)
+    
     st.pyplot(fig)
+
 
 # === DEEP PERSONALITY QUESTIONS ===
 st.divider()
