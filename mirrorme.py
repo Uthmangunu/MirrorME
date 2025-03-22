@@ -10,7 +10,7 @@ eleven_api_key = os.getenv("sk_73e13db9cbf905924180777628650af3774c9cc3aad5df53"
 voice_id = ("3Tjd0DlL3tjpqnkvDu9j")
 
 # 📄 Load System Prompt
-with open("uthman_prompt.txt", "r") as f:
+with open("uthmanprompt.txt", "r") as f:
     system_prompt = f.read()
 
 # 🧠 Get GPT Response
