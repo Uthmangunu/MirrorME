@@ -1,35 +1,46 @@
 import streamlit as st
 import openai
 import os
+import requests
 from dotenv import load_dotenv
-from elevenlabs import generate, set_api_key
 
 # === 🔐 Load Environment Variables ===
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
-set_api_key(os.getenv("ELEVEN_API_KEY"))
-voice_id = os.getenv("VOICE_ID") or "3Tjd0DlL3tjpqnkvDu9j"
+openai.api_key = os.getenv('OPENAI_API_KEY')
+ELEVEN_API_KEY = os.getenv('ELEVEN_API_KEY')
+VOICE_ID = os.getenv('VOICE_ID') or "3Tjd0DlL3tjpqnkvDu9j"
 
 # === 🧠 Mirror Personality Prompt ===
 system_prompt = (
     "You are Uthman's Mirror — an AI clone that thinks and speaks like him: calm, confident, witty, philosophical, sometimes a little savage. "
     "Respond with personality, purpose, and power."
 )
-
-# === 🔊 ElevenLabs Voice Function ===
+ 
+# === 🔊 ElevenLabs Voice Function (Using raw API) ===
 def speak_text(text):
-    try:
-        audio = generate(
-            text=text,
-            voice=voice_id,
-            model="eleven_monolingual_v1"
-        )
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}"
+    headers = {
+        "xi-api-key": ELEVEN_API_KEY,
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "text": text,
+        "model_id": "eleven_monolingual_v1",
+        "voice_settings": {
+            "stability": 0.5,
+            "similarity_boost": 0.9
+        }
+    }
+
+    response = requests.post(url, headers=headers, json=payload)
+
+    if response.status_code == 200:
         audio_file = "uthman_response.mp3"
         with open(audio_file, "wb") as f:
-            f.write(audio)
+            f.write(response.content)
         st.audio(audio_file, format="audio/mp3")
-    except Exception as e:
-        st.error(f"❌ ElevenLabs Error: {e}")
+    else:
+        st.error(f"❌ ElevenLabs Error: {response.text}")
 
 # === 🧠 GPT-4o Chat Completion ===
 def get_mirror_reply(messages):
