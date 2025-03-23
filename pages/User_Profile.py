@@ -1,18 +1,17 @@
+# home.py
 import streamlit as st
 import openai
 import os
 import requests
 import json
-from mirror_feedback import apply_feedback
 from dotenv import load_dotenv
 from user_memory import (
     load_user_clarity, save_user_clarity,
     update_user_memory, get_user_memory_as_string, summarize_user_memory
 )
-from clarity_tracker import log_clarity_change
+from clarity_tracker import log_clarity_change 
 from adaptive_ui import detect_mood, set_mood_background, animated_response, render_trait_snapshot
 from long_memory import load_long_memory
-from mirror_feedback import apply_feedback
 
 # === 🔐 Load Environment Variables ===
 load_dotenv()
@@ -31,7 +30,7 @@ if os.path.exists(settings_path):
     with open(settings_path, "r") as f:
         settings = json.load(f)
 else:
-    settings = {"dark_mode": False, "voice_id": "3Tjd0DlL3tjpqnkvDu9j"}
+    settings = {"dark_mode": False, "voice_id": "3Tjd0DlL3tjpqnkvDu9j", "enable_voice_response": True}
 
 # === Apply Theme ===
 if settings.get("dark_mode"):
@@ -42,9 +41,12 @@ if settings.get("dark_mode"):
     """, unsafe_allow_html=True)
 
 VOICE_ID = settings.get("voice_id", "3Tjd0DlL3tjpqnkvDu9j")
+VOICE_ENABLED = settings.get("enable_voice_response", True)
 
 # === 🗣️ ElevenLabs Voice Output ===
 def speak_text(text):
+    if not VOICE_ENABLED:
+        return
     try:
         url = f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}"
         headers = {
@@ -66,10 +68,19 @@ def speak_text(text):
     except Exception as e:
         st.error(f"❌ ElevenLabs Error: {e}")
 
-# === 🧠 Dynamic Prompt Generation ===
-def generate_prompt_from_clarity():
+# === 🧠 Auto-Adaptive Prompt Generator ===
+def generate_prompt_from_clarity(user_id):
     clarity = load_user_clarity(user_id)
     memory = load_long_memory(user_id)
+
+    tone = []
+    if clarity["humor"] > 6: tone.append("playful and witty")
+    if clarity["empathy"] > 6: tone.append("deeply understanding and emotionally intelligent")
+    if clarity["ambition"] > 6: tone.append("motivational and driven")
+    if clarity["flirtiness"] > 6: tone.append("charming or flirtatious")
+
+    tone_description = ", and ".join(tone) if tone else "neutral"
+
     return f"""
 You are MirrorMe — a confident, calm, deep AI clone of the user.
 
@@ -84,7 +95,7 @@ Personality Traits:
 - Ambition: {clarity['ambition']}/10
 - Flirtiness: {clarity['flirtiness']}/10
 
-Speak and respond like someone with this energy. Maintain their tone and perspective.
+Respond with a tone that is {tone_description}. Stay in character. Keep it sharp and personal.
 """
 
 # === GPT ===
@@ -113,15 +124,10 @@ with st.sidebar:
     with st.expander("🎭 Trait Snapshot"):
         clarity = load_user_clarity(user_id)
         render_trait_snapshot(clarity)
-    st.markdown("---")
-    if st.button("🔄 Reset Conversation"):
-        st.session_state.messages = [{"role": "system", "content": generate_prompt_from_clarity()}]
-        st.experimental_rerun()
-
 
 # === Init Chat Session ===
 if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "system", "content": generate_prompt_from_clarity()}]
+    st.session_state.messages = [{"role": "system", "content": generate_prompt_from_clarity(user_id)}]
 
 # === User Input ===
 user_input = st.text_input("You:")
