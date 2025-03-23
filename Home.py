@@ -6,7 +6,7 @@ import requests
 from dotenv import load_dotenv
 from mirror_feedback import apply_feedback, load_clarity, save_clarity
 from memory_engine import update_memory, get_memory_as_string, summarize_memory
-
+from clarity_tracker import log_clarity_change 
 # === 🔐 Load Environment Variables ===
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -134,4 +134,5 @@ for i, msg in enumerate(st.session_state.messages[1:], start=1):
                     clarity = load_clarity()
                     apply_feedback(issue, clarity)
                     save_clarity(clarity)
-                    st.success("✅ Feedback saved. Mirror will evolve.")
+                    log_clarity_change(source="feedback")  # 🔁 Track the update source
+                st.success("✅ Feedback saved. Mirror will evolve.")
