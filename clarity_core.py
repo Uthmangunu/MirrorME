@@ -1,4 +1,3 @@
-# clarity_core.py
 import json
 import os
 
@@ -14,7 +13,10 @@ def load_clarity():
             with open("clarity_data.json", "r") as f:
                 return json.load(f)
         except json.JSONDecodeError:
-            # If the file is empty or corrupted, reset it
             save_clarity(default_data)
             return default_data
     return default_data
+
+def save_clarity(data):
+    with open("clarity_data.json", "w") as f:
+        json.dump(data, f, indent=2)
