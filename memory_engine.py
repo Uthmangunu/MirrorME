@@ -51,6 +51,7 @@ def update_memory(user_input, assistant_reply):
 def get_memory_as_string():
     memory = load_memory()
     return "\n".join([
-        f"- 🧍 You: {entry['user']}\n  🪞 Mirror: {entry['mirror']}"
+        f"- 🧍 You: {entry.get('user', '[MISSING]')}\n  🪞 Mirror: {entry.get('mirror', '[MISSING]')}"
         for entry in memory
     ])
+

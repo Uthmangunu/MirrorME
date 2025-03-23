@@ -2,5 +2,8 @@
   {
     "user": "HELLO",
     "mirror": "Hello! What's on your mind today?"
+  },
+  {
+    "summary": "The user initiated a casual conversation with the AI assistant."
   }
 ]
