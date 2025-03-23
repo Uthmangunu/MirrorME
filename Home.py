@@ -6,13 +6,14 @@ import requests
 import json
 from dotenv import load_dotenv
 from mirror_feedback import apply_feedback, load_clarity, save_clarity
+from memory_engine import update_memory
 
 # === 🔐 Load Environment Variables ===
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 ELEVEN_API_KEY = os.getenv("ELEVEN_API_KEY")
 VOICE_ID = st.session_state.get("VOICE_ID", "3Tjd0DlL3tjpqnkvDu9j")
- 
+
 # === ElevenLabs Voice Function ===
 def speak_text(text):
     try:
@@ -69,7 +70,6 @@ st.title("🪞 MirrorMe — Talk to Your AI Mirror")
 if "VOICE_ID" not in st.session_state:
     st.info("🎤 No voice selected yet. [Go to Voice Setup](./voice_setup) to customize your Mirror’s voice.")
 
-
 # Init chat history
 if "messages" not in st.session_state:
     st.session_state.messages = [
@@ -82,6 +82,7 @@ if user_input:
     reply = get_reply(st.session_state.messages)
     if reply:
         st.session_state.messages.append({"role": "assistant", "content": reply})
+        update_memory(user_input, reply)
 
 # === Display + Feedback ===
 for i, msg in enumerate(st.session_state.messages[1:], start=1):
