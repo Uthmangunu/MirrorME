@@ -15,7 +15,8 @@ import json
 
 # === 🔐 Load API Keys ===
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+openai.api_key = st.secrets["OPENAI_API_KEY"]
+
 
 # === 🎤 Page Setup ===
 st.set_page_config(page_title="Voice Journal", page_icon="🎤")

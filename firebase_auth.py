@@ -1,16 +1,15 @@
-# firebase_auth.py
 import pyrebase
 import streamlit as st
 
+# === Use secrets from Streamlit's secure storage ===
 firebase_config = {
-    "apiKey": "AIzaSyAmqxGUCPDdZzelaunj6bxX5jVlKjljPqc",
-    "authDomain": "mirrorme-60800.firebaseapp.com",
-    "projectId": "mirrorme-60800",
-    "storageBucket": "mirrorme-60800.appspot.com",
-    "messagingSenderId": "909007885081",
-    "appId": "1:909007885081:web:f52febf51f231c49112b88",
-    "measurementId": "G-MTMHPX5Z79",
-    "databaseURL": ""  # Required for Pyrebase
+    "apiKey": st.secrets["FIREBASE_API_KEY"],
+    "authDomain": st.secrets["FIREBASE_AUTH_DOMAIN"],
+    "projectId": st.secrets["FIREBASE_PROJECT_ID"],
+    "storageBucket": st.secrets["FIREBASE_STORAGE_BUCKET"],
+    "messagingSenderId": st.secrets["FIREBASE_MESSAGING_SENDER_ID"],
+    "appId": st.secrets["FIREBASE_APP_ID"],
+    "measurementId": st.secrets["FIREBASE_MEASUREMENT_ID"]
 }
 
 firebase = pyrebase.initialize_app(firebase_config)
@@ -18,14 +17,16 @@ auth = firebase.auth()
 
 def signup(email, password):
     try:
-        return auth.create_user_with_email_and_password(email, password)
+        user = auth.create_user_with_email_and_password(email, password)
+        return user
     except Exception as e:
-        st.error(f"❌ Signup failed: {e}")
+        st.error(f"Signup failed: {e}")
         return None
 
 def login(email, password):
     try:
-        return auth.sign_in_with_email_and_password(email, password)
+        user = auth.sign_in_with_email_and_password(email, password)
+        return user
     except Exception as e:
-        st.error(f"❌ Login failed: {e}")
+        st.error(f"Login failed: {e}")
         return None

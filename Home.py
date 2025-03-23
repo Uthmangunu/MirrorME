@@ -19,6 +19,7 @@ load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 ELEVEN_API_KEY = os.getenv("ELEVEN_API_KEY")
 
+
 # === 🔒 Require Login ===
 if "user" not in st.session_state:
     st.warning("🔐 You must log in first.")
