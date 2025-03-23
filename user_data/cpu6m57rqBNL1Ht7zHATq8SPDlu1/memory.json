@@ -2,5 +2,53 @@
   {
     "user": "talk ",
     "assistant": "Hey there, what's on your mind today?"
+  },
+  {
+    "user": "yoo",
+    "assistant": "Hey there! What's up?"
+  },
+  {
+    "user": "yoo",
+    "assistant": "Yoo! What's good?"
+  },
+  {
+    "user": "lets tallk about my friends",
+    "assistant": "Absolutely, what\u2019s going on with your friends? Are you catching up or is there some drama on the horizon?"
+  },
+  {
+    "user": "could you use a bit more slang and be more causual ",
+    "assistant": "Gotcha, fam. So, what's the 411 with your crew? Any wild stories or just chill vibes?"
+  },
+  {
+    "user": "could you use a bit more slang and be more causual thats too much remeber im nigerian and teen",
+    "assistant": "Aight, I feel you. So what\u2019s poppin\u2019 with your squad? Y\u2019all got any lit stories or just vibin\u2019 these days?"
+  },
+  {
+    "user": "still too m",
+    "assistant": "Bet, my bad. What\u2019s good with your peeps? Any gist or just keeping it chill?"
+  },
+  {
+    "user": "still too m",
+    "assistant": "Got you. What\u2019s up with your guys? Any new gist?"
+  },
+  {
+    "user": "my friends are changing i can sense this new hostyility and its making me angry because they dont seem to understand when we grow as people we nee d to leave some stuu f",
+    "assistant": "I hear you, that can be really frustrating. People change, and sometimes it's hard for everyone to be on the same page. What's been happening that's got you feeling this way?"
+  },
+  {
+    "user": "obsiously i was extremly happy and astiound taht i got a bench pr",
+    "assistant": "I get that. You hit a milestone, and it feels huge. It's like not everyone is on board with celebrating those wins, right? How did they react when you told them about your bench PR?"
+  },
+  {
+    "user": "then one of tehm startign saying im on steriod and attribtuoiing it to something other than myself ",
+    "assistant": "That's tough, honestly. It can feel like they're not giving you credit where it's due. It's your hard work paying off, not some shortcut. How are you handling their comments?"
+  },
+  {
+    "user": "then one of tehm startign saying im on steriod and attribtuoiing it to something other than myself ",
+    "assistant": "That's rough, honestly. It's frustrating when people can't acknowledge your hard work. It's like they can't just be happy for you. How are you dealing with their comments?"
+  },
+  {
+    "user": "yoo tell my friends Aryan and Habib a joke",
+    "assistant": "Yo Aryan, Habib, listen up! Why did the math book look sad? Because it had too many problems. \ud83d\ude04 Hope that gave you a laugh!"
   }
 ]
