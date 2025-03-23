@@ -16,7 +16,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # === 🔒 Require Login ===
 if "user" not in st.session_state:
-    st.warning("\U0001f512 You must log in first.")
+    st.warning("🔐 You must log in first.")
     st.stop()
 
 user_id = st.session_state["user"]["localId"]
@@ -53,9 +53,9 @@ def generate_prompt(user_id):
     return f"""
 You're MirrorMe — insightful, calm, reflective.
 Use this tone: {tone_description}.
-First reflect on the user's mindset, then suggest adjustments (-1 to +1) to clarity traits:
+First reflect on the user's mindset, then suggest adjustments (-1 to 1) to clarity traits:
 humor, empathy, ambition, flirtiness.
-Return JSON like: {{'reflection': '...', 'adjustments': {{'humor': +0.5}}}}
+Return JSON like: {{'reflection': '...', 'adjustments': {{'humor': 0.5}}}}
 
 Long-Term Memory:
 - Values: {', '.join(memory['core_values'])}
@@ -64,8 +64,8 @@ Long-Term Memory:
 """
 
 # === UI Setup ===
-st.set_page_config(page_title="Journal Mode", page_icon="\ud83d\udcdd")
-st.title("\ud83d\udcdd MirrorMe Journal")
+st.set_page_config(page_title="Journal Mode", page_icon="📝")
+st.title("📝 MirrorMe Journal")
 
 st.markdown("""
 Welcome to your private journal.  
@@ -75,7 +75,7 @@ Write freely. MirrorMe will reflect back, extract insight, and update its unders
 # === Journal Input ===
 today = datetime.date.today().isoformat()
 journal_text = st.text_area("What's on your mind today?", height=250)
-submit = st.button("\U0001f512 Save & Reflect")
+submit = st.button("🔒 Save & Reflect")
 
 if submit and journal_text:
     user_dir = os.path.join("user_journals", user_id)
@@ -96,12 +96,18 @@ if submit and journal_text:
                 messages=prompt
             )
             raw = response.choices[0].message.content.strip()
-            parsed = ast.literal_eval(raw)
+
+            try:
+                parsed = ast.literal_eval(raw)
+            except Exception:
+                st.error("⚠️ Could not parse GPT response. Here's the raw output:")
+                st.text(raw)
+                st.stop()
 
             reflection = parsed["reflection"]
             adjustments = parsed["adjustments"]
 
-            st.success("\U0001faae Your Reflection:")
+            st.success("🪞 Your Reflection:")
             st.markdown(f"> {reflection}")
 
             update_user_memory(user_id, journal_text, reflection)
@@ -114,16 +120,16 @@ if submit and journal_text:
             save_user_clarity(user_id, clarity)
             log_clarity_change(user_id, source="journal")
 
-            st.success("\U0001f9e0 Mirror's clarity has evolved.")
+            st.success("🧠 Mirror's clarity has evolved.")
 
         except Exception as e:
-            st.error(f"\u274c Error during reflection or clarity update: {e}")
+            st.error(f"❌ Error during reflection or clarity update: {e}")
 
 # === Past Entries ===
 user_dir = os.path.join("user_journals", user_id)
 if os.path.exists(user_dir):
     st.markdown("---")
-    st.markdown("### \ud83d\udcc5 Past Entries")
+    st.markdown("### 📅 Past Entries")
     entries = sorted(os.listdir(user_dir), reverse=True)
 
     for entry in entries:
