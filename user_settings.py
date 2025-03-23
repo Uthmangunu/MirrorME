@@ -1,12 +1,5 @@
-# user_settings.py
-
 import os
 import json
-
-DEFAULT_SETTINGS = {
-    "dark_mode": False,
-    "voice_id": "3Tjd0DlL3tjpqnkvDu9j"
-}
 
 def get_settings_path(user_id):
     return f"user_data/{user_id}/settings.json"
@@ -14,9 +7,13 @@ def get_settings_path(user_id):
 def load_user_settings(user_id):
     path = get_settings_path(user_id)
     if os.path.exists(path):
-        with open(path) as f:
+        with open(path, "r") as f:
             return json.load(f)
-    return DEFAULT_SETTINGS.copy()
+    else:
+        return {
+            "dark_mode": False,
+            "voice_id": "3Tjd0DlL3tjpqnkvDu9j"
+        }
 
 def save_user_settings(user_id, settings):
     path = get_settings_path(user_id)
