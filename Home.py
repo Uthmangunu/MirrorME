@@ -16,6 +16,9 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 ELEVEN_API_KEY = os.getenv("ELEVEN_API_KEY")
 VOICE_ID = st.session_state.get("VOICE_ID", "3Tjd0DlL3tjpqnkvDu9j")
 
+if "user" not in st.session_state:
+    st.warning("🔒 You must log in first.")
+    st.stop()
 # === 🔣 ElevenLabs Voice Output ===
 def speak_text(text):
     try:
