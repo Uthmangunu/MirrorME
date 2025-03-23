@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from memory_engine import update_memory
 from clarity_tracker import log_clarity_change
 from mirror_feedback import load_clarity, save_clarity
-
+from clarity_tracker import log_clarity_change
 # === 🔐 Load API Key ===
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")

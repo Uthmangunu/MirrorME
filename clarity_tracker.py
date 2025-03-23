@@ -1,26 +1,28 @@
 # clarity_tracker.py
-import json
-import os
 from datetime import datetime
-from mirror_feedback import load_clarity
+import os
+import json
+from clarity_core import load_clarity
 
-def log_clarity_change(source="unspecified"):
+def log_clarity_change(source="unknown"):
     clarity = load_clarity()
     log_entry = {
         "timestamp": datetime.now().isoformat(),
-        "clarity": clarity,
-        "source": source
+        "source": source,
+        "clarity": clarity
     }
-    os.makedirs("clarity_logs", exist_ok=True)
-    log_path = "clarity_logs/history.json"
 
-    if os.path.exists(log_path):
-        with open(log_path, "r") as f:
-            history = json.load(f)
-    else:
-        history = []
+    os.makedirs("clarity_logs", exist_ok=True)
+    path = "clarity_logs/history.json"
+
+    history = []
+    if os.path.exists(path):
+        with open(path, "r") as f:
+            try:
+                history = json.load(f)
+            except:
+                history = []
 
     history.append(log_entry)
-
-    with open(log_path, "w") as f:
+    with open(path, "w") as f:
         json.dump(history, f, indent=2)

@@ -2,6 +2,8 @@
 from clarity_core import load_clarity
 import json
 import os
+from clarity_core import load_clarity, save_clarity
+from clarity_tracker import log_clarity_change
 
 
 
