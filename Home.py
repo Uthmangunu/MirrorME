@@ -5,7 +5,7 @@ import os
 import requests
 from dotenv import load_dotenv
 from mirror_feedback import apply_feedback, load_clarity, save_clarity
-from memory_engine import update_memory, get_memory_as_string
+from memory_engine import update_memory, get_memory_as_string, summarize_memory
 
 # === 🔐 Load Environment Variables ===
 load_dotenv()
@@ -71,9 +71,14 @@ if "VOICE_ID" not in st.session_state:
     st.info("🎤 No voice selected yet. [Go to Voice Setup](./voice_setup) to customize your Mirror’s voice.")
 
 # === Sidebar Memory View ===
+# === SIDEBAR MEMORY + SUMMARY ===
 with st.sidebar:
-    st.markdown("### 🧠 Memory Log")
+    st.markdown("### 🧠 Mirror Memory Log")
     st.text(get_memory_as_string())
+    st.markdown("---")
+    st.markdown("### 🔍 Mirror's Summary of You")
+    st.write(summarize_memory())
+
 
 # === Init Message History ===
 if "messages" not in st.session_state:

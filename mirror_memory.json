@@ -5,5 +5,11 @@
   },
   {
     "summary": "The user initiated a casual conversation with the AI assistant."
+  },
+  {
+    "summary": "The user greeted the AI, and the AI responded by asking what the user wanted to discuss."
+  },
+  {
+    "summary": "The AI assistant encouraged conversation during the user's downtime."
   }
 ]
