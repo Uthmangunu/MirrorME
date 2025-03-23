@@ -9,7 +9,6 @@ from memory_engine import update_memory, get_memory_as_string, summarize_memory
 from clarity_tracker import log_clarity_change 
 from adaptive_ui import detect_mood, set_mood_background, animated_response, render_trait_snapshot
 from long_memory import load_long_memory
-from long_memory import load_long_memory, save_long_memory, append_to_long_memory
 
 # === 🔐 Load Environment Variables ===
 load_dotenv()
@@ -17,7 +16,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 ELEVEN_API_KEY = os.getenv("ELEVEN_API_KEY")
 VOICE_ID = st.session_state.get("VOICE_ID", "3Tjd0DlL3tjpqnkvDu9j")
 
-# === 🗣️ ElevenLabs Voice Output ===
+# === 🔣 ElevenLabs Voice Output ===
 def speak_text(text):
     try:
         url = f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}"
@@ -40,7 +39,7 @@ def speak_text(text):
     except Exception as e:
         st.error(f"❌ ElevenLabs Error: {e}")
 
-# === 🧠 Load Personality Profile as Prompt ===
+# === 🧠 Dynamic Prompt Generation ===
 def generate_prompt_from_clarity():
     clarity = load_clarity()
     memory = load_long_memory()
@@ -61,7 +60,7 @@ Personality Traits:
 Speak and respond like someone with this energy. Maintain their tone and perspective.
 """
 
-# === 🔗 Chat Completion ===
+# === 🔗 Get GPT Reply ===
 def get_reply(messages):
     try:
         response = openai.ChatCompletion.create(
@@ -75,29 +74,29 @@ def get_reply(messages):
 
 # === 🌐 UI Setup ===
 st.set_page_config(page_title="MirrorMe", page_icon="🪞")
-st.title("🪞 MirrorMe — Talk to Your AI Mirror")
+st.title(":mirror: MirrorMe — Talk to Your AI Mirror")
 
-# === 🎙️ Voice Check
 if "VOICE_ID" not in st.session_state:
-    st.info("🎤 No voice selected yet. [Go to Voice Setup](./voice_setup) to customize your Mirror’s voice.")
+    st.info(":microphone2: No voice selected yet. [Go to Voice Setup](./voice_setup)")
 
-# === 🧠 Sidebar: Memory + Reflection Summary ===
+# === 🧠 Sidebar: Memory + Trait Snapshot ===
 with st.sidebar:
-    st.markdown("### 🧠 Memory Log")
+    st.markdown("### 🪠 Memory Log")
     st.text(get_memory_as_string())
     st.markdown("---")
-    st.markdown("### 🔍 What Your Reflection Reveals")
+    st.markdown("### :mag: What Your Reflection Reveals")
     st.write(summarize_memory())
-    with st.expander("🎭 Trait Snapshot", expanded=False):
-        render_trait_snapshot()
+    with st.expander(":performing_arts: Trait Snapshot"):
+        clarity = load_clarity()
+        render_trait_snapshot(clarity)
 
-# === 💬 Initialize Chat Session ===
+# === 🗣️ Chat Memory Setup ===
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {"role": "system", "content": generate_prompt_from_clarity()}
     ]
 
-# === 👤 User Input ===
+# === 🔊 User Input ===
 user_input = st.text_input("You:")
 if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
@@ -106,29 +105,27 @@ if user_input:
         st.session_state.messages.append({"role": "assistant", "content": reply})
         update_memory(user_input, reply)
 
-        # Mood detection & styling
         mood = detect_mood(user_input + " " + reply)
         set_mood_background(mood)
 
-# === 🔁 Reflect Mode ===
-if st.button("🔍 Reflect on Recent Messages"):
-    recent_context = [msg for msg in st.session_state.messages[-6:] if msg["role"] in ["user", "assistant"]]
-    reflection_prompt = [
-        {"role": "system", "content": "You are MirrorMe, an AI trained to offer deep personal reflection. Be concise but insightful."},
-        {"role": "user", "content": "Reflect on this conversation and offer insight into the user's mindset or behavior:\n\n" +
-         "\n".join([f"{m['role'].capitalize()}: {m['content']}" for m in recent_context])}
+# === 🔄 Reflection Mode ===
+if st.button(":mag: Reflect on Recent Messages"):
+    recent = [m for m in st.session_state.messages[-6:] if m["role"] in ["user", "assistant"]]
+    reflect_prompt = [
+        {"role": "system", "content": "You are MirrorMe, a calm and insightful reflection agent."},
+        {"role": "user", "content": "Reflect on this dialogue and extract an emotional insight about the user:\n\n" + "\n".join([f"{m['role'].capitalize()}: {m['content']}" for m in recent])}
     ]
 
     with st.spinner("Reflecting..."):
         try:
-            reflection = openai.ChatCompletion.create(model="gpt-4o", messages=reflection_prompt)
+            reflection = openai.ChatCompletion.create(model="gpt-4o", messages=reflect_prompt)
             output = reflection.choices[0].message.content.strip()
-            st.success("🪞 Your Reflection:")
+            st.success(":mirror: Your Reflection:")
             st.markdown(f"> {output}")
         except Exception as e:
             st.error(f"❌ Reflection Error: {e}")
 
-# === 🗨️ Chat Display + Feedback ===
+# === 💬 Message Display + Feedback ===
 for i, msg in enumerate(st.session_state.messages[1:], start=1):
     if msg["role"] == "assistant":
         animated_response(msg["content"])
@@ -147,7 +144,6 @@ for i, msg in enumerate(st.session_state.messages[1:], start=1):
             notes = st.text_input("Optional: Add notes", key=f"note_{i}")
 
             if st.button("📎 Submit Feedback", key=f"submit_{i}"):
-                clarity = load_clarity()
                 apply_feedback(issue, clarity)
                 save_clarity(clarity)
                 log_clarity_change(source="feedback")
