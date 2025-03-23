@@ -4,19 +4,13 @@ import os
 import datetime
 import tempfile
 import openai
-from dotenv import load_dotenv
-from clarity_tracker import log_clarity_change
-from user_memory import update_user_memory, load_user_clarity, save_user_clarity
-from long_memory import load_long_memory
+import json
 import speech_recognition as sr
 from pydub import AudioSegment
 import ast
-import json
-
-# === 🔐 Load API Keys ===
-load_dotenv()
-openai.api_key = st.secrets["OPENAI_API_KEY"]
-
+from clarity_tracker import log_clarity_change
+from user_memory import update_user_memory, load_user_clarity, save_user_clarity
+from long_memory import load_long_memory
 
 # === 🎤 Page Setup ===
 st.set_page_config(page_title="Voice Journal", page_icon="🎤")
@@ -42,6 +36,8 @@ if settings.get("dark_mode"):
         .stApp { background-color: #0e1117; color: white; }
         </style>
     """, unsafe_allow_html=True)
+
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 # === 📤 Upload Voice Note ===
 st.markdown("Upload a voice note (.mp3 or .wav). MirrorMe will transcribe, reflect, and adapt.")
