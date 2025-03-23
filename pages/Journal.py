@@ -12,7 +12,7 @@ import ast
 
 # === 🔐 Load API Keys ===
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 # === 🔒 Require Login ===
 if "user" not in st.session_state:
