@@ -1,4 +1,3 @@
-# adaptive_ui.py
 import streamlit as st
 import time
 
@@ -27,11 +26,11 @@ def detect_mood(text):
 
 # === Mood-Based Highlight Styling ===
 def set_mood_background(mood):
-    color = MOOD_COLOR_MAP.get(mood, "#333")
+    color = MOOD_COLOR_MAP.get(mood, "#333333")
     st.markdown(f"""
     <style>
     .stApp {{
-        background-color: {color}1A;  /* Light transparent background */
+        background-color: {color}1A;
     }}
     </style>
     """, unsafe_allow_html=True)
@@ -46,8 +45,14 @@ def animated_response(text, delay=0.015):
         time.sleep(delay)
     placeholder.markdown(f"**🧠 MirrorMe:** {animated}")
 
-# === Display Read-Only Clarity Sliders ===
+# === Display Read-Only Clarity Sliders (Integer-Only) ===
 def render_trait_snapshot(clarity):
     st.markdown("### 🎯 Current Trait Snapshot")
     for trait, value in clarity.items():
-        st.slider(trait.capitalize(), 0, 10, value, disabled=True)
+        st.slider(
+            label=trait.capitalize(),
+            min_value=0,
+            max_value=10,
+            value=int(value),
+            disabled=True
+        )
