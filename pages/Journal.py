@@ -1,16 +1,23 @@
+# journal.py
 import streamlit as st
 import datetime
 import os
 import json
 import openai
 from dotenv import load_dotenv
-from memory_engine import update_memory
+from user_memory import update_user_memory, load_user_clarity, save_user_clarity
 from clarity_tracker import log_clarity_change
-from mirror_feedback import load_clarity, save_clarity
-from clarity_tracker import log_clarity_change
+
 # === 🔐 Load API Key ===
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
+
+# === 🔒 Require Login ===
+if "user" not in st.session_state:
+    st.warning("🔐 You must log in first.")
+    st.stop()
+
+user_id = st.session_state["user"]["localId"]
 
 # === 📝 Journal Page Config ===
 st.set_page_config(page_title="Journal Mode", page_icon="📝")
@@ -28,10 +35,11 @@ submit = st.button("🔒 Save & Reflect")
 
 # === 🔄 Handle Journal Submission ===
 if submit and journal_text:
-    os.makedirs("journals", exist_ok=True)
+    user_dir = os.path.join("user_journals", user_id)
+    os.makedirs(user_dir, exist_ok=True)
 
     # Save raw journal entry
-    with open(f"journals/{today}.txt", "w") as f:
+    with open(os.path.join(user_dir, f"{today}.txt"), "w") as f:
         f.write(journal_text)
 
     # === 🔁 GPT Reflection + Clarity Update Prompt ===
@@ -41,11 +49,9 @@ if submit and journal_text:
             "content": (
                 "You're MirrorMe — insightful, calm, reflective.\n"
                 "First, reflect on the emotional and mental state of the user.\n"
-                "Then, based on the tone and themes, suggest adjustments (from -1 to +1) to their clarity traits:\n"
+                "Then, based on tone and themes, suggest clarity trait adjustments (-1 to +1):\n"
                 "humor, empathy, ambition, flirtiness.\n"
-                "Return a JSON block with the suggested changes.\n"
-                "Example:\n"
-                "{'reflection': 'Insight here...', 'adjustments': {'humor': +0.5, 'empathy': -0.5}}"
+                "Return a JSON: {'reflection': '...', 'adjustments': {'trait': value}}"
             )
         },
         {
@@ -62,9 +68,9 @@ if submit and journal_text:
             )
             raw = response.choices[0].message.content.strip()
 
-            # === Parse GPT Output
+            # === Parse GPT Output ===
             import ast
-            parsed = ast.literal_eval(raw)  # Safer than eval()
+            parsed = ast.literal_eval(raw)
 
             reflection = parsed["reflection"]
             adjustments = parsed["adjustments"]
@@ -72,31 +78,30 @@ if submit and journal_text:
             st.success("🪞 Your Reflection:")
             st.markdown(f"> {reflection}")
 
-            # === Update Memory
-            update_memory(journal_text, reflection)
+            update_user_memory(user_id, journal_text, reflection)
 
-            # === Apply Clarity Adjustments
-            clarity = load_clarity()
+            clarity = load_user_clarity(user_id)
             for trait, delta in adjustments.items():
                 if trait in clarity:
                     clarity[trait] = round(min(10, max(0, clarity[trait] + delta)), 2)
 
-            save_clarity(clarity)
-            log_clarity_change(source="journal")
+            save_user_clarity(user_id, clarity)
+            log_clarity_change(user_id, source="journal")
 
             st.success("🧠 Mirror's clarity has evolved based on your reflection.")
 
         except Exception as e:
             st.error(f"❌ Error during reflection or clarity update: {e}")
 
-# === 📚 View Past Journal Entries ===
-if os.path.exists("journals"):
+# === 📚 View Past Entries ===
+user_dir = os.path.join("user_journals", user_id)
+if os.path.exists(user_dir):
     st.markdown("---")
     st.markdown("### 📅 Past Entries")
-    entries = sorted(os.listdir("journals"), reverse=True)
+    entries = sorted(os.listdir(user_dir), reverse=True)
 
     for entry in entries:
-        with open(f"journals/{entry}", "r") as f:
+        with open(os.path.join(user_dir, entry), "r") as f:
             content = f.read()
-        with st.expander(f"{entry.replace('.txt', '')}"):
+        with st.expander(entry.replace(".txt", "")):
             st.text(content)
