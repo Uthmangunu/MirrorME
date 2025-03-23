@@ -9,6 +9,8 @@ from memory_engine import update_memory, get_memory_as_string, summarize_memory
 from clarity_tracker import log_clarity_change 
 from adaptive_ui import detect_mood, set_mood_background, animated_response, render_trait_snapshot
 from long_memory import load_long_memory
+from long_memory import load_long_memory, save_long_memory, append_to_long_memory
+
 # === 🔐 Load Environment Variables ===
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
