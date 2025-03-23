@@ -1,22 +1,17 @@
-# Folder: MirrorME/
-# File: app.py (Main Chat Page)
-
+# app.py
 import streamlit as st
 import openai
 import os
-from dotenv import load_dotenv
 import requests
+import json
+from dotenv import load_dotenv
+from mirror_feedback import apply_feedback, load_clarity, save_clarity
 
 # === 🔐 Load Environment Variables ===
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 ELEVEN_API_KEY = os.getenv("ELEVEN_API_KEY")
 VOICE_ID = os.getenv("VOICE_ID") or "3Tjd0DlL3tjpqnkvDu9j"
-
-# === Load System Prompt from Session or Default ===
-def get_prompt():
-    default = "You are MirrorMe — a confident, calm, and deep AI clone."
-    return st.session_state.get("system_prompt", default)
 
 # === ElevenLabs Voice Function ===
 def speak_text(text):
@@ -33,14 +28,28 @@ def speak_text(text):
         }
         response = requests.post(url, headers=headers, json=payload)
         if response.status_code == 200:
-            audio_file = "uthman_response.mp3"
-            with open(audio_file, "wb") as f:
+            with open("uthman_response.mp3", "wb") as f:
                 f.write(response.content)
-            st.audio(audio_file, format="audio/mp3")
+            st.audio("uthman_response.mp3", format="audio/mp3")
         else:
             st.error(f"❌ ElevenLabs Error: {response.text}")
     except Exception as e:
         st.error(f"❌ ElevenLabs Error: {e}")
+
+# === Load Prompt from Clarity ===
+def generate_prompt_from_clarity():
+    clarity = load_clarity()
+    return f"""
+You are MirrorMe — a confident, calm, deep AI clone of the user.
+
+Personality Traits:
+- Humor: {clarity['humor']}/10
+- Empathy: {clarity['empathy']}/10
+- Ambition: {clarity['ambition']}/10
+- Flirtiness: {clarity['flirtiness']}/10
+
+Speak and respond like someone with this energy. Maintain their tone and perspective.
+"""
 
 # === Chat Completion ===
 def get_reply(messages):
@@ -58,9 +67,10 @@ def get_reply(messages):
 st.set_page_config(page_title="MirrorMe", page_icon="🪞")
 st.title("🪞 MirrorMe — Talk to Your AI Mirror")
 
+# Init chat history
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "system", "content": get_prompt()}
+        {"role": "system", "content": generate_prompt_from_clarity()}
     ]
 
 user_input = st.text_input("You:")
@@ -70,99 +80,26 @@ if user_input:
     if reply:
         st.session_state.messages.append({"role": "assistant", "content": reply})
 
-for msg in st.session_state.messages[1:]:
+# === Display + Feedback ===
+for i, msg in enumerate(st.session_state.messages[1:], start=1):
     role = "🧍 You" if msg["role"] == "user" else "🧠 MirrorMe"
     st.markdown(f"**{role}:** {msg['content']}")
+
     if msg["role"] == "assistant":
         speak_text(msg["content"])
-# mirror_feedback.py
 
-import streamlit as st
-import json
-import os
+        if i == len(st.session_state.messages) - 1:
+            st.markdown("### 🤖 Was this reply accurate to your personality?")
+            feedback = st.radio("Feedback:", ["✅ Yes", "❌ No - Needs Tweaking"], key=f"feedback_{i}")
 
-# === 🔁 Feedback-Based Personality Adjustment System ===
+            if feedback == "❌ No - Needs Tweaking":
+                issue = st.selectbox("What was off?", [
+                    "Too blunt", "Too soft", "Not witty enough", "Too robotic", "Too emotional"
+                ], key=f"issue_{i}")
+                notes = st.text_input("Optional: Add notes", key=f"note_{i}")
 
-# --- Load Existing Clarity Profile or Initialize Default ---
-def load_clarity():
-    default_data = {
-        "humor": 5,
-        "empathy": 5,
-        "ambition": 5,
-        "flirtiness": 5
-    }
-    if os.path.exists("clarity_data.json"):
-        with open("clarity_data.json", "r") as f:
-            return json.load(f)
-    return default_data
-
-# --- Save Updated Clarity Profile ---
-def save_clarity(data):
-    with open("clarity_data.json", "w") as f:
-        json.dump(data, f, indent=2)
-
-# --- Visualize Feedback UI ---
-def feedback_ui(latest_reply, clarity):
-    st.markdown("---")
-    st.markdown("### 🧪 Feedback on Mirror's Response")
-    st.markdown(f"> {latest_reply}")
-
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("✅ That's Me"):
-            st.success("Got it. We'll reinforce this style.")
-    with col2:
-        if st.button("❌ That's Not Me"):
-            st.warning("Understood. Let’s refine that.")
-            tweak = st.selectbox("What was wrong?", [
-                "Too blunt", "Too soft", "Not funny", "Too robotic", "Too emotional"
-            ])
-            if tweak:
-                apply_feedback(tweak, clarity)
-                save_clarity(clarity)
-
-# --- Adjust Clarity Data Based on Feedback ---
-def apply_feedback(tweak, clarity):
-    if tweak == "Too blunt":
-        clarity["empathy"] = min(10, clarity["empathy"] + 0.5)
-    elif tweak == "Too soft":
-        clarity["empathy"] = max(0, clarity["empathy"] - 0.5)
-    elif tweak == "Not funny":
-        clarity["humor"] = max(0, clarity["humor"] - 0.5)
-    elif tweak == "Too robotic":
-        clarity["flirtiness"] = min(10, clarity["flirtiness"] + 0.5)
-    elif tweak == "Too emotional":
-        clarity["flirtiness"] = max(0, clarity["flirtiness"] - 0.5)
-
-# --- Radar Chart Optional (TBD Later) ---
-
-# Usage example (in app.py or another file):
-# clarity = load_clarity()
-# feedback_ui(latest_reply, clarity)
-# === FEEDBACK AFTER EACH REPLY ===
-if msg["role"] == "assistant":
-    speak_text(msg["content"])
-    
-    # Only show feedback UI for latest assistant message
-    if msg == st.session_state.messages[-1]:
-        st.markdown("### 🤖 Was this reply accurate to your personality?")
-        feedback = st.radio("Feedback:", ["✅ Yes", "❌ No - Needs Tweaking"], key=f"feedback_{len(st.session_state.messages)}")
-
-        if feedback == "❌ No - Needs Tweaking":
-            issue = st.selectbox("What was off?", [
-                "Too blunt",
-                "Too robotic",
-                "Not witty enough",
-                "Too emotional",
-                "Too shallow",
-                "Other"
-            ], key=f"issue_{len(st.session_state.messages)}")
-            notes = st.text_input("Optional: Add a short note (e.g. 'sound more like me')", key=f"note_{len(st.session_state.messages)}")
-
-            if st.button("💾 Submit Feedback"):
-                # Save feedback to file or apply adjustments
-                with open("mirror_feedback.txt", "a") as f:
-                    f.write(f"\n[Feedback #{len(st.session_state.messages)}]\n")
-                    f.write(f"Message: {msg['content']}\nIssue: {issue}\nNotes: {notes}\n\n")
-                st.success("✅ Feedback received. Mirror will evolve.")
-
+                if st.button("💾 Submit Feedback", key=f"submit_{i}"):
+                    clarity = load_clarity()
+                    apply_feedback(issue, clarity)
+                    save_clarity(clarity)
+                    st.success("✅ Feedback saved. Mirror will evolve.")
