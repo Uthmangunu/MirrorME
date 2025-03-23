@@ -7,7 +7,8 @@ from dotenv import load_dotenv
 from mirror_feedback import apply_feedback, load_clarity, save_clarity
 from memory_engine import update_memory, get_memory_as_string, summarize_memory
 from clarity_tracker import log_clarity_change 
-from clarity_tracker import log_clarity_change
+from adaptive_ui import detect_mood, set_mood_background, animated_response, render_trait_snapshot
+from long_memory import load_long_memory
 # === 🔐 Load Environment Variables ===
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -40,8 +41,14 @@ def speak_text(text):
 # === 🧠 Load Personality Profile as Prompt ===
 def generate_prompt_from_clarity():
     clarity = load_clarity()
+    memory = load_long_memory()
     return f"""
 You are MirrorMe — a confident, calm, deep AI clone of the user.
+
+Long-Term Memory:
+- Values: {', '.join(memory['core_values'])}
+- Goals: {', '.join(memory['goals'])}
+- Personality Summary: {memory['personality_summary']}
 
 Personality Traits:
 - Humor: {clarity['humor']}/10
@@ -79,6 +86,8 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### 🔍 What Your Reflection Reveals")
     st.write(summarize_memory())
+    with st.expander("🎭 Trait Snapshot", expanded=False):
+        render_trait_snapshot()
 
 # === 💬 Initialize Chat Session ===
 if "messages" not in st.session_state:
@@ -94,6 +103,10 @@ if user_input:
     if reply:
         st.session_state.messages.append({"role": "assistant", "content": reply})
         update_memory(user_input, reply)
+
+        # Mood detection & styling
+        mood = detect_mood(user_input + " " + reply)
+        set_mood_background(mood)
 
 # === 🔁 Reflect Mode ===
 if st.button("🔍 Reflect on Recent Messages"):
@@ -115,25 +128,25 @@ if st.button("🔍 Reflect on Recent Messages"):
 
 # === 🗨️ Chat Display + Feedback ===
 for i, msg in enumerate(st.session_state.messages[1:], start=1):
-    role = "🧍 You" if msg["role"] == "user" else "🧠 MirrorMe"
-    st.markdown(f"**{role}:** {msg['content']}")
-
     if msg["role"] == "assistant":
+        animated_response(msg["content"])
         speak_text(msg["content"])
+    else:
+        st.markdown(f"**👤 You:** {msg['content']}")
 
-        if i == len(st.session_state.messages) - 1:
-            st.markdown("### 🤖 Was this reply accurate to your personality?")
-            feedback = st.radio("Feedback:", ["✅ Yes", "❌ No - Needs Tweaking"], key=f"feedback_{i}")
+    if msg["role"] == "assistant" and i == len(st.session_state.messages) - 1:
+        st.markdown("### 🧠 Was this reply accurate to your personality?")
+        feedback = st.radio("Feedback:", ["✅ Yes", "❌ No - Needs Tweaking"], key=f"feedback_{i}")
 
-            if feedback == "❌ No - Needs Tweaking":
-                issue = st.selectbox("What was off?", [
-                    "Too blunt", "Too soft", "Not witty enough", "Too robotic", "Too emotional"
-                ], key=f"issue_{i}")
-                notes = st.text_input("Optional: Add notes", key=f"note_{i}")
+        if feedback == "❌ No - Needs Tweaking":
+            issue = st.selectbox("What was off?", [
+                "Too blunt", "Too soft", "Not witty enough", "Too robotic", "Too emotional"
+            ], key=f"issue_{i}")
+            notes = st.text_input("Optional: Add notes", key=f"note_{i}")
 
-                if st.button("💾 Submit Feedback", key=f"submit_{i}"):
-                    clarity = load_clarity()
-                    apply_feedback(issue, clarity)
-                    save_clarity(clarity)
-                    log_clarity_change(source="feedback")  # 🔁 Track the update source
+            if st.button("📎 Submit Feedback", key=f"submit_{i}"):
+                clarity = load_clarity()
+                apply_feedback(issue, clarity)
+                save_clarity(clarity)
+                log_clarity_change(source="feedback")
                 st.success("✅ Feedback saved. Mirror will evolve.")
