@@ -2,9 +2,11 @@ import streamlit as st
 import datetime
 import os
 import json
-from memory_engine import update_memory
 import openai
 from dotenv import load_dotenv
+from memory_engine import update_memory
+from clarity_tracker import log_clarity_change
+from mirror_feedback import load_clarity, save_clarity
 
 # === 🔐 Load API Key ===
 load_dotenv()
@@ -16,7 +18,7 @@ st.title("📝 MirrorMe Journal")
 
 st.markdown("""
 Welcome to your private journal.  
-Write freely. MirrorMe will reflect back, extract insight, and remember.
+Write freely. MirrorMe will reflect back, extract insight, and update its understanding of you.
 """)
 
 # === 📅 Journal Entry Input ===
@@ -32,11 +34,19 @@ if submit and journal_text:
     with open(f"journals/{today}.txt", "w") as f:
         f.write(journal_text)
 
-    # Reflection prompt
+    # === 🔁 GPT Reflection + Clarity Update Prompt ===
     reflection_prompt = [
         {
             "role": "system",
-            "content": "You're MirrorMe — insightful, calm, reflective. Analyze the journal entry and provide deep emotional insight, advice, or a grounding perspective."
+            "content": (
+                "You're MirrorMe — insightful, calm, reflective.\n"
+                "First, reflect on the emotional and mental state of the user.\n"
+                "Then, based on the tone and themes, suggest adjustments (from -1 to +1) to their clarity traits:\n"
+                "humor, empathy, ambition, flirtiness.\n"
+                "Return a JSON block with the suggested changes.\n"
+                "Example:\n"
+                "{'reflection': 'Insight here...', 'adjustments': {'humor': +0.5, 'empathy': -0.5}}"
+            )
         },
         {
             "role": "user",
@@ -44,28 +54,47 @@ if submit and journal_text:
         }
     ]
 
-    with st.spinner("Reflecting..."):
+    with st.spinner("Reflecting & Updating..."):
         try:
             response = openai.ChatCompletion.create(
                 model="gpt-4o",
                 messages=reflection_prompt
             )
-            reflection = response.choices[0].message.content.strip()
+            raw = response.choices[0].message.content.strip()
+
+            # === Parse GPT Output
+            import ast
+            parsed = ast.literal_eval(raw)  # Safer than eval()
+
+            reflection = parsed["reflection"]
+            adjustments = parsed["adjustments"]
 
             st.success("🪞 Your Reflection:")
             st.markdown(f"> {reflection}")
 
-            # Store into memory engine
+            # === Update Memory
             update_memory(journal_text, reflection)
 
+            # === Apply Clarity Adjustments
+            clarity = load_clarity()
+            for trait, delta in adjustments.items():
+                if trait in clarity:
+                    clarity[trait] = round(min(10, max(0, clarity[trait] + delta)), 2)
+
+            save_clarity(clarity)
+            log_clarity_change(source="journal")
+
+            st.success("🧠 Mirror's clarity has evolved based on your reflection.")
+
         except Exception as e:
-            st.error(f"Error generating reflection: {e}")
+            st.error(f"❌ Error during reflection or clarity update: {e}")
 
 # === 📚 View Past Journal Entries ===
 if os.path.exists("journals"):
     st.markdown("---")
     st.markdown("### 📅 Past Entries")
     entries = sorted(os.listdir("journals"), reverse=True)
+
     for entry in entries:
         with open(f"journals/{entry}", "r") as f:
             content = f.read()
