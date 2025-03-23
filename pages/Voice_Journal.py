@@ -1,89 +1,93 @@
 # voice_journal.py
 import streamlit as st
 import os
-import openai
-import requests
 import datetime
+import tempfile
+import openai
 from dotenv import load_dotenv
-from memory_engine import update_memory
 from clarity_tracker import log_clarity_change
-from mirror_feedback import load_clarity, save_clarity, apply_feedback
+from user_memory import update_user_memory, load_user_clarity, save_user_clarity
+import speech_recognition as sr
+from pydub import AudioSegment
+import ast
 
-# === 🔐 Load Environment ===
+# === 🔐 Load API Keys ===
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
-WHISPER_URL = "https://api.openai.com/v1/audio/transcriptions"
 
-# === 📁 Setup Paths ===
-os.makedirs("voice_journals", exist_ok=True)
-os.makedirs("voice_samples", exist_ok=True)
-
-# === 📝 Streamlit Page ===
+# === 🎤 Page Setup ===
 st.set_page_config(page_title="Voice Journal", page_icon="🎤")
-st.title("🎤 Voice Journal")
-st.markdown("Upload your voice, and MirrorMe will reflect on your thoughts.")
+st.title("🎤 MirrorMe Voice Journal")
 
-# === 🎙️ Voice Upload ===
-uploaded_file = st.file_uploader("Upload voice (mp3/wav)", type=["mp3", "wav"])
-submit = st.button("🧠 Transcribe & Reflect")
+if "user" not in st.session_state:
+    st.warning("🔒 You must log in to use this feature.")
+    st.stop()
 
-# === 🧪 Voice Calibration (First 3 Uses) ===
-def count_user_samples():
-    return len([f for f in os.listdir("voice_samples") if f.endswith(".mp3") or f.endswith(".wav")])
+# === 📤 Upload Voice Note ===
+st.markdown("Upload a voice note (.mp3 or .wav). MirrorMe will transcribe, reflect, and adapt.")
+uploaded_file = st.file_uploader("Upload voice journal", type=["mp3", "wav"])
+submit = st.button("📝 Reflect from Voice")
 
-def save_voice_sample(file):
-    index = count_user_samples() + 1
-    with open(f"voice_samples/sample_{index}.mp3", "wb") as f:
-        f.write(file.read())
-
-if uploaded_file and count_user_samples() < 3:
-    st.info(f"🔊 Voice Sample {count_user_samples()+1}/3 saved for voice calibration.")
-    save_voice_sample(uploaded_file)
-
-# === 🔍 Transcribe and Reflect ===
 if submit and uploaded_file:
-    file_path = f"voice_journals/{datetime.datetime.now().isoformat()}.mp3"
-    with open(file_path, "wb") as f:
-        f.write(uploaded_file.read())
+    try:
+        file_type = uploaded_file.type.split("/")[-1]
+        user_id = st.session_state["user"]["localId"]
+        today = datetime.date.today().isoformat()
 
-    with st.spinner("Transcribing with Whisper..."):
-        try:
-            with open(file_path, "rb") as audio_file:
-                response = requests.post(
-                    WHISPER_URL,
-                    headers={"Authorization": f"Bearer {openai.api_key}"},
-                    files={"file": audio_file},
-                    data={"model": "whisper-1"}
-                )
-            response.raise_for_status()
-            transcript = response.json()["text"]
-            st.success("✅ Transcription Complete")
-            st.markdown(f"**You said:** {transcript}")
-        except Exception as e:
-            st.error(f"❌ Whisper Error: {e}")
-            st.stop()
+        # === 🎧 Convert to WAV using pydub
+        audio = AudioSegment.from_file(uploaded_file, format=file_type)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_wav:
+            audio.export(tmp_wav.name, format="wav")
+            wav_path = tmp_wav.name
 
-    # === 💬 Reflect with GPT ===
-    reflection_prompt = [
-        {"role": "system", "content": "You're MirrorMe — insightful and emotionally intelligent. Reflect on the user's journal and offer clarity."},
-        {"role": "user", "content": transcript}
-    ]
+        # === 🧠 Transcribe
+        recognizer = sr.Recognizer()
+        with sr.AudioFile(wav_path) as source:
+            audio_data = recognizer.record(source)
+            transcript = recognizer.recognize_google(audio_data)
 
-    with st.spinner("Reflecting..."):
-        try:
-            reflection = openai.ChatCompletion.create(
+        st.markdown(f"### 📜 Transcribed Entry ({today})")
+        st.text_area("Transcript", transcript, height=200)
+
+        # === 🤖 GPT Reflection
+        prompt = [
+            {"role": "system", "content": (
+                "You're MirrorMe — insightful, calm, reflective.\n"
+                "First reflect on the emotional and mental state of the user.\n"
+                "Then, based on tone and content, suggest adjustments (from -1 to +1) for:\n"
+                "humor, empathy, ambition, flirtiness.\n"
+                "Return a JSON block like:\n"
+                "{'reflection': '...', 'adjustments': {'humor': +0.5, 'empathy': -0.5}}"
+            )},
+            {"role": "user", "content": f"Voice Journal Entry on {today}:\n\n{transcript}"}
+        ]
+
+        with st.spinner("Reflecting & Updating..."):
+            response = openai.ChatCompletion.create(
                 model="gpt-4o",
-                messages=reflection_prompt
-            ).choices[0].message.content.strip()
+                messages=prompt
+            )
+            raw = response.choices[0].message.content.strip()
+            parsed = ast.literal_eval(raw)
 
-            st.success("🪞 MirrorMe Reflects:")
+            reflection = parsed["reflection"]
+            adjustments = parsed["adjustments"]
+
+            st.success("🪞 Your Reflection:")
             st.markdown(f"> {reflection}")
 
-            update_memory(transcript, reflection)
-            clarity = load_clarity()
-            apply_feedback("auto", clarity)  # Treat as general insight feedback
-            save_clarity(clarity)
-            log_clarity_change(source="voice_journal")
+            # === 🧠 Update Memory & Clarity
+            update_user_memory(user_id, transcript, reflection)
 
-        except Exception as e:
-            st.error(f"❌ Reflection Error: {e}")
+            clarity = load_user_clarity(user_id)
+            for trait, delta in adjustments.items():
+                if trait in clarity:
+                    clarity[trait] = round(min(10, max(0, clarity[trait] + delta)), 2)
+
+            save_user_clarity(user_id, clarity)
+            log_clarity_change(user_id=user_id, source="voice_journal")
+
+            st.success("🧠 Mirror’s clarity has evolved based on your voice journal.")
+
+    except Exception as e:
+        st.error(f"❌ Error during transcription or reflection: {e}")
