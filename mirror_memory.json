@@ -11,5 +11,13 @@
   },
   {
     "summary": "The AI assistant encouraged conversation during the user's downtime."
+  },
+  {
+    "user": "HELLO",
+    "mirror": "Hello! How's the world treating you today?"
+  },
+  {
+    "user": "HEwhat going on",
+    "mirror": "Not much, just reflecting the energy you bring. What's on your mind?"
   }
 ]
