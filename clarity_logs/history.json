@@ -16,5 +16,30 @@
       "ambition": 4.5,
       "flirtiness": 5
     }
+  },
+  {
+    "timestamp": "2025-03-23T11:30:47.324064",
+    "source": {
+      "humor": 6.0,
+      "empathy": 5.0,
+      "ambition": 4.5,
+      "flirtiness": 5
+    },
+    "clarity": {
+      "humor": 5,
+      "empathy": 5,
+      "ambition": 5,
+      "flirtiness": 5
+    }
+  },
+  {
+    "timestamp": "2025-03-23T11:30:47.325019",
+    "source": "journal",
+    "clarity": {
+      "humor": 6.0,
+      "empathy": 5.0,
+      "ambition": 4.5,
+      "flirtiness": 5
+    }
   }
 ]
