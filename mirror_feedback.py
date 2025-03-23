@@ -1,7 +1,9 @@
 # mirror_feedback.py
-
+from clarity_tracker import log_clarity_change
 import json
 import os
+
+
 
 # === 🔁 Feedback-Based Personality Adjustment System ===
 
@@ -22,6 +24,8 @@ def load_clarity():
 def save_clarity(data):
     with open("clarity_data.json", "w") as f:
         json.dump(data, f, indent=2)
+        log_clarity_change(data)
+
 
 # --- Adjust Clarity Data Based on Feedback ---
 def apply_feedback(tweak, clarity):
