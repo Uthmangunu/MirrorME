@@ -3,14 +3,16 @@ import streamlit as st
 
 # === Use secrets from Streamlit's secure storage ===
 firebase_config = {
-    "apiKey": st.secrets["FIREBASE_API_KEY"],
-    "authDomain": st.secrets["FIREBASE_AUTH_DOMAIN"],
-    "projectId": st.secrets["FIREBASE_PROJECT_ID"],
-    "storageBucket": st.secrets["FIREBASE_STORAGE_BUCKET"],
-    "messagingSenderId": st.secrets["FIREBASE_MESSAGING_SENDER_ID"],
-    "appId": st.secrets["FIREBASE_APP_ID"],
-    "measurementId": st.secrets["FIREBASE_MEASUREMENT_ID"]
+    "apiKey": "AIzaSyAmqxGUCPDdZzelaunj6bxX5jVlKjljPqc",
+    "authDomain": "mirrorme-60800.firebaseapp.com",
+    "projectId": "mirrorme-60800",
+    "storageBucket": "mirrorme-60800.appspot.com",
+    "messagingSenderId": "909007885081",
+    "appId": "1:909007885081:web:f52febf51f231c49112b88",
+    "measurementId": "G-MTMHPX5Z79",
+    "databaseURL": "https://mirrorme-60800-default-rtdb.firebaseio.com"
 }
+
 
 firebase = pyrebase.initialize_app(firebase_config)
 auth = firebase.auth()
