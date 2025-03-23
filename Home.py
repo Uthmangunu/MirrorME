@@ -1,11 +1,11 @@
-# app.py
+# home.py
 import streamlit as st
 import openai
 import os
 import requests
 from dotenv import load_dotenv
 from mirror_feedback import apply_feedback, load_clarity, save_clarity
-from memory_engine import update_memory
+from memory_engine import update_memory, get_memory_as_string
 
 # === 🔐 Load Environment Variables ===
 load_dotenv()
@@ -70,6 +70,11 @@ st.title("🪞 MirrorMe — Talk to Your AI Mirror")
 if "VOICE_ID" not in st.session_state:
     st.info("🎤 No voice selected yet. [Go to Voice Setup](./voice_setup) to customize your Mirror’s voice.")
 
+# === Sidebar Memory View ===
+with st.sidebar:
+    st.markdown("### 🧠 Memory Log")
+    st.text(get_memory_as_string())
+
 # === Init Message History ===
 if "messages" not in st.session_state:
     st.session_state.messages = [
@@ -92,6 +97,7 @@ for i, msg in enumerate(st.session_state.messages[1:], start=1):
 
     if msg["role"] == "assistant":
         speak_text(msg["content"])
+
         if i == len(st.session_state.messages) - 1:
             st.markdown("### 🤖 Was this reply accurate to your personality?")
             feedback = st.radio("Feedback:", ["✅ Yes", "❌ No - Needs Tweaking"], key=f"feedback_{i}")
