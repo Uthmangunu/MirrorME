@@ -11,8 +11,8 @@ from mirror_feedback import apply_feedback, load_clarity, save_clarity
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 ELEVEN_API_KEY = os.getenv("ELEVEN_API_KEY")
-VOICE_ID = os.getenv("VOICE_ID") or "3Tjd0DlL3tjpqnkvDu9j"
-
+VOICE_ID = st.session_state.get("VOICE_ID", "3Tjd0DlL3tjpqnkvDu9j")
+ 
 # === ElevenLabs Voice Function ===
 def speak_text(text):
     try:
@@ -66,6 +66,9 @@ def get_reply(messages):
 # === UI ===
 st.set_page_config(page_title="MirrorMe", page_icon="🪞")
 st.title("🪞 MirrorMe — Talk to Your AI Mirror")
+if "VOICE_ID" not in st.session_state:
+    st.info("🎤 No voice selected yet. [Go to Voice Setup](./voice_setup) to customize your Mirror’s voice.")
+
 
 # Init chat history
 if "messages" not in st.session_state:
