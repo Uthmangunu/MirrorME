@@ -10,10 +10,11 @@ def load_clarity():
         "flirtiness": 5
     }
     if os.path.exists("clarity_data.json"):
-        with open("clarity_data.json", "r") as f:
-            return json.load(f)
+        try:
+            with open("clarity_data.json", "r") as f:
+                return json.load(f)
+        except json.JSONDecodeError:
+            # If the file is empty or corrupted, reset it
+            save_clarity(default_data)
+            return default_data
     return default_data
-
-def save_clarity(data):
-    with open("clarity_data.json", "w") as f:
-        json.dump(data, f, indent=2)
