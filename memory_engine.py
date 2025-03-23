@@ -4,54 +4,72 @@ import openai
 from dotenv import load_dotenv
 
 load_dotenv()
+MEMORY_FILE = "mirror_memory.json"
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-MEMORY_FILE = "mirror_memory.json"
 
+# === Load memory from file ===
 def load_memory():
-    if os.path.exists(MEMORY_FILE):
-        with open(MEMORY_FILE, "r") as f:
-            try:
-                return json.load(f)
-            except json.JSONDecodeError:
-                return []
-    return []
-
-def save_memory(memory):
-    with open(MEMORY_FILE, "w") as f:
-        json.dump(memory, f, indent=2)
-
-def auto_summarize(user_input, assistant_reply):
+    if not os.path.exists(MEMORY_FILE):
+        return []
     try:
-        summary_prompt = f"""
-Summarize the key insight from this exchange in 1 short sentence for long-term memory.
-User said: "{user_input}"
-Mirror replied: "{assistant_reply}"
-Summary:"""
+        with open(MEMORY_FILE, "r") as f:
+            return json.load(f)
+    except json.JSONDecodeError:
+        return []  # fallback if file is corrupted
 
+
+# === Save memory to file ===
+def save_memory(data):
+    with open(MEMORY_FILE, "w") as f:
+        json.dump(data, f, indent=2)
+
+
+# === Add new interaction ===
+def update_memory(user_input, mirror_reply):
+    memory = load_memory()
+    memory.append({
+        "user": user_input.strip(),
+        "mirror": mirror_reply.strip()
+    })
+    save_memory(memory)
+
+
+# === Display Memory Log in Sidebar ===
+def get_memory_as_string():
+    memory = load_memory()
+    formatted = []
+
+    for i, entry in enumerate(memory, start=1):
+        user = entry.get("user")
+        mirror = entry.get("mirror")
+        if user and mirror:
+            formatted.append(f"🧍 You #{i}: {user}\n🪞 Mirror: {mirror}")
+    return "\n\n".join(formatted) if formatted else "📭 No memory entries yet."
+
+
+# === GPT Summary of Last 10 Exchanges ===
+def summarize_memory():
+    memory = load_memory()
+    last_entries = [f"You: {m['user']}\nMirror: {m['mirror']}" for m in memory if "user" in m and "mirror" in m]
+
+    if not last_entries:
+        return "📭 No conversations to summarize."
+
+    prompt = (
+        "Summarize these conversations into 3–5 high-level insights about the user's mindset, behavior, or interests. "
+        "Focus on tone, personality patterns, and repeated themes:\n\n" +
+        "\n\n".join(last_entries[-10:])
+    )
+
+    try:
         response = openai.ChatCompletion.create(
-            model="gpt-4",
+            model="gpt-4o",
             messages=[
-                {"role": "system", "content": "You're a memory compressor for an AI assistant."},
-                {"role": "user", "content": summary_prompt}
+                {"role": "system", "content": "You're a psychological profiling assistant."},
+                {"role": "user", "content": prompt}
             ]
         )
         return response.choices[0].message.content.strip()
-
     except Exception as e:
-        print("❌ Auto-summarization error:", e)
-        return f"User: {user_input} | Mirror: {assistant_reply}"
-
-def update_memory(user_input, assistant_reply):
-    memory = load_memory()
-    summary = auto_summarize(user_input, assistant_reply)
-    memory.append({"summary": summary})
-    save_memory(memory)
-
-def get_memory_as_string():
-    memory = load_memory()
-    return "\n".join([
-        f"- 🧍 You: {entry.get('user', '[MISSING]')}\n  🪞 Mirror: {entry.get('mirror', '[MISSING]')}"
-        for entry in memory
-    ])
-
+        return f"❌ Summary error: {e}"
