@@ -1,22 +1,21 @@
 import streamlit as st
-import json
 import os
+import json
 from user_memory import load_user_clarity
 from long_memory import load_long_memory
 
 st.set_page_config(page_title="User Profile", page_icon="👤")
-st.title("👤 MirrorMe — User Profile")
+st.title("👤 MirrorMe — Your Profile")
 
-# 🔐 Require login
+# === 🔐 Require Login ===
 if "user" not in st.session_state:
-    st.warning("🔒 Please log in to view your profile.")
+    st.warning("🔒 You must log in first.")
     st.stop()
 
-user = st.session_state["user"]
-user_id = user["localId"]
-
-# === ⚙️ Load Settings ===
+user_id = st.session_state["user"]["localId"]
 settings_path = f"user_data/{user_id}/settings.json"
+
+# === Load Settings ===
 if os.path.exists(settings_path):
     with open(settings_path, "r") as f:
         settings = json.load(f)
@@ -27,29 +26,35 @@ else:
         "enable_voice_response": True
     }
 
-# === 🧠 Load Clarity and Long-Term Memory ===
+# === 🌙 Apply Dark Mode ===
+if settings.get("dark_mode"):
+    st.markdown("""
+        <style>
+        .stApp { background-color: #0e1117; color: white; }
+        </style>
+    """, unsafe_allow_html=True)
+
+# === 🎭 Personality Traits ===
+st.subheader("🎭 Your Trait Snapshot")
 clarity = load_user_clarity(user_id)
-long_memory = load_long_memory(user_id)
 
-# === 🧾 Basic Info ===
-st.markdown("### 🪪 Basic Info")
-st.write(f"**User ID:** `{user_id}`")
-st.write(f"**Email:** `{user.get('email', 'N/A')}`")
-
-# === 🔧 Settings Overview ===
-st.markdown("### ⚙️ Preferences")
-st.write(f"**Dark Mode:** {'✅ Enabled' if settings['dark_mode'] else '❌ Disabled'}")
-st.write(f"**Voice ID:** `{settings['voice_id']}`")
-st.write(f"**Voice Response:** {'✅ Enabled' if settings['enable_voice_response'] else '❌ Disabled'}")
-
-# === 🎯 Clarity Trait Snapshot ===
-st.markdown("### 🎯 Clarity Trait Snapshot")
 for trait, score in clarity.items():
-    st.slider(trait.capitalize(), 0, 10, float(score), disabled=True)
+    st.slider(trait.capitalize(), 0.0, 10.0, float(score), step=0.1, disabled=True)
 
 # === 🧠 Long-Term Memory ===
-st.markdown("### 🧠 Long-Term Memory Summary")
-st.write(f"**Core Values:** {', '.join(long_memory.get('core_values', []))}")
-st.write(f"**Goals:** {', '.join(long_memory.get('goals', []))}")
-st.write("**Personality Summary:**")
-st.text_area("Summary", long_memory.get("personality_summary", "Not yet set."), height=120, disabled=True)
+st.subheader("🧠 MirrorMe's Long-Term Memory")
+memory = load_long_memory(user_id)
+
+st.markdown("**Core Values:**")
+st.write(", ".join(memory.get("core_values", [])))
+
+st.markdown("**Goals:**")
+st.write(", ".join(memory.get("goals", [])))
+
+st.markdown("**Personality Summary:**")
+st.info(memory.get("personality_summary", "No summary found."))
+
+# === ⚙️ Voice Preferences ===
+st.subheader("🔊 Voice Preferences")
+st.markdown(f"- **Voice ID:** `{settings.get('voice_id')}`")
+st.markdown(f"- **Voice Response Enabled:** `{settings.get('enable_voice_response')}`")
