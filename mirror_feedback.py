@@ -5,8 +5,6 @@ import os
 from clarity_core import load_clarity, save_clarity
 from clarity_tracker import log_clarity_change
 
-
-
 # === 🔁 Feedback-Based Personality Adjustment System ===
 
 # --- Load Existing Clarity Profile or Initialize Default ---
