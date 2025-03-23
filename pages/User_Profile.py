@@ -1,182 +1,55 @@
-# home.py
 import streamlit as st
-import openai
-import os
-import requests
 import json
-from dotenv import load_dotenv
-from user_memory import (
-    load_user_clarity, save_user_clarity,
-    update_user_memory, get_user_memory_as_string, summarize_user_memory
-)
-from clarity_tracker import log_clarity_change 
-from adaptive_ui import detect_mood, set_mood_background, animated_response, render_trait_snapshot
+import os
+from user_memory import load_user_clarity
 from long_memory import load_long_memory
 
-# === 🔐 Load Environment Variables ===
-load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
-ELEVEN_API_KEY = os.getenv("ELEVEN_API_KEY")
+st.set_page_config(page_title="User Profile", page_icon="👤")
+st.title("👤 MirrorMe — User Profile")
 
-# === 🔒 Require Login ===
+# 🔐 Require login
 if "user" not in st.session_state:
-    st.warning("🔐 You must log in first.")
+    st.warning("🔒 Please log in to view your profile.")
     st.stop()
-user_id = st.session_state["user"]["localId"]
 
-# === ⚙️ Load User Settings ===
+user = st.session_state["user"]
+user_id = user["localId"]
+
+# === ⚙️ Load Settings ===
 settings_path = f"user_data/{user_id}/settings.json"
 if os.path.exists(settings_path):
     with open(settings_path, "r") as f:
         settings = json.load(f)
 else:
-    settings = {"dark_mode": False, "voice_id": "3Tjd0DlL3tjpqnkvDu9j", "enable_voice_response": True}
+    settings = {
+        "dark_mode": False,
+        "voice_id": "3Tjd0DlL3tjpqnkvDu9j",
+        "enable_voice_response": True
+    }
 
-# === Apply Theme ===
-if settings.get("dark_mode"):
-    st.markdown("""
-        <style>
-        .stApp { background-color: #0e1117; color: white; }
-        </style>
-    """, unsafe_allow_html=True)
+# === 🧠 Load Clarity and Long-Term Memory ===
+clarity = load_user_clarity(user_id)
+long_memory = load_long_memory(user_id)
 
-VOICE_ID = settings.get("voice_id", "3Tjd0DlL3tjpqnkvDu9j")
-VOICE_ENABLED = settings.get("enable_voice_response", True)
+# === 🧾 Basic Info ===
+st.markdown("### 🪪 Basic Info")
+st.write(f"**User ID:** `{user_id}`")
+st.write(f"**Email:** `{user.get('email', 'N/A')}`")
 
-# === 🗣️ ElevenLabs Voice Output ===
-def speak_text(text):
-    if not VOICE_ENABLED:
-        return
-    try:
-        url = f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}"
-        headers = {
-            "xi-api-key": ELEVEN_API_KEY,
-            "Content-Type": "application/json"
-        }
-        payload = {
-            "text": text,
-            "model_id": "eleven_monolingual_v1",
-            "voice_settings": {"stability": 0.5, "similarity_boost": 0.99}
-        }
-        response = requests.post(url, headers=headers, json=payload)
-        if response.status_code == 200:
-            with open("uthman_response.mp3", "wb") as f:
-                f.write(response.content)
-            st.audio("uthman_response.mp3", format="audio/mp3")
-        else:
-            st.error(f"❌ ElevenLabs Error: {response.text}")
-    except Exception as e:
-        st.error(f"❌ ElevenLabs Error: {e}")
+# === 🔧 Settings Overview ===
+st.markdown("### ⚙️ Preferences")
+st.write(f"**Dark Mode:** {'✅ Enabled' if settings['dark_mode'] else '❌ Disabled'}")
+st.write(f"**Voice ID:** `{settings['voice_id']}`")
+st.write(f"**Voice Response:** {'✅ Enabled' if settings['enable_voice_response'] else '❌ Disabled'}")
 
-# === 🧠 Auto-Adaptive Prompt Generator ===
-def generate_prompt_from_clarity(user_id):
-    clarity = load_user_clarity(user_id)
-    memory = load_long_memory(user_id)
+# === 🎯 Clarity Trait Snapshot ===
+st.markdown("### 🎯 Clarity Trait Snapshot")
+for trait, score in clarity.items():
+    st.slider(trait.capitalize(), 0, 10, float(score), disabled=True)
 
-    tone = []
-    if clarity["humor"] > 6: tone.append("playful and witty")
-    if clarity["empathy"] > 6: tone.append("deeply understanding and emotionally intelligent")
-    if clarity["ambition"] > 6: tone.append("motivational and driven")
-    if clarity["flirtiness"] > 6: tone.append("charming or flirtatious")
-
-    tone_description = ", and ".join(tone) if tone else "neutral"
-
-    return f"""
-You are MirrorMe — a confident, calm, deep AI clone of the user.
-
-Long-Term Memory:
-- Values: {', '.join(memory['core_values'])}
-- Goals: {', '.join(memory['goals'])}
-- Personality Summary: {memory['personality_summary']}
-
-Personality Traits:
-- Humor: {clarity['humor']}/10
-- Empathy: {clarity['empathy']}/10
-- Ambition: {clarity['ambition']}/10
-- Flirtiness: {clarity['flirtiness']}/10
-
-Respond with a tone that is {tone_description}. Stay in character. Keep it sharp and personal.
-"""
-
-# === GPT ===
-def get_reply(messages):
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4o",
-            messages=messages
-        )
-        return response.choices[0].message.content.strip()
-    except Exception as e:
-        st.error(f"❌ OpenAI Error: {e}")
-        return None
-
-# === UI Setup ===
-st.set_page_config(page_title="MirrorMe", page_icon="🪞")
-st.title("🪞 MirrorMe — Talk to Your AI Mirror")
-
-# === Sidebar ===
-with st.sidebar:
-    st.markdown("### 🧠 Memory Log")
-    st.text(get_user_memory_as_string(user_id))
-    st.markdown("---")
-    st.markdown("### 🔍 Your Reflection")
-    st.write(summarize_user_memory(user_id))
-    with st.expander("🎭 Trait Snapshot"):
-        clarity = load_user_clarity(user_id)
-        render_trait_snapshot(clarity)
-
-# === Init Chat Session ===
-if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "system", "content": generate_prompt_from_clarity(user_id)}]
-
-# === User Input ===
-user_input = st.text_input("You:")
-if user_input:
-    st.session_state.messages.append({"role": "user", "content": user_input})
-    reply = get_reply(st.session_state.messages)
-    if reply:
-        st.session_state.messages.append({"role": "assistant", "content": reply})
-        update_user_memory(user_id, user_input, reply)
-
-        mood = detect_mood(user_input + " " + reply)
-        set_mood_background(mood)
-
-# === Reflect Button ===
-if st.button("🔍 Reflect on Recent Messages"):
-    recent = [m for m in st.session_state.messages[-6:] if m["role"] in ["user", "assistant"]]
-    reflect_prompt = [
-        {"role": "system", "content": "You are MirrorMe, a calm and insightful reflection agent."},
-        {"role": "user", "content": "Reflect on this dialogue and extract an emotional insight about the user:\n\n" + "\n".join([f"{m['role'].capitalize()}: {m['content']}" for m in recent])}
-    ]
-
-    with st.spinner("Reflecting..."):
-        try:
-            reflection = openai.ChatCompletion.create(model="gpt-4o", messages=reflect_prompt)
-            output = reflection.choices[0].message.content.strip()
-            st.success("🪞 Your Reflection:")
-            st.markdown(f"> {output}")
-        except Exception as e:
-            st.error(f"❌ Reflection Error: {e}")
-
-# === Chat Log + Feedback ===
-for i, msg in enumerate(st.session_state.messages[1:], start=1):
-    if msg["role"] == "assistant":
-        animated_response(msg["content"])
-        speak_text(msg["content"])
-    else:
-        st.markdown(f"**👤 You:** {msg['content']}")
-
-    if msg["role"] == "assistant" and i == len(st.session_state.messages) - 1:
-        st.markdown("### 🧠 Was this reply accurate to your personality?")
-        feedback = st.radio("Feedback:", ["✅ Yes", "❌ No - Needs Tweaking"], key=f"feedback_{i}")
-
-        if feedback == "❌ No - Needs Tweaking":
-            issue = st.selectbox("What was off?", [
-                "Too blunt", "Too soft", "Not witty enough", "Too robotic", "Too emotional"
-            ], key=f"issue_{i}")
-            notes = st.text_input("Optional: Add notes", key=f"note_{i}")
-            if st.button("📎 Submit Feedback", key=f"submit_{i}"):
-                apply_feedback(issue, clarity)
-                save_user_clarity(user_id, clarity)
-                log_clarity_change(user_id, source="feedback")
-                st.success("✅ Feedback saved. Mirror will evolve.")
+# === 🧠 Long-Term Memory ===
+st.markdown("### 🧠 Long-Term Memory Summary")
+st.write(f"**Core Values:** {', '.join(long_memory.get('core_values', []))}")
+st.write(f"**Goals:** {', '.join(long_memory.get('goals', []))}")
+st.write("**Personality Summary:**")
+st.text_area("Summary", long_memory.get("personality_summary", "Not yet set."), height=120, disabled=True)
