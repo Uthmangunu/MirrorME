@@ -1,0 +1,20 @@
+[
+  {
+    "timestamp": "2025-03-23T03:47:35.275288",
+    "clarity": {
+      "humor": 5.5,
+      "empathy": 5.5,
+      "ambition": 5,
+      "flirtiness": 5
+    }
+  },
+  {
+    "timestamp": "2025-03-23T11:03:52.146397",
+    "clarity": {
+      "humor": 5.0,
+      "empathy": 6.0,
+      "ambition": 4.5,
+      "flirtiness": 5
+    }
+  }
+]
