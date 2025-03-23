@@ -3,7 +3,6 @@ import streamlit as st
 import openai
 import os
 import requests
-import json
 from dotenv import load_dotenv
 from mirror_feedback import apply_feedback, load_clarity, save_clarity
 from memory_engine import update_memory
@@ -14,7 +13,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 ELEVEN_API_KEY = os.getenv("ELEVEN_API_KEY")
 VOICE_ID = st.session_state.get("VOICE_ID", "3Tjd0DlL3tjpqnkvDu9j")
 
-# === ElevenLabs Voice Function ===
+# === ElevenLabs Voice ===
 def speak_text(text):
     try:
         url = f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}"
@@ -37,7 +36,7 @@ def speak_text(text):
     except Exception as e:
         st.error(f"❌ ElevenLabs Error: {e}")
 
-# === Load Prompt from Clarity ===
+# === Generate Dynamic System Prompt ===
 def generate_prompt_from_clarity():
     clarity = load_clarity()
     return f"""
@@ -52,7 +51,7 @@ Personality Traits:
 Speak and respond like someone with this energy. Maintain their tone and perspective.
 """
 
-# === Chat Completion ===
+# === GPT Reply ===
 def get_reply(messages):
     try:
         response = openai.ChatCompletion.create(
@@ -64,18 +63,20 @@ def get_reply(messages):
         st.error(f"❌ OpenAI Error: {e}")
         return None
 
-# === UI ===
+# === UI Setup ===
 st.set_page_config(page_title="MirrorMe", page_icon="🪞")
 st.title("🪞 MirrorMe — Talk to Your AI Mirror")
+
 if "VOICE_ID" not in st.session_state:
     st.info("🎤 No voice selected yet. [Go to Voice Setup](./voice_setup) to customize your Mirror’s voice.")
 
-# Init chat history
+# === Init Message History ===
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {"role": "system", "content": generate_prompt_from_clarity()}
     ]
 
+# === Handle Input ===
 user_input = st.text_input("You:")
 if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
@@ -91,7 +92,6 @@ for i, msg in enumerate(st.session_state.messages[1:], start=1):
 
     if msg["role"] == "assistant":
         speak_text(msg["content"])
-
         if i == len(st.session_state.messages) - 1:
             st.markdown("### 🤖 Was this reply accurate to your personality?")
             feedback = st.radio("Feedback:", ["✅ Yes", "❌ No - Needs Tweaking"], key=f"feedback_{i}")
