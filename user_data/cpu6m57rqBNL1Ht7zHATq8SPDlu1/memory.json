@@ -54,5 +54,9 @@
   {
     "user": "yo",
     "assistant": "Hello! How can we strategically tackle this day together?"
+  },
+  {
+    "user": "yo",
+    "assistant": "Hello! What strategy should we focus on today?"
   }
 ]
