@@ -1,6 +1,6 @@
 {
     "user_id": "uthman",
-    "archetype": "Ponderer",
+    "archetype": "Marcher",
     "clarity_level": 2,
     "total_xp": 185,
     "xp_to_next_level": 200,
@@ -33,5 +33,9 @@
             "1": "2025-03-22T16:30:00",
             "2": "2025-03-24T17:00:00"
         }
+    },
+    "archetype_meta": {
+        "emoji": "\ud83e\udd2c",
+        "desc": "Bold, driven, direct \u2014 you turn pressure into action."
     }
 }
