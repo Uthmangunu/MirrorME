@@ -8,7 +8,6 @@ from user_memory import update_user_memory, load_user_clarity, save_user_clarity
 from clarity_tracker import log_clarity_change
 from long_memory import load_long_memory
 from vector_store import store_vector
-from firebase_client import save_doc
 import ast
 
 # === 🔐 Load API Keys ===
@@ -88,9 +87,6 @@ if submit and journal_text:
 
     # === Store embedding ===
     store_vector(user_id, journal_text, source="journal")
-
-    # === Sync journal text into Firestore ===
-    save_doc("journals", user_id, {today: journal_text})
 
     prompt = [
         {"role": "system", "content": generate_prompt(user_id)},
