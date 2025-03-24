@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from user_memory import update_user_memory, load_user_clarity, save_user_clarity
 from clarity_tracker import log_clarity_change
 from long_memory import load_long_memory
-from vector_store import store_vector
+from vector_store import store_vector, get_similar_memories
 import ast
 
 # === 🔐 Load API Keys ===
@@ -38,7 +38,7 @@ if settings.get("dark_mode"):
     """, unsafe_allow_html=True)
 
 # === 🧠 Dynamic Prompt Generator ===
-def generate_prompt(user_id):
+def generate_prompt(user_id, journal_text):
     clarity = load_user_clarity(user_id)
     memory = load_long_memory(user_id)
     tone = []
@@ -48,9 +48,14 @@ def generate_prompt(user_id):
     if clarity["traits"]["flirtiness"]["score"] > 60: tone.append("charming or flirtatious")
     tone_description = ", and ".join(tone) if tone else "neutral"
 
+    insights = get_similar_memories(user_id, journal_text)
+    insight_str = "\n\n".join([f"Related Insight: {text}" for text in insights])
+
     return f"""
 You're MirrorMe — expressive, emotionally intelligent, not a therapist.
 Use this tone: {tone_description}.
+{insight_str}
+
 First reflect on the user's mindset, then suggest adjustments (-1 to 1) to clarity traits:
 humor, empathy, ambition, flirtiness.
 
@@ -89,7 +94,7 @@ if submit and journal_text:
     store_vector(user_id, journal_text, source="journal")
 
     prompt = [
-        {"role": "system", "content": generate_prompt(user_id)},
+        {"role": "system", "content": generate_prompt(user_id, journal_text)},
         {"role": "user", "content": f"Journal Entry on {today}:\n\n{journal_text}"}
     ]
 

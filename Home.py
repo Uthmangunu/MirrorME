@@ -13,8 +13,7 @@ from clarity_tracker import log_clarity_change
 from adaptive_ui import detect_mood, set_mood_background, animated_response, render_trait_snapshot
 from long_memory import load_long_memory
 from clarity_core import load_clarity, save_clarity, apply_trait_xp
-from user_settings import load_user_settings
-from firebase_client import get_doc, save_doc
+from vector_store import get_similar_memories
 
 st.set_page_config(page_title="MirrorMe", page_icon="🪞")
 
@@ -38,6 +37,8 @@ if "user" not in st.session_state:
     st.stop()
 user_id = st.session_state["user"]["localId"]
 
+settings_path = f"user_data/{user_id}/settings.json"
+from user_settings import load_user_settings
 settings = load_user_settings(user_id)
 
 if settings.get("dark_mode"):
@@ -90,15 +91,23 @@ def generate_prompt_from_clarity(user_id):
     if traits.get("ambition", {}).get("score", 0) > 60: tone.append("motivational and driven")
     if traits.get("flirtiness", {}).get("score", 0) > 60: tone.append("charming or flirtatious")
     tone_description = ", and ".join(tone) if tone else "neutral"
+
     archetype = clarity.get("archetype", "Strategist")
     meta = clarity.get("archetype_meta", {})
     emoji = meta.get("emoji", "♟️")
     desc = meta.get("desc", "Strategic, calm, structured.")
+
+    # Retrieve top 3 semantically similar memories
+    recent_memories = get_similar_memories(user_id, " ".join([m['user'] for m in st.session_state.get("messages", [])[-3:]]))
+    memory_injection = "\n\n".join([f"Related insight: {mem}" for mem in recent_memories])
+
     return f"""
 You are MirrorMe — a digital version of the user, trained to evolve with them over time.
 🧬 Archetype: {emoji} {archetype}
 Tone Style: {tone_description}
 Mirror Description: {desc}
+{memory_injection}
+
 Long-Term Memory:
 - Values: {', '.join(memory['core_values'])}
 - Goals: {', '.join(memory['goals'])}
@@ -159,33 +168,3 @@ for i, msg in enumerate(st.session_state.messages[1:], start=1):
         elif msg["role"] == "assistant":
             st.markdown(f"<div class='message-box ai-msg'>🧠 MirrorMe: {msg['content']}</div>", unsafe_allow_html=True)
             speak_text(msg["content"])
-
-        unique_key = str(uuid.uuid4())[:8]
-        st.markdown("---")
-        st.markdown("**🪞 Did this feel like something *you* would say?**")
-        col1, col2 = st.columns([1, 2])
-        with col1:
-            feedback = st.radio("", ["Yes", "No"], horizontal=True, key=f"feedback_{unique_key}")
-        if feedback == "No":
-            with col2:
-                user_feedback = st.text_input("What felt off? (optional)", key=f"reason_{unique_key}")
-            st.info("Thanks! We'll use this to improve your Mirror.")
-
-            data = get_doc("feedback_counts", user_id) or {}
-            data["count"] = data.get("count", 0) + 1
-            save_doc("feedback_counts", user_id, data)
-
-            feedback_count = data["count"]
-            clarity_data = load_clarity()
-            traits = clarity_data.get("traits", {})
-            for trait in traits:
-                traits[trait]["xp"] = max(0, traits[trait].get("xp", 0) - 2)
-                traits[trait]["score"] = max(0, traits[trait]["score"] - 0.2)
-            clarity_data["traits"] = traits
-            save_clarity(clarity_data)
-
-            if feedback_count >= 6 and st.checkbox("🔁 Show recalibration suggestion", value=True):
-                st.warning("🔁 You've flagged several misalignments. Consider retaking your Mirror calibration.")
-                if st.button("🎯 Recalibrate Mirror"):
-                    st.session_state["force_reset"] = True
-                    st.switch_page("pages/Welcome.py")
