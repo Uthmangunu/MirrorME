@@ -1,13 +1,13 @@
 {
     "user_id": "uthman",
     "archetype": "Marcher",
-    "clarity_level": 2,
-    "total_xp": 225,
-    "xp_to_next_level": 200,
+    "clarity_level": 4,
+    "total_xp": 785,
+    "xp_to_next_level": 1100,
     "traits": {
         "humor": {
-            "score": 39.0,
-            "xp": 85
+            "score": 67.0,
+            "xp": 365
         },
         "empathy": {
             "score": 90,
@@ -22,16 +22,18 @@
             "xp": 10
         },
         "memory": {
-            "score": 89.0,
-            "xp": 45
+            "score": 100,
+            "xp": 325
         }
     },
     "evolution": {
-        "last_updated": "2025-03-24T17:00:00",
+        "last_updated": "2025-03-24T18:15:03.364815",
         "level_history": {
             "0": "2025-03-20T13:00:00",
             "1": "2025-03-22T16:30:00",
-            "2": "2025-03-24T17:00:00"
+            "2": "2025-03-24T17:00:00",
+            "3": "2025-03-24T18:12:48.765360",
+            "4": "2025-03-24T18:15:03.364815"
         }
     },
     "archetype_meta": {
