@@ -1,7 +1,3 @@
-# Combining Clarity + Archetype into a single Welcome Flow page
-# This code merges both clarity sliders and archetype test, with a light "optional but recommended" gating.
-
-combined_welcome_code = '''
 import streamlit as st
 from clarity_core import load_clarity, save_clarity
 import matplotlib.pyplot as plt
@@ -16,7 +12,8 @@ clarity = load_clarity()
 if "skip_setup" not in st.session_state:
     st.session_state.skip_setup = False
 
-if clarity.get("archetype") and clarity.get("traits"):
+# === Reset guard ===
+if clarity.get("archetype") and clarity.get("traits") and not st.session_state.get("force_reset"):
     st.success("✅ Setup already complete. You can go to the main MirrorMe chat.")
     if st.button("➡️ Continue to Mirror"):
         st.switch_page("Home.py")
@@ -62,7 +59,7 @@ questions = [
             "Takes the lead and drives results": ["Marcher", "Strategist"],
             "Keeps people calm and connected": ["Heartbeat", "Ponderer"]
         }
-    },
+    }
 ]
 
 responses = []
@@ -109,6 +106,7 @@ if submitted:
         "depth": depth
     }
 
+    st.session_state["force_reset"] = False
     save_clarity(clarity)
 
     st.success(f"🎭 You are a {emoji} **{top_archetype}**")
@@ -117,6 +115,3 @@ if submitted:
     st.success("✅ Mirror Personality Profile Saved. You’re ready.")
     if st.button("🚀 Launch My Mirror"):
         st.switch_page("Home.py")
-'''
-
-
