@@ -1,37 +1,39 @@
-import firebase_admin
-from firebase_admin import credentials, auth
+import pyrebase
 import streamlit as st
+import json
 
-# Initialize Firebase Admin SDK
-cred = credentials.Certificate("firebase_service_account.json")
-firebase_admin.initialize_app(cred)
+firebase_config = {
+    "apiKey": st.secrets["firebase"]["api_key"],
+    "authDomain": st.secrets["firebase"]["auth_domain"],
+    "projectId": st.secrets["firebase"]["project_id"],
+    "storageBucket": st.secrets["firebase"]["storage_bucket"],
+    "messagingSenderId": st.secrets["firebase"]["messaging_sender_id"],
+    "appId": st.secrets["firebase"]["app_id"],
+    "measurementId": st.secrets["firebase"]["measurement_id"],
+    "databaseURL": ""
+}
 
-# Firebase Authentication functions
+firebase = pyrebase.initialize_app(firebase_config)
+auth = firebase.auth()
 
-# Signup function (uses Firebase Admin SDK)
+# Optional: Admin functionality with service account (if needed later)
+with open("firebase_service_account.json") as f:
+    service_account = json.load(f)
+
+# Signup
 def signup(email: str, password: str):
     try:
-        user = auth.create_user(
-            email=email,
-            password=password
-        )
-        return user.uid  # Return user UID after successful signup
+        user = auth.create_user_with_email_and_password(email, password)
+        return user
     except Exception as e:
-        st.error(f"Signup failed: {e}")
+        st.error(f"Signup Error: {e}")
         return None
 
-# Sign-in function (uses Firebase Admin SDK)
-def signin_with_email(email: str, password: str):
+# Login
+def login(email: str, password: str):
     try:
-        # Firebase Admin SDK doesn't directly handle password authentication.
-        # We can use Firebase client SDK for client-side login (which is recommended)
-        # For server-side, this method would only fetch user data if login is valid.
-        # Assuming user authentication happens on the client-side (using Firebase JS SDK, for example)
-        
-        # Just return user information for now (you should integrate Firebase client SDK for full auth flow)
-        user = auth.get_user_by_email(email)
-        return user.uid  # Return user UID after successful authentication
+        user = auth.sign_in_with_email_and_password(email, password)
+        return user
     except Exception as e:
-        st.error(f"Login failed: {e}")
+        st.error(f"Login Error: {e}")
         return None
-

@@ -2,3 +2,5 @@
 .streamlit/secrets.toml
 .streamlit/secrets.toml
 .streamlit/secrets.toml
+firebase_service_account.json
+.auth_cache.json
