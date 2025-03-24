@@ -13,7 +13,7 @@ from clarity_tracker import log_clarity_change
 from adaptive_ui import detect_mood, set_mood_background, animated_response, render_trait_snapshot
 from long_memory import load_long_memory
 from clarity_core import load_clarity, save_clarity, apply_trait_xp
-from vector_store import get_similar_memories, store_vector
+
 from user_settings import load_user_settings
 
 st.set_page_config(page_title="MirrorMe", page_icon="🪞")
