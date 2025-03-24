@@ -1,5 +1,6 @@
 import streamlit as st
 from google.cloud import firestore
+from google.oauth2 import service_account
 import os
 import json
 from dotenv import load_dotenv
@@ -9,10 +10,26 @@ load_dotenv()
 
 # === 🔥 FIREBASE CLIENT WRAPPER ===
 def init_firestore():
-    if os.getenv("GOOGLE_APPLICATION_CREDENTIALS") or os.path.exists("firebase_service_account.json"):
-        return firestore.Client()
-    else:
-        st.error("Firestore credentials not found. Set GOOGLE_APPLICATION_CREDENTIALS or upload JSON.")
+    try:
+        # Streamlit secrets or local .env with inline JSON
+        creds_str = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+
+        if creds_str and creds_str.strip().startswith("{"):
+            creds_dict = json.loads(creds_str)
+            creds = service_account.Credentials.from_service_account_info(creds_dict)
+            return firestore.Client(credentials=creds, project=creds_dict.get("project_id"))
+
+        # Local JSON path fallback
+        elif os.path.exists("firebase_service_account.json"):
+            creds = service_account.Credentials.from_service_account_file("firebase_service_account.json")
+            return firestore.Client(credentials=creds)
+
+        else:
+            st.error("❌ Firestore credentials not found. Please set GOOGLE_APPLICATION_CREDENTIALS or provide firebase_service_account.json")
+            return None
+
+    except Exception as e:
+        st.error(f"❌ Firestore init failed: {e}")
         return None
 
 # === 🔧 DOCUMENT HELPERS ===
