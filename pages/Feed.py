@@ -1,7 +1,11 @@
 import streamlit as st
 import sys
 import os
-sys.path.append(os.path.abspath("."))
+
+# Ensure we can import from the root directory (where firebase_client.py lives)
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if ROOT_DIR not in sys.path:
+    sys.path.append(ROOT_DIR)
 
 from firebase_client import get_all_docs, get_doc, save_doc
 
