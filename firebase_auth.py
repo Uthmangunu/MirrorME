@@ -9,7 +9,8 @@ firebase_config = {
     "storageBucket": st.secrets["FIREBASE_STORAGE_BUCKET"],
     "messagingSenderId": st.secrets["FIREBASE_MESSAGING_SENDER_ID"],
     "appId": st.secrets["FIREBASE_APP_ID"],
-    "measurementId": st.secrets["FIREBASE_MEASUREMENT_ID"]
+    "measurementId": st.secrets["FIREBASE_MEASUREMENT_ID"],
+    "databaseURL": st.secrets["FIREBASE_DATABASE_URL"]  # ✅ Required by Pyrebase
 }
 
 # === 🔧 Initialize Firebase ===
