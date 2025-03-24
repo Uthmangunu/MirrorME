@@ -6,3 +6,4 @@ PyJWT
 pydub
 SpeechRecognition
 pyrebase4
+matplotlib
