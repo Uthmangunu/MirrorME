@@ -11,7 +11,7 @@ import ast
 
 # === 🔐 Load API Keys ===
 load_dotenv()
-openai.api_key = st.secrets["OPENAI_API_KEY"]
+client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 # === 🔒 Require Login ===
 if "user" not in st.session_state:
@@ -42,10 +42,10 @@ def generate_prompt(user_id):
     memory = load_long_memory(user_id)
 
     tone = []
-    if clarity["humor"] > 6: tone.append("playful and witty")
-    if clarity["empathy"] > 6: tone.append("deeply understanding and emotionally intelligent")
-    if clarity["ambition"] > 6: tone.append("motivational and driven")
-    if clarity["flirtiness"] > 6: tone.append("charming or flirtatious")
+    if clarity["traits"]["humor"]["score"] > 60: tone.append("playful and witty")
+    if clarity["traits"]["empathy"]["score"] > 60: tone.append("deeply understanding and emotionally intelligent")
+    if clarity["traits"]["ambition"]["score"] > 60: tone.append("motivational and driven")
+    if clarity["traits"]["flirtiness"]["score"] > 60: tone.append("charming or flirtatious")
 
     tone_description = ", and ".join(tone) if tone else "neutral"
 
@@ -54,8 +54,11 @@ You're MirrorMe — insightful, calm, reflective.
 Use this tone: {tone_description}.
 First reflect on the user's mindset, then suggest adjustments (-1 to 1) to clarity traits:
 humor, empathy, ambition, flirtiness.
-Return JSON like: {{'reflection': '...', 'adjustments': {{'humor': 0.5}}}}
 
+Return ONLY valid Python-style dictionary in this format (no explanation):
+{{'reflection': '...', 'adjustments': {{'humor': 0.5, 'empathy': -0.5}}}}
+
+Avoid extra commentary or notes.
 Long-Term Memory:
 - Values: {', '.join(memory['core_values'])}
 - Goals: {', '.join(memory['goals'])}
@@ -90,8 +93,7 @@ if submit and journal_text:
 
     with st.spinner("Reflecting & Updating..."):
         try:
-            # ✅ New SDK call
-            response = openai.chat.completions.create(
+            response = client.chat.completions.create(
                 model="gpt-4o",
                 messages=prompt
             )
@@ -101,21 +103,25 @@ if submit and journal_text:
                 parsed = ast.literal_eval(raw)
             except Exception:
                 st.error("⚠️ Could not parse GPT response. Here's the raw output:")
-                st.text(raw)
+                st.code(raw)
                 st.stop()
 
-            reflection = parsed["reflection"]
-            adjustments = parsed["adjustments"]
+            reflection = parsed.get("reflection", "No reflection provided.")
+            adjustments = parsed.get("adjustments", {})
 
             st.success("🪞 Your Reflection:")
-            st.markdown(f"> {reflection}")
+            st.markdown(f"_{reflection}_")
 
             update_user_memory(user_id, journal_text, reflection)
 
+            # Update traits correctly
             clarity = load_user_clarity(user_id)
             for trait, delta in adjustments.items():
-                if trait in clarity:
-                    clarity[trait] = round(min(10, max(0, clarity[trait] + delta)), 2)
+                if trait in clarity["traits"]:
+                    score = clarity["traits"][trait]["score"]
+                    new_score = round(min(100, max(0, score + (delta * 10))), 2)
+                    clarity["traits"][trait]["score"] = new_score
+                    clarity["traits"][trait]["xp"] += int(abs(delta * 10))  # Optional XP bump
 
             save_user_clarity(user_id, clarity)
             log_clarity_change(user_id, source="journal")
