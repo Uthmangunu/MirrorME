@@ -15,6 +15,8 @@ from adaptive_ui import detect_mood, set_mood_background, animated_response, ren
 from long_memory import load_long_memory
 from clarity_core import load_clarity, save_clarity, apply_trait_xp
 
+clarity_data = load_clarity() # Load Clarity data
+
 # === This is just ensuring the user has completed the Archetype Test and has traits ===
 if not clarity_data.get("archetype") or "traits" not in clarity_data:
     st.warning("🔧 Mirror setup not complete. Please go to the Welcome page first.")
