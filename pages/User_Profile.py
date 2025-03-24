@@ -47,11 +47,11 @@ if archetype:
     st.markdown(f"### {emoji} {archetype}")
     st.caption(desc)
     if st.button("🔄 Retake Archetype Test"):
-        st.switch_page("Welcome.py")
+        st.switch_page("pages/Welcome.py")
 else:
     st.info("You haven’t taken the Archetype Test yet.")
     if st.button("🎯 Take Archetype Quiz Now"):
-        st.switch_page("Welcome.py")
+        st.switch_page("pages/Welcome.py")
 
 # === 📈 Clarity Level & XP ===
 st.subheader("📈 Clarity Level")

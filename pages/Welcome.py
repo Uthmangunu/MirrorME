@@ -119,9 +119,4 @@ if submitted:
         st.switch_page("Home.py")
 '''
 
-# Save the unified welcome page
-welcome_path = "/mnt/data/Welcome.py"
-with open(welcome_path, "w") as f:
-    f.write(combined_welcome_code)
 
-welcome_path
