@@ -1,43 +1,54 @@
 # home.py
+
 import streamlit as st
 import openai
 import os
-import requests
 import json
+import requests
 from dotenv import load_dotenv
+
 from user_memory import (
     load_user_clarity, save_user_clarity,
     update_user_memory, get_user_memory_as_string, summarize_user_memory
 )
-from clarity_tracker import log_clarity_change 
+from clarity_tracker import log_clarity_change
 from adaptive_ui import detect_mood, set_mood_background, animated_response, render_trait_snapshot
 from long_memory import load_long_memory
 
-# === 🔐 Load Environment Variables ===
+# === PAGE CONFIG ===
+st.set_page_config(page_title="MirrorMe", page_icon="🪞")
+
+# === 🔐 ENVIRONMENT ===
 load_dotenv()
 openai.api_key = st.secrets["OPENAI_API_KEY"]
-ELEVEN_API = st.secrets["ELEVEN_API_KEY"]
+ELEVEN_API_KEY = st.secrets["ELEVEN_API_KEY"]
 
-# === 🔒 Require Login ===
+# === 🔒 AUTH CHECK ===
 if "user" not in st.session_state:
     st.warning("🔐 You must log in first.")
     st.stop()
 user_id = st.session_state["user"]["localId"]
 
-# === ⚙️ Load User Settings ===
+# === ⚙️ USER SETTINGS ===
 settings_path = f"user_data/{user_id}/settings.json"
+settings = {
+    "dark_mode": False,
+    "voice_id": "3Tjd0DlL3tjpqnkvDu9j",
+    "enable_voice_response": True
+}
 if os.path.exists(settings_path):
     with open(settings_path, "r") as f:
-        settings = json.load(f)
-else:
-    settings = {"dark_mode": False, "voice_id": "3Tjd0DlL3tjpqnkvDu9j", "enable_voice_response": True}
+        settings.update(json.load(f))
 
-# === 🌒 Apply Dark Mode ===
-if settings.get("dark_mode"):
+VOICE_ID = settings["voice_id"]
+VOICE_ENABLED = settings["enable_voice_response"]
+
+# === 🎨 STYLING ===
+if settings["dark_mode"]:
     st.markdown("""
         <style>
         .stApp { background-color: #0e1117; color: white; }
-        .message-box { border: 1px solid #444; border-radius: 10px; padding: 0.75em; margin-bottom: 1em; background-color: #1a1d23; }
+        .message-box { background-color: #1a1d23; border: 1px solid #444; border-radius: 10px; padding: 0.75em; margin-bottom: 1em; }
         .user-msg { color: #FFD700; font-weight: bold; }
         .ai-msg { color: #90EE90; }
         </style>
@@ -45,16 +56,13 @@ if settings.get("dark_mode"):
 else:
     st.markdown("""
         <style>
-        .message-box { border: 1px solid #ccc; border-radius: 10px; padding: 0.75em; margin-bottom: 1em; background-color: #f9f9f9; }
+        .message-box { background-color: #f9f9f9; border: 1px solid #ccc; border-radius: 10px; padding: 0.75em; margin-bottom: 1em; }
         .user-msg { color: #333; font-weight: bold; }
         .ai-msg { color: #000; }
         </style>
     """, unsafe_allow_html=True)
 
-VOICE_ID = settings.get("voice_id", "3Tjd0DlL3tjpqnkvDu9j")
-VOICE_ENABLED = settings.get("enable_voice_response", True)
-
-# === 🗣️ ElevenLabs Voice Output ===
+# === 🔊 VOICE OUTPUT ===
 def speak_text(text):
     if not VOICE_ENABLED:
         return
@@ -77,7 +85,19 @@ def speak_text(text):
     except Exception as e:
         st.error(f"❌ ElevenLabs Error: {e}")
 
-# === 🧠 Adaptive Prompt Generator ===
+# === 🤖 GPT FUNCTION ===
+def get_reply(messages):
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4o",
+            messages=messages
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        st.error(f"❌ OpenAI Error: {e}")
+        return None
+
+# === 🧠 PROMPT GENERATION ===
 def generate_prompt_from_clarity(user_id):
     clarity = load_user_clarity(user_id)
     memory = load_long_memory(user_id)
@@ -107,23 +127,14 @@ Personality Traits:
 Respond with a tone that is {tone_description}. Stay in character. Keep it sharp and personal.
 """
 
-# === GPT ===
-def get_reply(messages):
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4o",
-            messages=messages
-        )
-        return response.choices[0].message.content.strip()
-    except Exception as e:
-        st.error(f"❌ OpenAI Error: {e}")
-        return None
+# === 🧠 INIT SESSION ===
+if "messages" not in st.session_state:
+    st.session_state.messages = [{"role": "system", "content": generate_prompt_from_clarity(user_id)}]
 
-# === UI Setup ===
-st.set_page_config(page_title="MirrorMe", page_icon="🪞")
-st.title("🪞 MirrorMe — Your AI Mirror")
+# === 💬 UI ===
+st.title("🪞 MirrorMe — Your AI Reflection")
 
-# === Sidebar ===
+# === 🧠 SIDEBAR MEMORY ===
 with st.sidebar:
     st.markdown("### 🧠 Memory Log")
     st.text(get_user_memory_as_string(user_id))
@@ -134,11 +145,7 @@ with st.sidebar:
         clarity = load_user_clarity(user_id)
         render_trait_snapshot(clarity)
 
-# === Init Chat Session ===
-if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "system", "content": generate_prompt_from_clarity(user_id)}]
-
-# === Text Input ===
+# === ✍️ CHAT INPUT ===
 user_input = st.chat_input("Send a message...")
 if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
@@ -149,7 +156,7 @@ if user_input:
         mood = detect_mood(user_input + " " + reply)
         set_mood_background(mood)
 
-# === Display Chat ===
+# === 💬 MESSAGE DISPLAY ===
 for msg in st.session_state.messages[1:]:
     with st.container():
         if msg["role"] == "user":
