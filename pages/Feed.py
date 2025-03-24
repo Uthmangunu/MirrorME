@@ -45,7 +45,8 @@ else:
                 comments.append(new_entry)
                 save_doc("comments", user_id, {"entries": comments})
                 st.success("Comment posted!")
-                st.experimental_rerun()
+                st.session_state[f"comment_input_{user_id}"] = ""  # Clear input manually
+
 
         if st.button(f"🗣 Talk to this Mirror", key=f"talk_{user_id}"):
             st.session_state["sandbox_target"] = user_id
