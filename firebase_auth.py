@@ -1,4 +1,4 @@
-import pyrebase  # ✅ not pyrebase4
+import pyrebase4 as pyrebase
 import streamlit as st
 import json
 import os

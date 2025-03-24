@@ -6,3 +6,5 @@ PyJWT
 pydub
 SpeechRecognition
 pyrebase
+pyrebase4
+requests==2.31.0
