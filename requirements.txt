@@ -1,6 +1,6 @@
 streamlit
 openai
-requests==2.31.0
+requests>=2.27
 python-dotenv
 PyJWT
 pydub
