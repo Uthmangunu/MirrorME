@@ -1,32 +1,21 @@
 import streamlit as st
-import os
-import sys
-from pathlib import Path
-
-# Dynamically locate firebase_client.py regardless of working directory
-BASE_DIR = Path(__file__).resolve().parent.parent
-sys.path.append(str(BASE_DIR))
-
-try:
-    from firebase_client import get_all_docs, get_doc, save_doc
-except ModuleNotFoundError as e:
-    st.error("🚨 Could not load firebase_client.py — make sure it's in the root directory.")
-    st.stop()
-
-    sys.path.append(ROOT_DIR)
-
-from firebase_client import get_all_docs, get_doc, save_doc
+from firebase_client import get_doc, save_doc, get_all_docs
+from datetime import datetime
 
 st.set_page_config(page_title="🌍 Mirror Feed", page_icon="🧠")
 st.title("🌍 Explore Public Mirrors")
 
 mirrors = get_all_docs("public_mirrors")
+current_user = st.session_state.get("user", {}).get("localId")
 
 if not mirrors:
     st.info("No public mirrors yet. Encourage others to share their minds!")
 else:
     for mirror in mirrors:
         user_id = mirror.get("user_id")
+        if not user_id:
+            continue
+
         st.markdown("---")
         st.markdown(f"## {mirror.get('emoji', '')} {mirror.get('archetype', '')}")
         st.caption(mirror.get("desc", ""))
@@ -35,17 +24,29 @@ else:
         for trait, score in mirror.get("traits", {}).items():
             st.progress(score / 100.0, text=f"{trait.title()}: {score}")
 
+        with st.expander("💬 Comments"):
+            comment_path = f"comments/{user_id}"
+            comment_doc = get_doc("comments", user_id) or {}
+            comments = comment_doc.get("entries", [])
+
+            for c in comments[-5:]:
+                st.markdown(f"**{c['author']}** said:")
+                st.markdown(f"\> {c['text']}")
+                st.caption(c['timestamp'])
+
+            st.markdown("---")
+            new_comment = st.text_input(f"Write a comment...", key=f"comment_input_{user_id}")
+            if st.button("Post", key=f"comment_btn_{user_id}") and new_comment.strip():
+                new_entry = {
+                    "author": current_user or "Anonymous",
+                    "text": new_comment.strip(),
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M")
+                }
+                comments.append(new_entry)
+                save_doc("comments", user_id, {"entries": comments})
+                st.success("Comment posted!")
+                st.experimental_rerun()
+
         if st.button(f"🗣 Talk to this Mirror", key=f"talk_{user_id}"):
             st.session_state["sandbox_target"] = user_id
-            st.switch_page("Sandbox.py")
-
-        with st.expander("💬 Leave a Comment"):
-            comments = get_doc("mirror_comments", user_id).get("comments", [])
-            for c in comments:
-                st.markdown(f"- {c}")
-
-            new_comment = st.text_input("Add your thoughts:", key=f"comment_input_{user_id}")
-            if st.button("Submit Comment", key=f"submit_comment_{user_id}") and new_comment:
-                comments.append(new_comment)
-                save_doc("mirror_comments", user_id, {"comments": comments})
-                st.experimental_rerun()
+            st.switch_page("pages/Sandbox.py")
