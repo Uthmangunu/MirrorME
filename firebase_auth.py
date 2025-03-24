@@ -1,36 +1,51 @@
-# firebase_auth.py (🔥 using Firebase REST API)
+import pyrebase
 import streamlit as st
-import requests
 
-API_KEY = st.secrets["FIREBASE_API_KEY"]
+# === 🔐 Firebase Config from Streamlit Secrets ===
+firebase_config = {
+    "apiKey": st.secrets["FIREBASE_API_KEY"],
+    "authDomain": st.secrets["FIREBASE_AUTH_DOMAIN"],
+    "projectId": st.secrets["FIREBASE_PROJECT_ID"],
+    "storageBucket": st.secrets["FIREBASE_STORAGE_BUCKET"],
+    "messagingSenderId": st.secrets["FIREBASE_MESSAGING_SENDER_ID"],
+    "appId": st.secrets["FIREBASE_APP_ID"],
+    "measurementId": st.secrets["FIREBASE_MEASUREMENT_ID"],
+    "databaseURL": ""  # Optional, can be left empty for auth-only apps
+}
 
-FIREBASE_SIGNUP_URL = f"https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={API_KEY}"
-FIREBASE_LOGIN_URL = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={API_KEY}"
+# === 🔧 Initialize Firebase ===
+firebase = pyrebase.initialize_app(firebase_config)
+auth = firebase.auth()
 
-def signup(email, password):
-    payload = {
-        "email": email,
-        "password": password,
-        "returnSecureToken": True
-    }
-    try:
-        response = requests.post(FIREBASE_SIGNUP_URL, json=payload)
-        response.raise_for_status()
-        return response.json()
-    except Exception as e:
-        st.error(f"Signup failed: {response.json().get('error', {}).get('message', str(e))}")
-        return None
 
+# === 🔑 Login User ===
 def login(email, password):
-    payload = {
-        "email": email,
-        "password": password,
-        "returnSecureToken": True
-    }
     try:
-        response = requests.post(FIREBASE_LOGIN_URL, json=payload)
-        response.raise_for_status()
-        return response.json()
+        user = auth.sign_in_with_email_and_password(email, password)
+        return user
     except Exception as e:
-        st.error(f"Login failed: {response.json().get('error', {}).get('message', str(e))}")
+        error_msg = extract_firebase_error(e)
+        st.error(f"Login failed: {error_msg}")
         return None
+
+
+# === 🆕 Register New User ===
+def signup(email, password):
+    try:
+        user = auth.create_user_with_email_and_password(email, password)
+        return user
+    except Exception as e:
+        error_msg = extract_firebase_error(e)
+        st.error(f"Signup failed: {error_msg}")
+        return None
+
+
+# === 🧠 Error Extraction Helper ===
+def extract_firebase_error(error):
+    try:
+        # Firebase error comes inside a nested JSON
+        error_dict = error.args[1]
+        error_data = eval(error_dict) if isinstance(error_dict, str) else error_dict
+        return error_data['error']['message']
+    except Exception:
+        return "An unknown error occurred."

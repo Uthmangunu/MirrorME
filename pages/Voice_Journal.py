@@ -1,9 +1,8 @@
-# voice_journal.py
 import streamlit as st
 import os
 import datetime
 import tempfile
-import openai
+from openai import OpenAI
 import json
 import speech_recognition as sr
 from pydub import AudioSegment
@@ -37,7 +36,8 @@ if settings.get("dark_mode"):
         </style>
     """, unsafe_allow_html=True)
 
-openai.api_key = st.secrets["OPENAI_API_KEY"]
+# === 🗝️ Init OpenAI Client ===
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 # === 📤 Upload Voice Note ===
 st.markdown("Upload a voice note (.mp3 or .wav). MirrorMe will transcribe, reflect, and adapt.")
@@ -74,6 +74,7 @@ Personality Traits:
 Respond with a tone that is {tone_description}. Stay in character. Keep it sharp and personal.
 """
 
+# === Main Flow ===
 if submit and uploaded_file:
     try:
         file_type = uploaded_file.type.split("/")[-1]
@@ -95,15 +96,15 @@ if submit and uploaded_file:
         st.text_area("Transcript", transcript, height=200)
 
         # === 🤖 GPT Reflection
-        prompt = [
+        messages = [
             {"role": "system", "content": generate_prompt_from_clarity(user_id)},
             {"role": "user", "content": f"Voice Journal Entry on {today}:\n\n{transcript}"}
         ]
 
         with st.spinner("Reflecting & Updating..."):
-            response = openai.ChatCompletion.create(
+            response = client.chat.completions.create(
                 model="gpt-4o",
-                messages=prompt
+                messages=messages
             )
             raw = response.choices[0].message.content.strip()
             parsed = ast.literal_eval(raw)

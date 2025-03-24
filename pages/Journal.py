@@ -1,4 +1,3 @@
-# journal.py
 import streamlit as st
 import datetime
 import os
@@ -91,7 +90,8 @@ if submit and journal_text:
 
     with st.spinner("Reflecting & Updating..."):
         try:
-            response = openai.ChatCompletion.create(
+            # ✅ New SDK call
+            response = openai.chat.completions.create(
                 model="gpt-4o",
                 messages=prompt
             )
