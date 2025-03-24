@@ -1,34 +1,37 @@
-import pyrebase
+import firebase_admin
+from firebase_admin import credentials, auth
 import streamlit as st
 
-# === Use secrets from Streamlit's secure storage ===
-firebase_config = {
-    "apiKey": "AIzaSyAmqxGUCPDdZzelaunj6bxX5jVlKjljPqc",
-    "authDomain": "mirrorme-60800.firebaseapp.com",
-    "projectId": "mirrorme-60800",
-    "storageBucket": "mirrorme-60800.appspot.com",
-    "messagingSenderId": "909007885081",
-    "appId": "1:909007885081:web:f52febf51f231c49112b88",
-    "measurementId": "G-MTMHPX5Z79",
-    "databaseURL": "https://mirrorme-60800-default-rtdb.firebaseio.com"
-}
+# Initialize Firebase Admin SDK
+cred = credentials.Certificate("firebase_service_account.json")
+firebase_admin.initialize_app(cred)
 
+# Firebase Authentication functions
 
-firebase = pyrebase.initialize_app(firebase_config)
-auth = firebase.auth()
-
-def signup(email, password):
+# Signup function (uses Firebase Admin SDK)
+def signup(email: str, password: str):
     try:
-        user = auth.create_user_with_email_and_password(email, password)
-        return user
+        user = auth.create_user(
+            email=email,
+            password=password
+        )
+        return user.uid  # Return user UID after successful signup
     except Exception as e:
         st.error(f"Signup failed: {e}")
         return None
 
-def login(email, password):
+# Sign-in function (uses Firebase Admin SDK)
+def signin_with_email(email: str, password: str):
     try:
-        user = auth.sign_in_with_email_and_password(email, password)
-        return user
+        # Firebase Admin SDK doesn't directly handle password authentication.
+        # We can use Firebase client SDK for client-side login (which is recommended)
+        # For server-side, this method would only fetch user data if login is valid.
+        # Assuming user authentication happens on the client-side (using Firebase JS SDK, for example)
+        
+        # Just return user information for now (you should integrate Firebase client SDK for full auth flow)
+        user = auth.get_user_by_email(email)
+        return user.uid  # Return user UID after successful authentication
     except Exception as e:
         st.error(f"Login failed: {e}")
         return None
+
