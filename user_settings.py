@@ -1,22 +1,14 @@
-import os
-import json
+from firebase_client import get_doc, save_doc
 
-def get_settings_path(user_id):
-    return f"user_data/{user_id}/settings.json"
-
+# === 🔧 Load User Settings ===
 def load_user_settings(user_id):
-    path = get_settings_path(user_id)
-    if os.path.exists(path):
-        with open(path, "r") as f:
-            return json.load(f)
-    else:
-        return {
-            "dark_mode": False,
-            "voice_id": "3Tjd0DlL3tjpqnkvDu9j"
-        }
+    data = get_doc("settings", user_id)
+    return {
+        "dark_mode": data.get("dark_mode", False),
+        "voice_id": data.get("voice_id", "3Tjd0DlL3tjpqnkvDu9j"),
+        "enable_voice_response": data.get("enable_voice_response", True)
+    }
 
-def save_user_settings(user_id, settings):
-    path = get_settings_path(user_id)
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w") as f:
-        json.dump(settings, f, indent=2)
+# === 💾 Save User Settings ===
+def save_user_settings(user_id, settings_data):
+    save_doc("settings", user_id, settings_data)

@@ -1,33 +1,20 @@
 import streamlit as st
 import os
-import json
-from user_memory import load_user_clarity
 from long_memory import load_long_memory
+from user_memory import load_user_clarity
 from clarity_core import load_clarity
+from user_settings import load_user_settings
 
 st.set_page_config(page_title="User Profile", page_icon="👤")
 st.title("👤 MirrorMe — Your Profile")
 
-# === 🔐 Require Login ===
 if "user" not in st.session_state:
     st.warning("🔐 You must log in first.")
     st.stop()
 
 user_id = st.session_state["user"]["localId"]
-settings_path = f"user_data/{user_id}/settings.json"
+settings = load_user_settings(user_id)
 
-# === Load Settings ===
-if os.path.exists(settings_path):
-    with open(settings_path, "r") as f:
-        settings = json.load(f)
-else:
-    settings = {
-        "dark_mode": False,
-        "voice_id": "3Tjd0DlL3tjpqnkvDu9j",
-        "enable_voice_response": True
-    }
-
-# === 🌙 Apply Dark Mode ===
 if settings.get("dark_mode"):
     st.markdown("""
         <style>
@@ -35,7 +22,6 @@ if settings.get("dark_mode"):
         </style>
     """, unsafe_allow_html=True)
 
-# === 🨠 Mirror Summary Card ===
 st.subheader("🔠 Mirror Identity")
 clarity = load_clarity()
 archetype = clarity.get("archetype")
@@ -47,13 +33,19 @@ if archetype:
     st.markdown(f"### {emoji} {archetype}")
     st.caption(desc)
     if st.button("🔄 Retake Archetype Test"):
+        clarity["archetype"] = None
+        clarity["archetype_meta"] = {}
+        clarity["traits"] = {}
+        from clarity_core import save_clarity
+        save_clarity(clarity)
+        st.session_state["force_reset"] = True
+        st.success("🔁 Archetype and traits reset. Redirecting to test...")
         st.switch_page("pages/Welcome.py")
 else:
     st.info("You haven’t taken the Archetype Test yet.")
     if st.button("🎯 Take Archetype Quiz Now"):
         st.switch_page("pages/Welcome.py")
 
-# === 📈 Clarity Level & XP ===
 st.subheader("📈 Clarity Level")
 level = clarity.get("clarity_level", 0)
 total_xp = clarity.get("total_xp", 0)
@@ -65,13 +57,11 @@ if xp_to_next > 0:
 else:
     st.warning("Clarity leveling not initialized.")
 
-# === 🎭 Trait Snapshot ===
 st.subheader("🎭 Personality Traits")
 traits = clarity.get("traits", {})
 for trait, values in traits.items():
     st.slider(trait.capitalize(), 0.0, 10.0, float(values["score"]), step=0.1, disabled=True)
 
-# === 🧠 Long-Term Memory ===
 st.subheader("🧠 MirrorMe's Long-Term Memory")
 memory = load_long_memory(user_id)
 
@@ -84,7 +74,6 @@ st.write(", ".join(memory.get("goals", [])))
 st.markdown("**Personality Summary:**")
 st.info(memory.get("personality_summary", "No summary found."))
 
-# === ⚙️ Voice Preferences ===
 st.subheader("🔊 Voice Preferences")
 st.markdown(f"- **Voice ID:** `{settings.get('voice_id')}`")
 st.markdown(f"- **Voice Response Enabled:** `{settings.get('enable_voice_response')}`")

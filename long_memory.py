@@ -1,33 +1,14 @@
-# long_memory.py
-import os
-import json
+from firebase_client import get_doc, save_doc
 
-def _get_memory_path(user_id):
-    path = f"user_data/{user_id}/long_memory.json"
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    return path
-
+# === 🧠 Load Long-Term Memory ===
 def load_long_memory(user_id):
-    path = _get_memory_path(user_id)
-    if os.path.exists(path):
-        with open(path, "r") as f:
-            return json.load(f)
+    data = get_doc("long_memory", user_id)
     return {
-        "core_values": [],
-        "goals": [],
-        "personality_summary": ""
+        "core_values": data.get("core_values", []),
+        "goals": data.get("goals", []),
+        "personality_summary": data.get("personality_summary", "No summary found.")
     }
 
-def save_long_memory(user_id, memory):
-    path = _get_memory_path(user_id)
-    with open(path, "w") as f:
-        json.dump(memory, f, indent=2)
-
-def append_to_long_memory(user_id, key, value):
-    memory = load_long_memory(user_id)
-    if key == "core_values" or key == "goals":
-        if value not in memory[key]:
-            memory[key].append(value)
-    elif key == "personality_summary":
-        memory[key] = value  # Replace for now
-    save_long_memory(user_id, memory)
+# === 🧠 Save Long-Term Memory ===
+def save_long_memory(user_id, memory_data):
+    save_doc("long_memory", user_id, memory_data)

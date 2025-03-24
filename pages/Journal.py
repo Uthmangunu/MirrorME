@@ -1,58 +1,42 @@
 import streamlit as st
 import datetime
-import os
-import json
 import openai
+import os
+import ast
 from dotenv import load_dotenv
 from user_memory import update_user_memory, load_user_clarity, save_user_clarity
 from clarity_tracker import log_clarity_change
 from long_memory import load_long_memory
-import ast
+from journal_memory import save_journal_entry, get_journal_entries
 
-# === 🔐 Load API Keys ===
+# === 🔐 Load API Key ===
 load_dotenv()
-client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# === 🔒 Require Login ===
+# === Require Login ===
 if "user" not in st.session_state:
-    st.warning("🔐 You must log in first.")
+    st.warning("🔒 You must log in first.")
     st.stop()
-
 user_id = st.session_state["user"]["localId"]
 
-# === ⚙️ Load User Settings ===
-settings_path = f"user_data/{user_id}/settings.json"
-if os.path.exists(settings_path):
-    with open(settings_path, "r") as f:
-        settings = json.load(f)
-else:
-    settings = {"dark_mode": False, "voice_id": "3Tjd0DlL3tjpqnkvDu9j", "enable_voice_response": True}
+# === UI Setup ===
+st.set_page_config(page_title="Journal Mode", page_icon="📝")
+st.title("📝 MirrorMe Journal")
+st.markdown("""
+Welcome to your private journal.  
+Write freely. MirrorMe will reflect back, extract insight, and update its understanding of you.
+""")
 
-# === 🌒 Apply Dark Mode ===
-if settings.get("dark_mode"):
-    st.markdown("""
-        <style>
-        .stApp { background-color: #0e1117; color: white; }
-        </style>
-    """, unsafe_allow_html=True)
-
-# === 🧠 Dynamic Prompt Generator ===
+# === Generate Prompt ===
 def generate_prompt(user_id):
     clarity = load_user_clarity(user_id)
     memory = load_long_memory(user_id)
-
-    traits = clarity.get("traits", {})
-    humor = traits.get("humor", {}).get("score", 0)
-    empathy = traits.get("empathy", {}).get("score", 0)
-    ambition = traits.get("ambition", {}).get("score", 0)
-    flirtiness = traits.get("flirtiness", {}).get("score", 0)
-
     tone = []
-    if humor > 60: tone.append("playful and witty")
-    if empathy > 60: tone.append("deeply understanding and emotionally intelligent")
-    if ambition > 60: tone.append("motivational and driven")
-    if flirtiness > 60: tone.append("charming or flirtatious")
-
+    traits = clarity.get("traits", {})
+    if traits.get("humor", {}).get("score", 0) > 60: tone.append("playful and witty")
+    if traits.get("empathy", {}).get("score", 0) > 60: tone.append("deeply understanding and emotionally intelligent")
+    if traits.get("ambition", {}).get("score", 0) > 60: tone.append("motivational and driven")
+    if traits.get("flirtiness", {}).get("score", 0) > 60: tone.append("charming or flirtatious")
     tone_description = ", and ".join(tone) if tone else "neutral"
 
     return f"""
@@ -71,32 +55,15 @@ Long-Term Memory:
 - Personality Summary: {memory['personality_summary']}
 """
 
-# === 📑 UI Setup ===
-st.set_page_config(page_title="Journal Mode", page_icon="📝")
-st.title("📝 MirrorMe Journal")
-
-st.markdown("""
-Welcome to your private journal.  
-Write freely. MirrorMe will reflect back, extract insight, and update its understanding of you.
-""")
-
-# === 📅 Journal Input ===
-today = datetime.date.today().isoformat()
+# === Journal Input ===
 journal_text = st.text_area("What's on your mind today?", height=250)
-submit = st.button("🔐 Save & Reflect")
+submit = st.button("🔒 Save & Reflect")
 
 if submit and journal_text:
-    user_dir = os.path.join("user_journals", user_id)
-    os.makedirs(user_dir, exist_ok=True)
-
-    with open(os.path.join(user_dir, f"{today}.txt"), "w") as f:
-        f.write(journal_text)
-
     prompt = [
         {"role": "system", "content": generate_prompt(user_id)},
-        {"role": "user", "content": f"Journal Entry on {today}:\n\n{journal_text}"}
+        {"role": "user", "content": f"Journal Entry:\n\n{journal_text}"}
     ]
-
     with st.spinner("Reflecting & Updating..."):
         try:
             response = client.chat.completions.create(
@@ -104,7 +71,6 @@ if submit and journal_text:
                 messages=prompt
             )
             raw = response.choices[0].message.content.strip()
-
             try:
                 parsed = ast.literal_eval(raw)
             except Exception:
@@ -122,29 +88,27 @@ if submit and journal_text:
 
             clarity = load_user_clarity(user_id)
             for trait, delta in adjustments.items():
-                if trait in clarity.get("traits", {}):
-                    score = clarity["traits"][trait].get("score", 0)
+                if trait in clarity["traits"]:
+                    score = clarity["traits"][trait]["score"]
                     new_score = round(min(100, max(0, score + (delta * 10))), 2)
                     clarity["traits"][trait]["score"] = new_score
                     clarity["traits"][trait]["xp"] += int(abs(delta * 10))
 
             save_user_clarity(user_id, clarity)
             log_clarity_change(user_id, source="journal")
+            save_journal_entry(user_id, journal_text, reflection, adjustments)
 
             st.success("🧠 Mirror's clarity has evolved.")
 
         except Exception as e:
             st.error(f"❌ Error during reflection or clarity update: {e}")
 
-# === 🗓️ Past Entries ===
-user_dir = os.path.join("user_journals", user_id)
-if os.path.exists(user_dir):
+# === Past Entries ===
+entries = get_journal_entries(user_id)
+if entries:
     st.markdown("---")
     st.markdown("### 📅 Past Entries")
-    entries = sorted(os.listdir(user_dir), reverse=True)
-
     for entry in entries:
-        with open(os.path.join(user_dir, entry), "r") as f:
-            content = f.read()
-        with st.expander(entry.replace(".txt", "")):
-            st.text(content)
+        with st.expander(entry["date"]):
+            st.text_area("Text", entry["text"], height=100, disabled=True)
+            st.caption(f"Reflection: {entry.get('reflection', '')}")

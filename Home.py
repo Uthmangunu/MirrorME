@@ -13,6 +13,8 @@ from clarity_tracker import log_clarity_change
 from adaptive_ui import detect_mood, set_mood_background, animated_response, render_trait_snapshot
 from long_memory import load_long_memory
 from clarity_core import load_clarity, save_clarity, apply_trait_xp
+from user_settings import load_user_settings
+from firebase_client import get_doc, save_doc
 
 st.set_page_config(page_title="MirrorMe", page_icon="🪞")
 
@@ -36,12 +38,7 @@ if "user" not in st.session_state:
     st.stop()
 user_id = st.session_state["user"]["localId"]
 
-settings_path = f"user_data/{user_id}/settings.json"
-if os.path.exists(settings_path):
-    with open(settings_path, "r") as f:
-        settings = json.load(f)
-else:
-    settings = {"dark_mode": False, "voice_id": "3Tjd0DlL3tjpqnkvDu9j", "enable_voice_response": True}
+settings = load_user_settings(user_id)
 
 if settings.get("dark_mode"):
     st.markdown("""
@@ -174,18 +171,11 @@ for i, msg in enumerate(st.session_state.messages[1:], start=1):
                 user_feedback = st.text_input("What felt off? (optional)", key=f"reason_{unique_key}")
             st.info("Thanks! We'll use this to improve your Mirror.")
 
-            feedback_log_path = f"user_data/{user_id}/feedback_count.json"
-            if os.path.exists(feedback_log_path):
-                with open(feedback_log_path, "r") as f:
-                    feedback_data = json.load(f)
-            else:
-                feedback_data = {"count": 0}
+            data = get_doc("feedback_counts", user_id) or {}
+            data["count"] = data.get("count", 0) + 1
+            save_doc("feedback_counts", user_id, data)
 
-            feedback_data["count"] += 1
-            with open(feedback_log_path, "w") as f:
-                json.dump(feedback_data, f)
-
-            feedback_count = feedback_data["count"]
+            feedback_count = data["count"]
             clarity_data = load_clarity()
             traits = clarity_data.get("traits", {})
             for trait in traits:

@@ -2,12 +2,12 @@
     "user_id": "uthman",
     "archetype": "Marcher",
     "clarity_level": 4,
-    "total_xp": 785,
+    "total_xp": 865,
     "xp_to_next_level": 1100,
     "traits": {
         "humor": {
-            "score": 67.0,
-            "xp": 365
+            "score": 71.0,
+            "xp": 405
         },
         "empathy": {
             "score": 90,
@@ -23,7 +23,7 @@
         },
         "memory": {
             "score": 100,
-            "xp": 325
+            "xp": 365
         }
     },
     "evolution": {
