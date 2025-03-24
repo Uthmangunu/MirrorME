@@ -164,3 +164,4 @@ for msg in st.session_state.messages[1:]:
         elif msg["role"] == "assistant":
             st.markdown(f"<div class='message-box ai-msg'>🧠 MirrorMe: {msg['content']}</div>", unsafe_allow_html=True)
             speak_text(msg["content"])
+ 
