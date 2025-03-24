@@ -13,7 +13,8 @@ from clarity_tracker import log_clarity_change
 from adaptive_ui import detect_mood, set_mood_background, animated_response, render_trait_snapshot
 from long_memory import load_long_memory
 from clarity_core import load_clarity, save_clarity, apply_trait_xp
-from vector_store import get_similar_memories
+from user_settings import load_user_settings
+from vector_store import get_similar_memories  # NEW
 
 st.set_page_config(page_title="MirrorMe", page_icon="🪞")
 
@@ -37,8 +38,6 @@ if "user" not in st.session_state:
     st.stop()
 user_id = st.session_state["user"]["localId"]
 
-settings_path = f"user_data/{user_id}/settings.json"
-from user_settings import load_user_settings
 settings = load_user_settings(user_id)
 
 if settings.get("dark_mode"):
@@ -97,23 +96,30 @@ def generate_prompt_from_clarity(user_id):
     emoji = meta.get("emoji", "♟️")
     desc = meta.get("desc", "Strategic, calm, structured.")
 
-    # Retrieve top 3 semantically similar memories
-    recent_memories = get_similar_memories(user_id, " ".join([m['user'] for m in st.session_state.get("messages", [])[-3:]]))
-    memory_injection = "\n\n".join([f"Related insight: {mem}" for mem in recent_memories])
+    # === 🔁 Semantic memory recall ===
+    recent_text = " ".join([m["content"] for m in st.session_state.get("messages", [])[-3:] if m["role"] == "user"])
+    insights = get_similar_memories(user_id, recent_text, top_n=3)
+    insight_block = "\n".join([f"- {i}" for i in insights]) if insights else "None"
 
     return f"""
 You are MirrorMe — a digital version of the user, trained to evolve with them over time.
+
 🧬 Archetype: {emoji} {archetype}
 Tone Style: {tone_description}
 Mirror Description: {desc}
-{memory_injection}
+
+Contextual Insights from Past Reflections:
+{insight_block}
 
 Long-Term Memory:
 - Values: {', '.join(memory['core_values'])}
 - Goals: {', '.join(memory['goals'])}
 - Personality Summary: {memory['personality_summary']}
+
 Speak in a way that reflects this tone and personality. Be expressive, insightful, and act like their emotional reflection. Stay in character.
 """
+
+# 🧠 continue with rest of Home.py unchanged...
 
 def get_reply(messages):
     try:
