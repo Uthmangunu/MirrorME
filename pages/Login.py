@@ -3,6 +3,8 @@ from firebase_auth import signup, login
 import os
 import json
 
+
+
 st.set_page_config(page_title="Login", page_icon="🔐")
 st.title("🔐 MirrorMe Login")
 
