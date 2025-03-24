@@ -1,120 +1,110 @@
-# Create a new file for the archetype test implementation: ArchetypeTest.py
-archetype_test_code = '''
+# Updated ArchetypeTest.py that saves archetype info to clarity_data.json
+
+updated_archetype_test_code = '''
 import streamlit as st
-import json
 from clarity_core import load_clarity, save_clarity
 
-st.set_page_config(page_title="🧠 Mirror Archetype Test", page_icon="🧪")
+st.set_page_config(page_title="🧬 Mirror Archetype Quiz", page_icon="🪞")
+st.title("🧠 MirrorMe Archetype Test")
+st.markdown("Discover your baseline Mirror identity. Who are you at your core?")
 
-st.title("🧠 Discover Your Mirror Archetype")
-
-# Archetype scoring map
-archetype_scores = {
-    "Strategist": 0,
-    "Marcher": 0,
-    "Ponderer": 0,
-    "Spark": 0,
-    "Oracle": 0,
-    "Heartbeat": 0,
-    "Renegade": 0,
-    "Sculptor": 0,
-    "Coquette": 0,
-    "Phantom": 0
+# Archetypes: emoji + short description
+archetype_meta = {
+    "Strategist": ["♟️", "Strategic, calm, structured — always 3 steps ahead."],
+    "Marcher": ["🤬", "Bold, driven, direct — you turn pressure into action."],
+    "Ponderer": ["🌀", "Reflective, emotional, inward — you move through meaning."],
+    "Spark": ["⚡", "Witty, chaotic, vibrant — you bring life into every room."],
+    "Oracle": ["🔮", "Philosophical, abstract, observant — you see beneath things."],
+    "Heartbeat": ["💗", "Loyal, grounding, emotionally present — you hold space."],
+    "Renegade": ["😈", "Unfiltered, raw, honest — you challenge what doesn’t feel real."],
+    "Sculptor": ["🗿", "Disciplined, precise, reserved — you build slowly and solidly."],
+    "Coquette": ["😏", "Flirty, smooth, intuitive — you read between every line."],
+    "Phantom": ["🕷", "Detached, elusive, hyper-logical — you stay unreadable."]
 }
+
+archetype_scores = {k: 0 for k in archetype_meta.keys()}
 
 questions = [
     {
-        "q": "How do you usually process emotion?",
+        "q": "How do you process emotion?",
         "options": {
-            "Pause and reflect first": ["Ponderer", "Oracle"],
-            "Feel deeply and speak when needed": ["Heartbeat", "Coquette"],
-            "Stay logical and remove emotion": ["Phantom", "Strategist"],
-            "Express it quickly and clearly": ["Marcher", "Renegade"]
+            "Pause and reflect deeply": ["Ponderer", "Oracle"],
+            "Feel it but stay composed": ["Heartbeat", "Coquette"],
+            "Try to remove it from decision-making": ["Phantom", "Strategist"],
+            "Say it directly and move on": ["Renegade", "Marcher"]
         }
     },
     {
-        "q": "How do you handle conflict?",
+        "q": "In a group, you tend to...",
         "options": {
-            "Stay quiet and calculate": ["Phantom", "Strategist"],
-            "De-escalate and empathize": ["Heartbeat", "Ponderer"],
-            "Say it straight, maybe too straight": ["Renegade", "Marcher"],
-            "Deflect with humor or distraction": ["Spark", "Coquette"]
+            "Observe quietly and step in later": ["Oracle", "Sculptor"],
+            "Take the lead and organize": ["Marcher", "Strategist"],
+            "Keep the energy high and fun": ["Spark", "Coquette"],
+            "Support and listen more than speak": ["Heartbeat", "Ponderer"]
         }
     },
     {
-        "q": "What kind of space energizes you?",
+        "q": "People often say you are...",
         "options": {
-            "Solo, reflective environments": ["Oracle", "Ponderer"],
-            "Goal-oriented, productive zones": ["Sculptor", "Strategist"],
-            "Loud, vibrant group dynamics": ["Spark", "Coquette"],
-            "Pressure-filled momentum moments": ["Marcher", "Phantom"]
+            "Calm and wise": ["Oracle", "Phantom"],
+            "Fun and magnetic": ["Spark", "Coquette"],
+            "Bold and honest": ["Marcher", "Renegade"],
+            "Kind and supportive": ["Heartbeat", "Ponderer"]
         }
     },
     {
-        "q": "What do people praise you for?",
+        "q": "Which energy feels most like you?",
         "options": {
-            "Loyalty or emotional grounding": ["Heartbeat", "Ponderer"],
-            "Sharp mind and insights": ["Oracle", "Strategist"],
-            "Energy, charm, or presence": ["Spark", "Coquette"],
-            "Bravery and honesty": ["Renegade", "Marcher"]
+            "Quiet precision and focus": ["Sculptor", "Phantom"],
+            "Chaos, jokes, and ideas": ["Spark", "Coquette"],
+            "Depth, emotions, and stillness": ["Ponderer", "Heartbeat"],
+            "Directness, speed, and fire": ["Marcher", "Renegade"]
         }
     },
     {
-        "q": "What do you value most in others?",
+        "q": "You value people who are...",
         "options": {
-            "Emotional intelligence and patience": ["Heartbeat", "Ponderer"],
-            "Drive and confidence": ["Marcher", "Renegade"],
-            "Intellect and independence": ["Phantom", "Strategist"],
-            "Creativity and boldness": ["Spark", "Coquette"]
-        }
-    },
-    {
-        "q": "What do you tend to hide from others?",
-        "options": {
-            "How deeply I feel": ["Phantom", "Sculptor"],
-            "Fear of not being chosen": ["Coquette", "Spark"],
-            "Self-doubt or hesitation": ["Marcher", "Renegade"],
-            "Overthinking everything": ["Strategist", "Oracle", "Ponderer"]
+            "Emotionally intelligent": ["Heartbeat", "Ponderer"],
+            "Independent thinkers": ["Strategist", "Phantom"],
+            "Fun and confident": ["Spark", "Coquette"],
+            "Straightforward and real": ["Marcher", "Renegade"]
         }
     }
 ]
 
 responses = []
-
 with st.form("archetype_form"):
     for idx, q in enumerate(questions):
-        choice = st.radio(f"**Q{idx+1}. {q['q']}**", list(q["options"].keys()), key=f"q_{idx}")
+        choice = st.radio(f"**Q{idx+1}: {q['q']}**", list(q["options"].keys()), key=f"q{idx}")
         responses.append(q["options"][choice])
     submitted = st.form_submit_button("🔮 Reveal My Archetype")
 
 if submitted:
-    # Tally scores
     for answer in responses:
         for archetype in answer:
             archetype_scores[archetype] += 1
 
-    # Get highest scoring archetype
     top_archetype = max(archetype_scores, key=archetype_scores.get)
+    emoji, desc = archetype_meta[top_archetype]
 
-    # Load clarity and assign archetype + base traits
+    # Save to clarity_data.json
     clarity = load_clarity()
     clarity["archetype"] = top_archetype
-    clarity["clarity_level"] = 1
-    clarity["total_xp"] = 0
-    clarity["xp_to_next_level"] = 100
-    clarity["evolution"]["level_history"] = {"1": "2025-03-24T00:00:00"}
-
-    # Optional: assign starting trait scores if you want
+    clarity["archetype_meta"] = {
+        "emoji": emoji,
+        "desc": desc
+    }
     save_clarity(clarity)
 
-    st.success(f"🎭 Your Archetype is: **{top_archetype}**")
+    st.success(f"🎭 You are a {emoji} **{top_archetype}**")
+    st.markdown(f"_{desc}_")
     st.balloons()
-    st.info("Your Mirror will now grow based on your unique archetype personality.")
+    st.info("Your Mirror will now reflect this identity at the beginning.")
 '''
 
-# Write ArchetypeTest.py file
-archetype_test_path = "/mnt/data/MirrorME-main/MirrorME-main/ArchetypeTest.py"
-with open(archetype_test_path, "w") as f:
-    f.write(archetype_test_code)
+# Save it to the correct location
+final_archetype_test_path = "/mnt/data/MirrorME-main/ArchetypeTest.py"
+with open(final_archetype_test_path, "w") as f:
+    f.write(updated_archetype_test_code)
 
-archetype_test_path
+final_archetype_test_path
