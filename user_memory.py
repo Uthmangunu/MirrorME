@@ -5,7 +5,7 @@ import openai
 from dotenv import load_dotenv
 
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # === File Path Helpers ===
 def user_folder(user_id):
@@ -59,7 +59,10 @@ def summarize_user_memory(user_id):
     ]
 
     try:
-        response = openai.ChatCompletion.create(model="gpt-4o", messages=prompt)
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=prompt
+        )
         return response.choices[0].message.content.strip()
     except Exception as e:
         return f"Summary error: {e}"
@@ -72,7 +75,7 @@ def load_user_clarity(user_id):
             with open(path, "r") as f:
                 return json.load(f)
         except Exception:
-            pass  # fallback below
+            pass
     return {
         "humor": 5,
         "empathy": 5,
