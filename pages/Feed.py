@@ -35,7 +35,11 @@ else:
                 st.caption(c['timestamp'])
 
             st.markdown("---")
-            new_comment = st.text_input(f"Write a comment...", key=f"comment_input_{user_id}")
+            comment_key = f"comment_input_{user_id}"
+            if comment_key not in st.session_state:
+                st.session_state[comment_key] = ""
+
+            new_comment = st.text_input("Write a comment...", key=comment_key)
             if st.button("Post", key=f"comment_btn_{user_id}") and new_comment.strip():
                 new_entry = {
                     "author": current_user or "Anonymous",
@@ -45,8 +49,7 @@ else:
                 comments.append(new_entry)
                 save_doc("comments", user_id, {"entries": comments})
                 st.success("Comment posted!")
-                st.session_state[f"comment_input_{user_id}"] = ""  # Clear input manually
-
+                st.session_state[comment_key] = ""
 
         if st.button(f"🗣 Talk to this Mirror", key=f"talk_{user_id}"):
             st.session_state["sandbox_target"] = user_id

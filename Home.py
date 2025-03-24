@@ -66,7 +66,10 @@ def speak_text(text):
         return
     try:
         url = f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}"
-        headers = {"xi-api-key": ELEVEN_API, "Content-Type": "application/json"}
+        headers = {
+            "xi-api-key": ELEVEN_API,
+            "Content-Type": "application/json"
+        }
         payload = {
             "text": text,
             "model_id": "eleven_monolingual_v1",
@@ -74,11 +77,13 @@ def speak_text(text):
         }
         response = requests.post(url, headers=headers, json=payload)
         if response.status_code == 200:
-            with open("response.mp3", "wb") as f:
+            filename = f"{st.session_state['user']['localId']}_response.mp3"
+            with open(filename, "wb") as f:
                 f.write(response.content)
-            st.audio("response.mp3", format="audio/mp3")
+            st.audio(filename, format="audio/mp3")
     except Exception as e:
         st.error(f"❌ ElevenLabs Error: {e}")
+
 
 def generate_prompt_from_clarity(user_id):
     clarity = load_user_clarity(user_id)
