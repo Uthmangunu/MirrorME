@@ -1,5 +1,8 @@
-
 import streamlit as st
+import sys
+import os
+sys.path.append(os.path.abspath("."))
+
 from firebase_client import get_all_docs, get_doc, save_doc
 
 st.set_page_config(page_title="🌍 Mirror Feed", page_icon="🧠")
