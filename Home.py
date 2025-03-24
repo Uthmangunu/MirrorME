@@ -28,7 +28,7 @@ def clarity_stage_label(level):
 
 # === 🔐 Load Environment Variables ===
 load_dotenv()
-openai.api_key = st.secrets["OPENAI_API_KEY"]
+client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 ELEVEN_API = st.secrets["ELEVEN_API_KEY"]
 
 # === 🔒 Require Login ===
@@ -130,12 +130,12 @@ Speak in a way that reflects this tone and personality. Be expressive, insightfu
 # === 🧐 GPT ===
 def get_reply(messages):
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=messages,
-            max_tokens=150  # You can adjust this depending on the response length you want
+            max_tokens=150
         )
-        return response['choices'][0]['message']['content'].strip()
+        return response.choices[0].message.content.strip()
     except Exception as e:
         st.error(f"❌ OpenAI Error: {e}")
         return None
@@ -158,29 +158,11 @@ with st.sidebar:
     for trait, values in clarity_data["traits"].items():
         st.text(f"{trait.title()}: {int(values['score'])}")
 
-## === Redirect to Archetype Test if not taken yet ===
+# === Redirect to Archetype Test if not taken yet ===
 if not clarity_data.get("archetype"):
     st.title("🔮 Welcome to MirrorMe!")
-    st.write("""
-        Before you start chatting with your Mirror, we need to set the tone.  
-        **Your Mirror’s personality** is based on a fun test that helps define how it speaks and interacts with you.
-    """)
-    st.markdown("""
-        **Why Take the Test?**
-        - Your Mirror’s responses will reflect your unique personality archetype.
-        - It helps us create a custom experience for you!
-    """)
-    
-    # Add an option for the user to skip, but recommend the test
-    st.warning("🚀 Let’s begin by choosing your Mirror Archetype. Taking the test is highly recommended!")
-    if st.button("Take the Archetype Test"):
-        st.session_state["archetype_test_taken"] = True
-        st.experimental_rerun()  # Redirect to ArchetypeTest.py
-    else:
-        st.write("You can skip for now, but we recommend you take the test to get the best experience.")
-    st.stop()  # Stop here, redirecting to Archetype Test if button is pressed
-
-
+    st.write("Before starting, we recommend taking the Archetype Test to personalize your Mirror.")
+    st.stop()
 
 # === Init Chat Session ===
 if "messages" not in st.session_state:
