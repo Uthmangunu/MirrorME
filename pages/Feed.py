@@ -1,10 +1,18 @@
 import streamlit as st
-import sys
 import os
+import sys
+from pathlib import Path
 
-# Ensure we can import from the root directory (where firebase_client.py lives)
-ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if ROOT_DIR not in sys.path:
+# Dynamically locate firebase_client.py regardless of working directory
+BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.append(str(BASE_DIR))
+
+try:
+    from firebase_client import get_all_docs, get_doc, save_doc
+except ModuleNotFoundError as e:
+    st.error("🚨 Could not load firebase_client.py — make sure it's in the root directory.")
+    st.stop()
+
     sys.path.append(ROOT_DIR)
 
 from firebase_client import get_all_docs, get_doc, save_doc
