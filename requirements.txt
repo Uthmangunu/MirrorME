@@ -2,7 +2,7 @@ streamlit
 openai
 requests
 python-dotenv
-pyrebase4
 PyJWT
 pydub
 SpeechRecognition
+pyrebase
