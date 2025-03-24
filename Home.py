@@ -1,4 +1,3 @@
-
 import streamlit as st
 st.set_page_config(page_title="MirrorMe", page_icon="🪞")
 
@@ -103,11 +102,12 @@ def generate_prompt_from_clarity(user_id):
     clarity = load_user_clarity(user_id)
     memory = load_long_memory(user_id)
 
+    traits = clarity.get("traits", {})
     tone = []
-    if clarity["humor"] > 6: tone.append("playful and witty")
-    if clarity["empathy"] > 6: tone.append("deeply understanding and emotionally intelligent")
-    if clarity["ambition"] > 6: tone.append("motivational and driven")
-    if clarity["flirtiness"] > 6: tone.append("charming or flirtatious")
+    if traits.get("humor", {}).get("score", 0) > 60: tone.append("playful and witty")
+    if traits.get("empathy", {}).get("score", 0) > 60: tone.append("deeply understanding and emotionally intelligent")
+    if traits.get("ambition", {}).get("score", 0) > 60: tone.append("motivational and driven")
+    if traits.get("flirtiness", {}).get("score", 0) > 60: tone.append("charming or flirtatious")
 
     tone_description = ", and ".join(tone) if tone else "neutral"
 
@@ -157,12 +157,11 @@ with st.sidebar:
     st.markdown("### 🪞 Mirror Clarity")
     st.markdown(f"**Archetype:** {clarity_data['archetype']}")
     st.markdown(f"**Level {clarity_data.get('clarity_level', 0)}** — {clarity_stage_label(clarity_data.get('clarity_level', 0))}")
-    
-    if "total_xp" in clarity_data and "xp_to_next_level" in clarity_data and clarity_data["xp_to_next_level"] > 0:
+    if clarity_data.get("total_xp") is not None and clarity_data.get("xp_to_next_level", 1) > 0:
         progress = clarity_data["total_xp"] / clarity_data["xp_to_next_level"]
         st.progress(min(progress, 1.0))
     else:
-        st.warning("⚠️ Mirror XP data is missing. Please complete setup first.")
+        st.warning("⚠️ XP tracking not initialized.")
 
     st.markdown("**Traits**")
     for trait, values in clarity_data["traits"].items():
