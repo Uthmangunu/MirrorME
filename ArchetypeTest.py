@@ -1,14 +1,12 @@
-# Updated ArchetypeTest.py that saves archetype info to clarity_data.json
-
-updated_archetype_test_code = '''
 import streamlit as st
 from clarity_core import load_clarity, save_clarity
 
 st.set_page_config(page_title="🧬 Mirror Archetype Quiz", page_icon="🪞")
 st.title("🧠 MirrorMe Archetype Test")
-st.markdown("Discover your baseline Mirror identity. Who are you at your core?")
+st.markdown("Answer a few quick questions to discover your baseline Mirror identity.")
 
-# Archetypes: emoji + short description
+archetype_scores = {k: 0 for k in ["Strategist", "Marcher", "Ponderer", "Spark", "Oracle", "Heartbeat", "Renegade", "Sculptor", "Coquette", "Phantom"]}
+
 archetype_meta = {
     "Strategist": ["♟️", "Strategic, calm, structured — always 3 steps ahead."],
     "Marcher": ["🤬", "Bold, driven, direct — you turn pressure into action."],
@@ -22,8 +20,6 @@ archetype_meta = {
     "Phantom": ["🕷", "Detached, elusive, hyper-logical — you stay unreadable."]
 }
 
-archetype_scores = {k: 0 for k in archetype_meta.keys()}
-
 questions = [
     {
         "q": "How do you process emotion?",
@@ -34,42 +30,7 @@ questions = [
             "Say it directly and move on": ["Renegade", "Marcher"]
         }
     },
-    {
-        "q": "In a group, you tend to...",
-        "options": {
-            "Observe quietly and step in later": ["Oracle", "Sculptor"],
-            "Take the lead and organize": ["Marcher", "Strategist"],
-            "Keep the energy high and fun": ["Spark", "Coquette"],
-            "Support and listen more than speak": ["Heartbeat", "Ponderer"]
-        }
-    },
-    {
-        "q": "People often say you are...",
-        "options": {
-            "Calm and wise": ["Oracle", "Phantom"],
-            "Fun and magnetic": ["Spark", "Coquette"],
-            "Bold and honest": ["Marcher", "Renegade"],
-            "Kind and supportive": ["Heartbeat", "Ponderer"]
-        }
-    },
-    {
-        "q": "Which energy feels most like you?",
-        "options": {
-            "Quiet precision and focus": ["Sculptor", "Phantom"],
-            "Chaos, jokes, and ideas": ["Spark", "Coquette"],
-            "Depth, emotions, and stillness": ["Ponderer", "Heartbeat"],
-            "Directness, speed, and fire": ["Marcher", "Renegade"]
-        }
-    },
-    {
-        "q": "You value people who are...",
-        "options": {
-            "Emotionally intelligent": ["Heartbeat", "Ponderer"],
-            "Independent thinkers": ["Strategist", "Phantom"],
-            "Fun and confident": ["Spark", "Coquette"],
-            "Straightforward and real": ["Marcher", "Renegade"]
-        }
-    }
+    # More questions here...
 ]
 
 responses = []
@@ -100,11 +61,3 @@ if submitted:
     st.markdown(f"_{desc}_")
     st.balloons()
     st.info("Your Mirror will now reflect this identity at the beginning.")
-'''
-
-# Save it to the correct location
-final_archetype_test_path = "/mnt/data/MirrorME-main/ArchetypeTest.py"
-with open(final_archetype_test_path, "w") as f:
-    f.write(updated_archetype_test_code)
-
-final_archetype_test_path
