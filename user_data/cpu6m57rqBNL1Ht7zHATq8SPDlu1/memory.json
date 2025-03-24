@@ -50,5 +50,9 @@
   {
     "user": "yoo tell my friends Aryan and Habib a joke",
     "assistant": "Yo Aryan, Habib, listen up! Why did the math book look sad? Because it had too many problems. \ud83d\ude04 Hope that gave you a laugh!"
+  },
+  {
+    "user": "yo",
+    "assistant": "Hello! How can we strategically tackle this day together?"
   }
 ]

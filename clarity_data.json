@@ -1,37 +1,37 @@
 {
-  "user_id": "uthman",
-  "archetype": "Ponderer",
-  "clarity_level": 2,
-  "total_xp": 145,
-  "xp_to_next_level": 200,
-  "traits": {
-    "humor": {
-      "score": 35,
-      "xp": 45
+    "user_id": "uthman",
+    "archetype": "Ponderer",
+    "clarity_level": 2,
+    "total_xp": 185,
+    "xp_to_next_level": 200,
+    "traits": {
+        "humor": {
+            "score": 37.0,
+            "xp": 65
+        },
+        "empathy": {
+            "score": 90,
+            "xp": 60
+        },
+        "logic": {
+            "score": 65,
+            "xp": 25
+        },
+        "boldness": {
+            "score": 30,
+            "xp": 10
+        },
+        "memory": {
+            "score": 87.0,
+            "xp": 25
+        }
     },
-    "empathy": {
-      "score": 90,
-      "xp": 60
-    },
-    "logic": {
-      "score": 65,
-      "xp": 25
-    },
-    "boldness": {
-      "score": 30,
-      "xp": 10
-    },
-    "memory": {
-      "score": 85,
-      "xp": 5
+    "evolution": {
+        "last_updated": "2025-03-24T17:00:00",
+        "level_history": {
+            "0": "2025-03-20T13:00:00",
+            "1": "2025-03-22T16:30:00",
+            "2": "2025-03-24T17:00:00"
+        }
     }
-  },
-  "evolution": {
-    "last_updated": "2025-03-24T17:00:00",
-    "level_history": {
-      "0": "2025-03-20T13:00:00",
-      "1": "2025-03-22T16:30:00",
-      "2": "2025-03-24T17:00:00"
-    }
-  }
 }
