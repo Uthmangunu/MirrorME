@@ -158,10 +158,29 @@ with st.sidebar:
     for trait, values in clarity_data["traits"].items():
         st.text(f"{trait.title()}: {int(values['score'])}")
 
-# === Redirect to Archetype Test if not taken yet ===
+## === Redirect to Archetype Test if not taken yet ===
 if not clarity_data.get("archetype"):
-    st.warning("🔮 You must complete the archetype test to begin.")
-    st.stop()
+    st.title("🔮 Welcome to MirrorMe!")
+    st.write("""
+        Before you start chatting with your Mirror, we need to set the tone.  
+        **Your Mirror’s personality** is based on a fun test that helps define how it speaks and interacts with you.
+    """)
+    st.markdown("""
+        **Why Take the Test?**
+        - Your Mirror’s responses will reflect your unique personality archetype.
+        - It helps us create a custom experience for you!
+    """)
+    
+    # Add an option for the user to skip, but recommend the test
+    st.warning("🚀 Let’s begin by choosing your Mirror Archetype. Taking the test is highly recommended!")
+    if st.button("Take the Archetype Test"):
+        st.session_state["archetype_test_taken"] = True
+        st.experimental_rerun()  # Redirect to ArchetypeTest.py
+    else:
+        st.write("You can skip for now, but we recommend you take the test to get the best experience.")
+    st.stop()  # Stop here, redirecting to Archetype Test if button is pressed
+
+
 
 # === Init Chat Session ===
 if "messages" not in st.session_state:
