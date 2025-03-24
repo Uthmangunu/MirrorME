@@ -4,7 +4,7 @@ import os
 import json
 from dotenv import load_dotenv
 
-# Load Firebase service account if using local
+# Load environment variables
 load_dotenv()
 
 # === 🔥 FIREBASE CLIENT WRAPPER ===
@@ -18,17 +18,22 @@ def init_firestore():
 # === 🔧 DOCUMENT HELPERS ===
 def get_doc(collection, user_id):
     db = init_firestore()
+    if db is None:
+        return {}
     doc = db.collection(collection).document(user_id).get()
     return doc.to_dict() if doc.exists else {}
 
 def save_doc(collection, user_id, data):
     db = init_firestore()
-    db.collection(collection).document(user_id).set(data)
+    if db:
+        db.collection(collection).document(user_id).set(data)
 
 def update_doc(collection, user_id, data):
     db = init_firestore()
-    db.collection(collection).document(user_id).update(data)
+    if db:
+        db.collection(collection).document(user_id).update(data)
 
 def delete_doc(collection, user_id):
     db = init_firestore()
-    db.collection(collection).document(user_id).delete()
+    if db:
+        db.collection(collection).document(user_id).delete()
