@@ -1,6 +1,6 @@
 # --- Core App Requirements ---
 streamlit
-openai
+openai>=1.0.0
 requests>=2.27
 python-dotenv
 
@@ -15,8 +15,9 @@ SpeechRecognition
 # --- Plotting (Clarity radar chart) ---
 matplotlib
 
-# --- Google Cloud (pyrebase dependency) ---
-gcloud
+# --- Google Cloud (Firestore) ---
+google-cloud-firestore
+google-auth
 
 # --- Misc Helpers ---
 setuptools
