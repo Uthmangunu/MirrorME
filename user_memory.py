@@ -13,15 +13,15 @@ def get_user_memory_as_string(user_id):
     return "\n".join([f"You: {m['user']}\nMirrorMe: {m['assistant']}" for m in memory[-5:]])
 
 # === 🔍 Memory Summarization ===
-import openai
-from dotenv import load_dotenv
-load_dotenv()
-client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
 def summarize_user_memory(user_id):
+    import os
+    from openai import OpenAI
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
     memory = get_doc("memories", user_id).get("entries", [])
     if not memory:
         return "Nothing to summarize yet."
+
     history = "\n".join([f"You: {m['user']}\nMirrorMe: {m['assistant']}" for m in memory[-10:]])
     prompt = [
         {"role": "system", "content": "You are a calm, analytical assistant summarizing emotional and behavioral patterns."},
