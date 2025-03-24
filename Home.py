@@ -130,12 +130,12 @@ Speak in a way that reflects this tone and personality. Be expressive, insightfu
 # === 🧐 GPT ===
 def get_reply(messages):
     try:
-        client = openai.OpenAI()
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=messages
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=messages,
+            max_tokens=150  # You can adjust this depending on the response length you want
         )
-        return response.choices[0].message.content.strip()
+        return response['choices'][0]['message']['content'].strip()
     except Exception as e:
         st.error(f"❌ OpenAI Error: {e}")
         return None
