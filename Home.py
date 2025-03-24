@@ -12,6 +12,20 @@ from user_memory import (
 from clarity_tracker import log_clarity_change 
 from adaptive_ui import detect_mood, set_mood_background, animated_response, render_trait_snapshot
 from long_memory import load_long_memory
+import streamlit as st
+import openai
+import os
+import requests
+import json
+from dotenv import load_dotenv
+# ... other imports
+
+# 🔥 MUST COME FIRST before ANY Streamlit UI commands:
+st.set_page_config(page_title="MirrorMe", page_icon="🪞")
+
+# === Now your logic can continue ===
+load_dotenv()
+# ...
 
 # === 🔐 Load Environment Variables ===
 load_dotenv()
