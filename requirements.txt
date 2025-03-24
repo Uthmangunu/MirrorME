@@ -1,8 +1,8 @@
-streamlit==1.32.2
-openai==1.14.1
-pyrebase4==4.5.0
-pydub==0.25.1
-SpeechRecognition==3.10.1
-python-dotenv==1.0.1
-requests==2.31.0
-firebase-admin==6.5.0
+streamlit
+openai
+requests
+python-dotenv
+pyrebase4
+PyJWT
+pydub
+SpeechRecognition

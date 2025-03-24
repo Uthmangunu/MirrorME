@@ -1,5 +1,4 @@
-# ✅ Updated: firebase_auth.py (with pyrebase4)
-import pyrebase4 as pyrebase
+import pyrebase  # ✅ not pyrebase4
 import streamlit as st
 import json
 import os
