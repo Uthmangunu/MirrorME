@@ -192,3 +192,55 @@ for msg in st.session_state.messages[1:]:
         elif msg["role"] == "assistant":
             st.markdown(f"<div class='message-box ai-msg'>🧠 MirrorMe: {msg['content']}</div>", unsafe_allow_html=True)
             speak_text(msg["content"])
+# === Mirror Feedback Prompt ===
+    st.markdown("---")
+    st.markdown("**🪞 Did this feel like something *you* would say?**")
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        feedback = st.radio("", ["Yes", "No"], horizontal=True, key=f"feedback_{len(st.session_state.messages)}")
+    if feedback == "No":
+        with col2:
+            user_feedback = st.text_input("What felt off? (optional)", key=f"reason_{len(st.session_state.messages)}")
+        st.info("Thanks! We'll use this to improve your Mirror.")
+        # Automatically adjust clarity based on feedback
+        import os
+        feedback_log_path = f"user_data/{user_id}/feedback_count.json"
+
+        # Load or initialize persistent feedback counter
+        if os.path.exists(feedback_log_path):
+            with open(feedback_log_path, "r") as f:
+                feedback_data = json.load(f)
+        else:
+            feedback_data = {"count": 0}
+
+        feedback_data["count"] += 1
+
+        with open(feedback_log_path, "w") as f:
+            json.dump(feedback_data, f)
+
+        feedback_count = feedback_data["count"]
+        clarity_data = load_clarity()
+        traits = clarity_data.get("traits", {})
+        feedback_count = st.session_state.get("feedback_count", 0) + 1
+        st.session_state["feedback_count"] = feedback_count
+
+        for trait in traits:
+            traits[trait]["xp"] = max(0, traits[trait].get("xp", 0) - 2)
+            traits[trait]["score"] = max(0, traits[trait]["score"] - 0.2)
+
+        clarity_data["traits"] = traits
+        save_clarity(clarity_data)
+
+        if feedback_count >= 6 and st.checkbox("🔁 Show recalibration suggestion", value=True):
+            st.warning("🔁 You've flagged several misalignments. Consider retaking your Mirror calibration.")
+            if st.button("🎯 Recalibrate Mirror"):
+                st.session_state["force_reset"] = True
+                st.switch_page("pages/Welcome.py")
+for msg in st.session_state.messages[1:]:
+    with st.container():
+        if msg["role"] == "user":
+            st.markdown(f"<div class='message-box user-msg'>👤 You: {msg['content']}</div>", unsafe_allow_html=True)
+        elif msg["role"] == "assistant":
+            st.markdown(f"<div class='message-box ai-msg'>🧠 MirrorMe: {msg['content']}</div>", unsafe_allow_html=True)
+            speak_text(msg["content"])
+
