@@ -1,10 +1,13 @@
-# home.py
 import streamlit as st
-from openai import OpenAI
+st.set_page_config(page_title="MirrorMe", page_icon="🪞")  # ← This must come first
+
+import openai
 import os
 import requests
 import json
 from dotenv import load_dotenv
+# ...rest of your code
+
 from user_memory import (
     load_user_clarity, save_user_clarity,
     update_user_memory, get_user_memory_as_string, summarize_user_memory
