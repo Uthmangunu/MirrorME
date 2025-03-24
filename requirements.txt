@@ -6,3 +6,4 @@ pyrebase
 matplotlib
 speechrecognition
 pydub
+firebase-admin
