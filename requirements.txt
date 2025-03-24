@@ -1,12 +1,22 @@
+# --- Core App Requirements ---
 streamlit
 openai
 requests>=2.27
 python-dotenv
+
+# --- Firebase Auth ---
+pyrebase4
+
+# --- Voice & Audio ---
 PyJWT
 pydub
 SpeechRecognition
-pyrebase4
+
+# --- Plotting (Clarity radar chart) ---
 matplotlib
-gcloud           # required by pyrebase4
-setuptools       # fixes pkg_resources error
-astor            # for safe dict parsing (optional but useful)
+
+# --- Google Cloud (pyrebase dependency) ---
+gcloud
+
+# --- Misc Helpers ---
+setuptools
