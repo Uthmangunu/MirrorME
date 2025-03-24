@@ -1,3 +1,4 @@
+
 import streamlit as st
 st.set_page_config(page_title="MirrorMe", page_icon="🪞")
 
@@ -15,12 +16,13 @@ from adaptive_ui import detect_mood, set_mood_background, animated_response, ren
 from long_memory import load_long_memory
 from clarity_core import load_clarity, save_clarity, apply_trait_xp
 
-clarity_data = load_clarity() # Load Clarity data
+clarity_data = load_clarity()
 
-# === This is just ensuring the user has completed the Archetype Test and has traits ===
+# Check setup completeness
 if not clarity_data.get("archetype") or "traits" not in clarity_data:
     st.warning("🔧 Mirror setup not complete. Please go to the Welcome page first.")
     st.stop()
+
 def clarity_stage_label(level):
     stages = {
         0: "Shell",
@@ -32,18 +34,18 @@ def clarity_stage_label(level):
     }
     return stages.get(level, "Unknown")
 
-# === 🔐 Load Environment Variables ===
+# Load environment variables
 load_dotenv()
 client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 ELEVEN_API = st.secrets["ELEVEN_API_KEY"]
 
-# === 🔒 Require Login ===
+# Ensure user is logged in
 if "user" not in st.session_state:
     st.warning("🔐 You must log in first.")
     st.stop()
 user_id = st.session_state["user"]["localId"]
 
-# === ⚙️ Load User Settings ===
+# Load user settings
 settings_path = f"user_data/{user_id}/settings.json"
 if os.path.exists(settings_path):
     with open(settings_path, "r") as f:
@@ -51,7 +53,7 @@ if os.path.exists(settings_path):
 else:
     settings = {"dark_mode": False, "voice_id": "3Tjd0DlL3tjpqnkvDu9j", "enable_voice_response": True}
 
-# === 🌒 Apply Dark Mode ===
+# Apply dark mode
 if settings.get("dark_mode"):
     st.markdown("""
         <style>
@@ -73,10 +75,7 @@ else:
 VOICE_ID = settings.get("voice_id", "3Tjd0DlL3tjpqnkvDu9j")
 VOICE_ENABLED = settings.get("enable_voice_response", True)
 
-# === 🪞 Load Clarity System ===
-clarity_data = load_clarity()
-
-# === 🗣️ ElevenLabs Voice Output ===
+# ElevenLabs voice response
 def speak_text(text):
     if not VOICE_ENABLED:
         return
@@ -99,7 +98,7 @@ def speak_text(text):
     except Exception as e:
         st.error(f"❌ ElevenLabs Error: {e}")
 
-# === 🧠 Adaptive Prompt Generator ===
+# GPT prompt builder
 def generate_prompt_from_clarity(user_id):
     clarity = load_user_clarity(user_id)
     memory = load_long_memory(user_id)
@@ -112,7 +111,6 @@ def generate_prompt_from_clarity(user_id):
 
     tone_description = ", and ".join(tone) if tone else "neutral"
 
-    # Get the archetype for tone setting
     archetype = clarity.get("archetype", "Strategist")
     meta = clarity.get("archetype_meta", {})
     emoji = meta.get("emoji", "♟️")
@@ -133,7 +131,7 @@ Long-Term Memory:
 Speak in a way that reflects this tone and personality. Be expressive, insightful, and act like their emotional reflection. Stay in character.
 """
 
-# === 🧐 GPT ===
+# GPT call
 def get_reply(messages):
     try:
         response = client.chat.completions.create(
@@ -146,10 +144,10 @@ def get_reply(messages):
         st.error(f"❌ OpenAI Error: {e}")
         return None
 
-# === UI Setup ===
+# Main UI
 st.title("🪞 MirrorMe — Your AI Mirror")
 
-# === Sidebar ===
+# Sidebar
 with st.sidebar:
     st.markdown("### 🧠 Memory Log")
     st.text(get_user_memory_as_string(user_id))
@@ -158,23 +156,23 @@ with st.sidebar:
     st.write(summarize_user_memory(user_id))
     st.markdown("### 🪞 Mirror Clarity")
     st.markdown(f"**Archetype:** {clarity_data['archetype']}")
-    st.markdown(f"**Level {clarity_data['clarity_level']}** — {clarity_stage_label(clarity_data['clarity_level'])}")
-    st.progress(clarity_data['total_xp'] / clarity_data['xp_to_next_level'])
+    st.markdown(f"**Level {clarity_data.get('clarity_level', 0)}** — {clarity_stage_label(clarity_data.get('clarity_level', 0))}")
+    
+    if "total_xp" in clarity_data and "xp_to_next_level" in clarity_data and clarity_data["xp_to_next_level"] > 0:
+        progress = clarity_data["total_xp"] / clarity_data["xp_to_next_level"]
+        st.progress(min(progress, 1.0))
+    else:
+        st.warning("⚠️ Mirror XP data is missing. Please complete setup first.")
+
     st.markdown("**Traits**")
     for trait, values in clarity_data["traits"].items():
         st.text(f"{trait.title()}: {int(values['score'])}")
 
-# === Redirect to Archetype Test if not taken yet ===
-if not clarity_data.get("archetype"):
-    st.title("🔮 Welcome to MirrorMe!")
-    st.write("Before starting, we recommend taking the Archetype Test to personalize your Mirror.")
-    st.stop()
-
-# === Init Chat Session ===
+# Init system prompt
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "system", "content": generate_prompt_from_clarity(user_id)}]
 
-# === Text Input ===
+# Chat input
 user_input = st.chat_input("Send a message...")
 if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
@@ -187,7 +185,7 @@ if user_input:
         set_mood_background(mood)
         save_clarity(clarity_data)
 
-# === Display Chat ===
+# Display chat
 for msg in st.session_state.messages[1:]:
     with st.container():
         if msg["role"] == "user":
