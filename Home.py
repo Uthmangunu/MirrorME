@@ -1,13 +1,11 @@
 import streamlit as st
-st.set_page_config(page_title="MirrorMe", page_icon="🪞")  # ← This must come first
+st.set_page_config(page_title="MirrorMe", page_icon="🪞")  # 🔐 must be first
 
 import openai
 import os
 import requests
 import json
 from dotenv import load_dotenv
-# ...rest of your code
-
 from user_memory import (
     load_user_clarity, save_user_clarity,
     update_user_memory, get_user_memory_as_string, summarize_user_memory
@@ -15,24 +13,10 @@ from user_memory import (
 from clarity_tracker import log_clarity_change 
 from adaptive_ui import detect_mood, set_mood_background, animated_response, render_trait_snapshot
 from long_memory import load_long_memory
-import streamlit as st
-import openai
-import os
-import requests
-import json
-from dotenv import load_dotenv
-# ... other imports
-
-# 🔥 MUST COME FIRST before ANY Streamlit UI commands:
-st.set_page_config(page_title="MirrorMe", page_icon="🪞")
-
-# === Now your logic can continue ===
-load_dotenv()
-# ...
 
 # === 🔐 Load Environment Variables ===
 load_dotenv()
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 ELEVEN_API = st.secrets["ELEVEN_API_KEY"]
 
 # === 🔒 Require Login ===
@@ -124,11 +108,12 @@ Personality Traits:
 Respond with a tone that is {tone_description}. Stay in character. Keep it sharp and personal.
 """
 
-# === GPT ===
+# === 🧐 GPT ===
 def get_reply(messages):
     try:
+        client = openai.OpenAI()
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4o",
             messages=messages
         )
         return response.choices[0].message.content.strip()
@@ -137,7 +122,6 @@ def get_reply(messages):
         return None
 
 # === UI Setup ===
-st.set_page_config(page_title="MirrorMe", page_icon="🪞")
 st.title("🪞 MirrorMe — Your AI Mirror")
 
 # === Sidebar ===
