@@ -8,7 +8,7 @@ st.title("🔐 MirrorMe Login")
 
 AUTH_CACHE = ".auth_cache.json"
 
-# === Auth Cache Helpers ===
+# === 🔒 Persistent Login Helpers ===
 def save_auth_cache(user):
     with open(AUTH_CACHE, "w") as f:
         json.dump(user, f)
@@ -23,21 +23,22 @@ def clear_auth_cache():
     if os.path.exists(AUTH_CACHE):
         os.remove(AUTH_CACHE)
 
-# === Auto Login from Cache ===
+# === 🔁 Auto-Login from Cache ===
 if "user" not in st.session_state:
-    cached = load_auth_cache()
-    if cached:
-        st.session_state["user"] = cached
+    cached_user = load_auth_cache()
+    if cached_user:
+        st.session_state["user"] = cached_user
 
-# === Already Logged In ===
+# === ✅ Already Logged In ===
 if "user" in st.session_state:
     st.success("✅ You are already logged in.")
     if st.button("🚪 Log Out"):
         clear_auth_cache()
         del st.session_state["user"]
         st.rerun()
+
+# === 🔐 Login/Signup UI ===
 else:
-    # === Login UI ===
     st.subheader("🔑 Access MirrorMe")
     mode = st.radio("Mode", ["Login", "Sign Up"], horizontal=True)
     email = st.text_input("Email")
@@ -52,3 +53,5 @@ else:
             if remember:
                 save_auth_cache(user)
             st.rerun()
+        else:
+            st.error("❌ Failed. Please check your credentials.")
