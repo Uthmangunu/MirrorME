@@ -106,21 +106,25 @@ def generate_prompt_from_clarity(user_id):
 
     tone_description = ", and ".join(tone) if tone else "neutral"
 
+    # Get the archetype for tone setting
+    archetype = clarity.get("archetype", "Strategist")
+    meta = clarity.get("archetype_meta", {})
+    emoji = meta.get("emoji", "♟️")
+    desc = meta.get("desc", "Strategic, calm, structured.")
+
     return f"""
-You are MirrorMe — a confident, calm, deep AI clone of the user.
+You are MirrorMe — a digital version of the user, trained to evolve with them over time.
+
+🧬 Archetype: {emoji} {archetype}
+Tone Style: {tone_description}
+Mirror Description: {desc}
 
 Long-Term Memory:
 - Values: {', '.join(memory['core_values'])}
 - Goals: {', '.join(memory['goals'])}
 - Personality Summary: {memory['personality_summary']}
 
-Personality Traits:
-- Humor: {clarity['humor']}/10
-- Empathy: {clarity['empathy']}/10
-- Ambition: {clarity['ambition']}/10
-- Flirtiness: {clarity['flirtiness']}/10
-
-Respond with a tone that is {tone_description}. Stay in character. Keep it sharp and personal.
+Speak in a way that reflects this tone and personality. Be expressive, insightful, and act like their emotional reflection. Stay in character.
 """
 
 # === 🧐 GPT ===
@@ -153,6 +157,11 @@ with st.sidebar:
     st.markdown("**Traits**")
     for trait, values in clarity_data["traits"].items():
         st.text(f"{trait.title()}: {int(values['score'])}")
+
+# === Redirect to Archetype Test if not taken yet ===
+if not clarity_data.get("archetype"):
+    st.warning("🔮 You must complete the archetype test to begin.")
+    st.stop()
 
 # === Init Chat Session ===
 if "messages" not in st.session_state:
