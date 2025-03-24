@@ -1,5 +1,5 @@
 import streamlit as st
-st.set_page_config(page_title="MirrorMe", page_icon="🪞")  # 🔐 must be first
+st.set_page_config(page_title="MirrorMe", page_icon="🪞")
 
 import openai
 import os
@@ -13,6 +13,18 @@ from user_memory import (
 from clarity_tracker import log_clarity_change 
 from adaptive_ui import detect_mood, set_mood_background, animated_response, render_trait_snapshot
 from long_memory import load_long_memory
+from clarity_core import load_clarity, save_clarity, apply_trait_xp
+
+def clarity_stage_label(level):
+    stages = {
+        0: "Shell",
+        1: "Echo",
+        2: "Voiceprint",
+        3: "Imprint",
+        4: "Reflection",
+        5: "You"
+    }
+    return stages.get(level, "Unknown")
 
 # === 🔐 Load Environment Variables ===
 load_dotenv()
@@ -54,6 +66,9 @@ else:
 
 VOICE_ID = settings.get("voice_id", "3Tjd0DlL3tjpqnkvDu9j")
 VOICE_ENABLED = settings.get("enable_voice_response", True)
+
+# === 🪞 Load Clarity System ===
+clarity_data = load_clarity()
 
 # === 🗣️ ElevenLabs Voice Output ===
 def speak_text(text):
@@ -131,9 +146,13 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### 🔍 Your Reflection")
     st.write(summarize_user_memory(user_id))
-    with st.expander("🎭 Trait Snapshot"):
-        clarity = load_user_clarity(user_id)
-        render_trait_snapshot(clarity)
+    st.markdown("### 🪞 Mirror Clarity")
+    st.markdown(f"**Archetype:** {clarity_data['archetype']}")
+    st.markdown(f"**Level {clarity_data['clarity_level']}** — {clarity_stage_label(clarity_data['clarity_level'])}")
+    st.progress(clarity_data['total_xp'] / clarity_data['xp_to_next_level'])
+    st.markdown("**Traits**")
+    for trait, values in clarity_data["traits"].items():
+        st.text(f"{trait.title()}: {int(values['score'])}")
 
 # === Init Chat Session ===
 if "messages" not in st.session_state:
@@ -143,12 +162,14 @@ if "messages" not in st.session_state:
 user_input = st.chat_input("Send a message...")
 if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
+    clarity_data = apply_trait_xp(clarity_data, "dm")
     reply = get_reply(st.session_state.messages)
     if reply:
         st.session_state.messages.append({"role": "assistant", "content": reply})
         update_user_memory(user_id, user_input, reply)
         mood = detect_mood(user_input + " " + reply)
         set_mood_background(mood)
+        save_clarity(clarity_data)
 
 # === Display Chat ===
 for msg in st.session_state.messages[1:]:
