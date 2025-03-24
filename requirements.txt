@@ -7,3 +7,6 @@ pydub
 SpeechRecognition
 pyrebase4
 matplotlib
+gcloud           # required by pyrebase4
+setuptools       # fixes pkg_resources error
+astor            # for safe dict parsing (optional but useful)
