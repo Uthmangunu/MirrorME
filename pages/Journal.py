@@ -41,11 +41,17 @@ def generate_prompt(user_id):
     clarity = load_user_clarity(user_id)
     memory = load_long_memory(user_id)
 
+    traits = clarity.get("traits", {})
+    humor = traits.get("humor", {}).get("score", 0)
+    empathy = traits.get("empathy", {}).get("score", 0)
+    ambition = traits.get("ambition", {}).get("score", 0)
+    flirtiness = traits.get("flirtiness", {}).get("score", 0)
+
     tone = []
-    if clarity["traits"]["humor"]["score"] > 60: tone.append("playful and witty")
-    if clarity["traits"]["empathy"]["score"] > 60: tone.append("deeply understanding and emotionally intelligent")
-    if clarity["traits"]["ambition"]["score"] > 60: tone.append("motivational and driven")
-    if clarity["traits"]["flirtiness"]["score"] > 60: tone.append("charming or flirtatious")
+    if humor > 60: tone.append("playful and witty")
+    if empathy > 60: tone.append("deeply understanding and emotionally intelligent")
+    if ambition > 60: tone.append("motivational and driven")
+    if flirtiness > 60: tone.append("charming or flirtatious")
 
     tone_description = ", and ".join(tone) if tone else "neutral"
 
@@ -65,7 +71,7 @@ Long-Term Memory:
 - Personality Summary: {memory['personality_summary']}
 """
 
-# === UI Setup ===
+# === 📑 UI Setup ===
 st.set_page_config(page_title="Journal Mode", page_icon="📝")
 st.title("📝 MirrorMe Journal")
 
@@ -74,10 +80,10 @@ Welcome to your private journal.
 Write freely. MirrorMe will reflect back, extract insight, and update its understanding of you.
 """)
 
-# === Journal Input ===
+# === 📅 Journal Input ===
 today = datetime.date.today().isoformat()
 journal_text = st.text_area("What's on your mind today?", height=250)
-submit = st.button("🔒 Save & Reflect")
+submit = st.button("🔐 Save & Reflect")
 
 if submit and journal_text:
     user_dir = os.path.join("user_journals", user_id)
@@ -114,14 +120,13 @@ if submit and journal_text:
 
             update_user_memory(user_id, journal_text, reflection)
 
-            # Update traits correctly
             clarity = load_user_clarity(user_id)
             for trait, delta in adjustments.items():
-                if trait in clarity["traits"]:
-                    score = clarity["traits"][trait]["score"]
+                if trait in clarity.get("traits", {}):
+                    score = clarity["traits"][trait].get("score", 0)
                     new_score = round(min(100, max(0, score + (delta * 10))), 2)
                     clarity["traits"][trait]["score"] = new_score
-                    clarity["traits"][trait]["xp"] += int(abs(delta * 10))  # Optional XP bump
+                    clarity["traits"][trait]["xp"] += int(abs(delta * 10))
 
             save_user_clarity(user_id, clarity)
             log_clarity_change(user_id, source="journal")
@@ -131,7 +136,7 @@ if submit and journal_text:
         except Exception as e:
             st.error(f"❌ Error during reflection or clarity update: {e}")
 
-# === Past Entries ===
+# === 🗓️ Past Entries ===
 user_dir = os.path.join("user_journals", user_id)
 if os.path.exists(user_dir):
     st.markdown("---")
