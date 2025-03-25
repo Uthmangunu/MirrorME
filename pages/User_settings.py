@@ -3,7 +3,7 @@ import streamlit as st
 import os
 import json
 from components.feedback_button import feedback_button
-feedback_button(user_id)
+
 
 
 st.set_page_config(page_title="User Settings", page_icon="🌐")
@@ -47,3 +47,4 @@ settings["voice_id"] = st.text_input("🎤 Preferred Voice ID", value=settings.g
 if st.button("🔄 Save Settings"):
     save_settings(settings)
     st.success("✅ Settings saved!")
+feedback_button(user_id)

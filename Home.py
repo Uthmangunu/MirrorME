@@ -15,11 +15,6 @@ from long_memory import load_long_memory
 from clarity_core import load_clarity, save_clarity, apply_trait_xp
 from user_settings import load_user_settings
 from vector_store import get_similar_memories  # NEW
-from utils.feedback_logger import log_feedback  # NEW
-from components.feedback_button import feedback_button
-feedback_button(user_id)
-
-
 
 st.set_page_config(page_title="MirrorMe", page_icon="🪞")
 
@@ -71,10 +66,7 @@ def speak_text(text):
         return
     try:
         url = f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}"
-        headers = {
-            "xi-api-key": ELEVEN_API,
-            "Content-Type": "application/json"
-        }
+        headers = {"xi-api-key": ELEVEN_API, "Content-Type": "application/json"}
         payload = {
             "text": text,
             "model_id": "eleven_monolingual_v1",
@@ -82,13 +74,11 @@ def speak_text(text):
         }
         response = requests.post(url, headers=headers, json=payload)
         if response.status_code == 200:
-            filename = f"{st.session_state['user']['localId']}_response.mp3"
-            with open(filename, "wb") as f:
+            with open("response.mp3", "wb") as f:
                 f.write(response.content)
-            st.audio(filename, format="audio/mp3")
+            st.audio("response.mp3", format="audio/mp3")
     except Exception as e:
         st.error(f"❌ ElevenLabs Error: {e}")
-
 
 def generate_prompt_from_clarity(user_id):
     clarity = load_user_clarity(user_id)
@@ -169,20 +159,13 @@ user_input = st.chat_input("Send a message...")
 if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
     clarity_data = apply_trait_xp(clarity_data, "dm")
-
-    try:
-        reply = get_reply(st.session_state.messages)
-        if reply:
-            st.session_state.messages.append({"role": "assistant", "content": reply})
-            update_user_memory(user_id, user_input, reply)
-            mood = detect_mood(user_input + " " + reply)
-            set_mood_background(mood)
-            save_clarity(clarity_data)
-    except Exception as e:
-        error_msg = str(e)
-        log_feedback(error_msg, page="Home.py", feedback_type="error", user_id=user_id)
-        st.error("❌ Something went wrong while generating a response.")
-
+    reply = get_reply(st.session_state.messages)
+    if reply:
+        st.session_state.messages.append({"role": "assistant", "content": reply})
+        update_user_memory(user_id, user_input, reply)
+        mood = detect_mood(user_input + " " + reply)
+        set_mood_background(mood)
+        save_clarity(clarity_data)
 
 for i, msg in enumerate(st.session_state.messages[1:], start=1):
     with st.container():
