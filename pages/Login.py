@@ -1,5 +1,8 @@
 import streamlit as st
 from firebase_auth import signup, login
+from components.feedback_button import feedback_button
+feedback_button(user_id)
+
 
 st.set_page_config(page_title="Login", page_icon="🔐")
 st.title("🔐 MirrorMe Login")

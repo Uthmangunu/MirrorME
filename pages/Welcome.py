@@ -1,6 +1,9 @@
 import streamlit as st
 from clarity_core import load_clarity, save_clarity
 import matplotlib.pyplot as plt
+from components.feedback_button import feedback_button
+feedback_button(user_id)
+
 
 st.set_page_config(page_title="Welcome to MirrorMe", page_icon="🪞")
 st.title("🪞 Welcome to MirrorMe")

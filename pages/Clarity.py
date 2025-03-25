@@ -2,6 +2,9 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import os
 from dotenv import load_dotenv
+from components.feedback_button import feedback_button
+feedback_button(user_id)
+
 
 # Load environment variables (optional for backend use)
 load_dotenv()

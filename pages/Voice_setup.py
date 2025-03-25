@@ -3,6 +3,9 @@ import os
 import requests
 from dotenv import load_dotenv
 from firebase_client import save_doc, get_doc
+from components.feedback_button import feedback_button
+feedback_button(user_id)
+
 
 # === Page Config ===
 st.set_page_config(page_title="🗣️ Mirror Voice Setup", page_icon="🎙️")
