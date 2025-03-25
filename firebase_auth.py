@@ -21,23 +21,22 @@ auth = firebase.auth()
 def login(email, password):
     try:
         user = auth.sign_in_with_email_and_password(email, password)
-        return user
+        return {
+            "localId": user["localId"],
+            "email": email,
+            "idToken": user["idToken"]
+        }
     except Exception as e:
-        raise Exception(extract_firebase_error(e))  # 🔁 Let Login.py handle the error UI
+        raise Exception(extract_firebase_error(e))
 
-# === 🆕 Sign Up User ===
+
 def signup(email, password):
     try:
         user = auth.create_user_with_email_and_password(email, password)
-        return user
+        return {
+            "localId": user["localId"],
+            "email": email,
+            "idToken": user["idToken"]
+        }
     except Exception as e:
-        raise Exception(extract_firebase_error(e))  # 🔁 Raise clean message
-
-# === 🧠 Error Extraction Helper ===
-def extract_firebase_error(error):
-    try:
-        error_dict = error.args[1]
-        error_data = eval(error_dict) if isinstance(error_dict, str) else error_dict
-        return error_data['error']['message']
-    except Exception:
-        return "An unknown error occurred."
+        raise Exception(extract_firebase_error(e))
