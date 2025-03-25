@@ -90,6 +90,7 @@ def generate_prompt_from_clarity(user_id):
     clarity = load_user_clarity(user_id)
     memory = load_long_memory(user_id)
     traits = clarity.get("traits", {})
+    
     tone = []
     if traits.get("humor", {}).get("score", 0) > 60: tone.append("playful and witty")
     if traits.get("empathy", {}).get("score", 0) > 60: tone.append("deeply understanding and emotionally intelligent")
@@ -102,8 +103,14 @@ def generate_prompt_from_clarity(user_id):
     emoji = meta.get("emoji", "♟️")
     desc = meta.get("desc", "Strategic, calm, structured.")
 
+    # 🔁 Semantic memory (safe fallback)
     recent_text = " ".join([m["content"] for m in st.session_state.get("messages", [])[-3:] if m["role"] == "user"])
-    insights = get_similar_memories(user_id, recent_text, top_n=3) or []
+    try:
+        insights = get_similar_memories(user_id, recent_text, top_n=3) or []
+    except Exception as e:
+        insights = []
+        st.warning(f"⚠️ Semantic memory failed: {e}")
+
     insight_block = "\n".join([f"- {i}" for i in insights]) if insights else "None"
 
     return f"""
