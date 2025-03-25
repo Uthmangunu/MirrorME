@@ -150,6 +150,15 @@ def get_reply(messages):
 
 # === UI Header ===
 st.title("🪞 MirrorMe — Your AI Mirror")
+# Safe fallback for level display
+level = 0
+try:
+    level = int(clarity_data.get("clarity_level", 0))
+    label = clarity_stage_label(level)
+    st.markdown(f"**Level {level}** — {label}")
+except Exception as e:
+    st.warning(f"⚠️ Could not display clarity level: {e}")
+
 
 # === Sidebar Tools ===
 if st.sidebar.button("🧹 Reset Session"):
