@@ -5,6 +5,13 @@ from components.feedback_button import feedback_button
 feedback_button(user_id)
 
 
+if "user" not in st.session_state:
+    st.warning("🔐 Please log in first.")
+    st.stop()
+
+feedback_button(user_id)
+
+user_id = st.session_state["user"]["localId"]
 st.set_page_config(page_title="🌍 Mirror Feed", page_icon="🧠")
 st.title("🌍 Explore Public Mirrors")
 
