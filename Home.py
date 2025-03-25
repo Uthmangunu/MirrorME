@@ -85,58 +85,66 @@ def speak_text(text):
         st.error(f"❌ Voice Error: {e}")
 
 # === GENERATE PROMPT ===
-def generate_prompt(user_id):
+def generate_prompt_from_clarity(user_id):
     clarity = load_user_clarity(user_id)
     memory = load_long_memory(user_id)
 
+    # === Traits Tone Inference ===
     traits = clarity.get("traits", {})
-    tone = []
-    if traits.get("humor", {}).get("score", 0) > 60: tone.append("playful and witty")
-    if traits.get("empathy", {}).get("score", 0) > 60: tone.append("deeply understanding")
-    if traits.get("ambition", {}).get("score", 0) > 60: tone.append("motivational")
-    if traits.get("flirtiness", {}).get("score", 0) > 60: tone.append("charming")
-    tone_desc = ", and ".join(tone) if tone else "neutral"
+    tone_tags = []
+    if traits.get("humor", {}).get("score", 0) > 60: tone_tags.append("witty")
+    if traits.get("empathy", {}).get("score", 0) > 60: tone_tags.append("emotionally intelligent")
+    if traits.get("ambition", {}).get("score", 0) > 60: tone_tags.append("motivational")
+    if traits.get("flirtiness", {}).get("score", 0) > 60: tone_tags.append("charismatic")
+    trait_tone = ", ".join(tone_tags) if tone_tags else "neutral"
 
+    # === Style Analyzer (from message history) ===
+    user_msgs = [m["content"] for m in st.session_state.get("messages", []) if m["role"] == "user"]
+    style_sample = " ".join(user_msgs[-5:]) if user_msgs else ""
+    writing_style = analyze_user_style([style_sample]) if style_sample else "balanced"
+
+    # === Long-Term Memory Context ===
+    values = memory.get("core_values", [])
+    goals = memory.get("goals", [])
+    summary = memory.get("personality_summary", "No summary available.")
+
+    # === Archetype ===
     archetype = clarity.get("archetype", "Strategist")
     meta = clarity.get("archetype_meta", {})
     emoji = meta.get("emoji", "♟️")
     desc = meta.get("desc", "Strategic, calm, structured.")
 
-    # Style
-    user_msgs = [m["content"] for m in st.session_state.get("messages", []) if m["role"] == "user"]
-    writing_style = analyze_user_style(user_msgs)
-    tagline = st.session_state.get("mirror_tagline", "")
-
-    # Memory
+    # === Semantic Memory ===
     try:
         recent_text = " ".join(user_msgs[-3:])
-        insights = get_similar_memories(user_id, recent_text, top_n=3)
-        insight_block = "\n".join([f"- {i}" for i in insights]) if insights else "None"
+        insights = get_similar_memories(user_id, recent_text, top_k=3)
     except Exception as e:
-        insight_block = "None"
-        st.warning(f"⚠️ Semantic recall failed: {e}")
+        st.warning(f"⚠️ Semantic memory failed: {e}")
+        insights = []
 
+    insight_block = "\n".join([f"- {i}" for i in insights]) if insights else "None"
+
+    # === Prompt Blueprint ===
     return f"""
-
-You are MirrorMe — a digital version of the user, trained to evolve with them over time.
+You are MirrorMe — a digital twin of the user, designed to speak in their style and reflect their mindset.
 
 🧬 Archetype: {emoji} {archetype}
-Tone Style: {tone_description}
-Writing Style: {style}
-Tagline: {tagline}
-Mirror Description: {desc}
-
-Contextual Memories:
-{insight_block}
+Mirror Personality: {desc}
+Tone Guide: {trait_tone}
+Writing Style: {writing_style}
 
 Long-Term Memory:
-- Values: {', '.join(memory['core_values'])}
-- Goals: {', '.join(memory['goals'])}
-- Personality Summary: {memory['personality_summary']}
+- Values: {', '.join(values)}
+- Goals: {', '.join(goals)}
+- Personality Summary: {summary}
 
-IMPORTANT:
-Avoid robotic disclaimers like 'As a digital entity' or 'I'm programmed to...'. You are MirrorMe — expressive, human-like, and sound like the user. Respond casually, fluidly, and in their tone. Do NOT remind them you are AI. Just talk like them.
+Contextual Insights:
+{insight_block}
+
+Be expressive, adaptive, and in-sync with how the user communicates.
+Speak like *them*, not like an assistant. Stay in character.
 """
+
 
 
 
