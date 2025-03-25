@@ -117,7 +117,7 @@ def generate_prompt_from_clarity(user_id):
     # === Semantic Memory ===
     try:
         recent_text = " ".join(user_msgs[-3:])
-        insights = get_similar_memories(user_id, recent_text, top_k=3)
+        insights = get_similar_memories(user_id, recent_text, top_n=3)
     except Exception as e:
         st.warning(f"⚠️ Semantic memory failed: {e}")
         insights = []
