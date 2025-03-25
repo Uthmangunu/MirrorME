@@ -10,8 +10,9 @@ firebase_config = {
     "messagingSenderId": os.getenv("FIREBASE_MESSAGING_SENDER_ID"),
     "appId": os.getenv("FIREBASE_APP_ID"),
     "measurementId": os.getenv("FIREBASE_MEASUREMENT_ID"),
-    "databaseURL": ""  # Optional
+    "databaseURL": ""
 }
+
 
 
 # === 🔧 Initialize Firebase ===
