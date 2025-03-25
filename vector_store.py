@@ -32,7 +32,7 @@ def store_vector(user_id, text, source="chat"):
         print("Embedding store error:", e)
 
 # === Retrieve similar vectors ===
-def get_similar_memories(user_id, query_text, top_k=3):
+def get_similar_memories(user_id, query_text, top_n=3):
     try:
         query_vec = openai.embeddings.create(
             model="text-embedding-ada-002",
@@ -52,7 +52,7 @@ def get_similar_memories(user_id, query_text, top_k=3):
         ]
 
         scored.sort(key=lambda x: x[1], reverse=True)
-        return [s[0] for s in scored[:top_k]]
+        return [s[0] for s in scored[:top_n]]
 
     except Exception as e:
         print("Similarity retrieval error:", e)
