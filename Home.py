@@ -15,6 +15,8 @@ from long_memory import load_long_memory
 from clarity_core import load_clarity, save_clarity, apply_trait_xp
 from user_settings import load_user_settings
 from vector_store import get_similar_memories  # NEW
+from utils.feedback_logger import log_feedback  # NEW
+
 
 st.set_page_config(page_title="MirrorMe", page_icon="🪞")
 
@@ -164,13 +166,20 @@ user_input = st.chat_input("Send a message...")
 if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
     clarity_data = apply_trait_xp(clarity_data, "dm")
-    reply = get_reply(st.session_state.messages)
-    if reply:
-        st.session_state.messages.append({"role": "assistant", "content": reply})
-        update_user_memory(user_id, user_input, reply)
-        mood = detect_mood(user_input + " " + reply)
-        set_mood_background(mood)
-        save_clarity(clarity_data)
+
+    try:
+        reply = get_reply(st.session_state.messages)
+        if reply:
+            st.session_state.messages.append({"role": "assistant", "content": reply})
+            update_user_memory(user_id, user_input, reply)
+            mood = detect_mood(user_input + " " + reply)
+            set_mood_background(mood)
+            save_clarity(clarity_data)
+    except Exception as e:
+        error_msg = str(e)
+        log_feedback(error_msg, page="Home.py", feedback_type="error", user_id=user_id)
+        st.error("❌ Something went wrong while generating a response.")
+
 
 for i, msg in enumerate(st.session_state.messages[1:], start=1):
     with st.container():
