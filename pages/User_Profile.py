@@ -5,6 +5,8 @@ from user_memory import load_user_clarity
 from long_memory import load_long_memory
 from clarity_core import load_clarity, save_clarity
 from firebase_client import save_doc, delete_doc
+from components.feedback_button import feedback_button
+feedback_button(user_id)
 
 st.set_page_config(page_title="User Profile", page_icon="👤")
 st.title("👤 MirrorMe — Your Profile")

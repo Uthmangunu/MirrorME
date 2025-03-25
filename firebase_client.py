@@ -34,10 +34,14 @@ def get_doc(collection, doc_id):
     doc = db.collection(collection).document(doc_id).get()
     return doc.to_dict() if doc.exists else {}
 
-def save_doc(collection, doc_id, data):
+def save_doc(collection, user_id, data, append_to_array=None):
     db = init_firestore()
     if db:
-        db.collection(collection).document(doc_id).set(data)
+        doc_ref = db.collection(collection).document(user_id)
+        if append_to_array:
+            doc_ref.set({append_to_array: firestore.ArrayUnion([data])}, merge=True)
+        else:
+            doc_ref.set(data)
 
 def update_doc(collection, doc_id, data):
     db = init_firestore()

@@ -2,6 +2,9 @@
 import streamlit as st
 import os
 import json
+from components.feedback_button import feedback_button
+feedback_button(user_id)
+
 
 st.set_page_config(page_title="User Settings", page_icon="🌐")
 st.title("🔐 MirrorMe — User Settings")

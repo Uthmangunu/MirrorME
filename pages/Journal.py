@@ -12,6 +12,9 @@ from long_memory import load_long_memory
 from vector_store import store_vector, get_similar_memories
 from utils.feedback_logger import log_feedback  # NEW
 import ast
+from components.feedback_button import feedback_button
+feedback_button(user_id)
+
 
 # === 🔐 Load API Keys ===
 load_dotenv()

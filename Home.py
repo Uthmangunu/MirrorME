@@ -16,6 +16,9 @@ from clarity_core import load_clarity, save_clarity, apply_trait_xp
 from user_settings import load_user_settings
 from vector_store import get_similar_memories  # NEW
 from utils.feedback_logger import log_feedback  # NEW
+from components.feedback_button import feedback_button
+feedback_button(user_id)
+
 
 
 st.set_page_config(page_title="MirrorMe", page_icon="🪞")

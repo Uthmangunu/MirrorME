@@ -1,6 +1,9 @@
 import streamlit as st
 from firebase_client import get_doc, save_doc, get_all_docs
 from datetime import datetime
+from components.feedback_button import feedback_button
+feedback_button(user_id)
+
 
 st.set_page_config(page_title="🌍 Mirror Feed", page_icon="🧠")
 st.title("🌍 Explore Public Mirrors")

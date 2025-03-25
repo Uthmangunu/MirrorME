@@ -1,25 +1,31 @@
-# pages/Feedback_Inbox.py
-
 import streamlit as st
 from firebase_client import get_all_docs
+import datetime
 
-st.set_page_config(page_title="🛠 Feedback Inbox", page_icon="📬")
-st.title("📬 MirrorMe Feedback Inbox")
+# === SET YOUR ADMIN EMAIL HERE ===
+ADMIN_EMAIL = "us1233208@gmail.com"  # 🔁 Replace this with your real email
 
-# You can add a check here if you want to restrict to admins only:
-# if st.session_state["user"]["email"] != "your@email.com":
-#     st.stop()
+# === 🔒 Check if current user is admin ===
+if "user" not in st.session_state or st.session_state["user"]["email"] != ADMIN_EMAIL:
+    st.set_page_config(page_title="Hidden", layout="centered")
+    st.title("⛔ Access Denied")
+    st.warning("You do not have permission to view this page.")
+    st.stop()
 
-feedback_entries = get_all_docs("feedback_logs")
+# === PAGE CONFIG ===
+st.set_page_config(page_title="📬 Admin Feedback Inbox", page_icon="🛠️")
+st.title("📬 Feedback Inbox")
+st.caption("Only visible to the admin.")
 
-if not feedback_entries:
-    st.info("No feedback submitted yet.")
+# === LOAD FEEDBACK ===
+feedback_logs = get_all_docs("feedback_logs")
+
+if not feedback_logs:
+    st.info("No feedback yet.")
 else:
-    sorted_entries = sorted(feedback_entries, key=lambda x: x.get("timestamp", ""), reverse=True)
-
-    for entry in sorted_entries:
-        with st.expander(f"🗓 {entry['timestamp']} — {entry['type'].title()} from {entry['user_id']}"):
-            st.markdown(f"**Page:** `{entry.get('page', 'unknown')}`")
-            st.markdown(f"**Type:** `{entry.get('type', 'general')}`")
-            st.markdown("**Content:**")
-            st.code(entry["content"])
+    for user_id, doc in feedback_logs.items():
+        st.markdown(f"### 🧑 From: `{user_id}`")
+        for entry in doc.get("entries", []):
+            st.markdown(f"- 🕒 `{entry.get('timestamp', 'N/A')}`")
+            st.code(entry.get("error", 'No error provided.'))
+        st.markdown("---")

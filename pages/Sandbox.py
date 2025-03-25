@@ -3,6 +3,9 @@ from clarity_core import load_clarity
 from long_memory import load_long_memory
 import openai
 import os
+from components.feedback_button import feedback_button
+feedback_button(user_id)
+
 
 st.set_page_config(page_title="🕶 Sandbox Mode", page_icon="🧠")
 st.title("🕶 Talk to a Public Mirror")
