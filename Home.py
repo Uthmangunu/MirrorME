@@ -110,7 +110,7 @@ def generate_prompt(user_id):
     # Memory
     try:
         recent_text = " ".join(user_msgs[-3:])
-        insights = get_similar_memories(user_id, recent_text, top_k=3)
+        insights = get_similar_memories(user_id, recent_text, top_n=3)
         insight_block = "\n".join([f"- {i}" for i in insights]) if insights else "None"
     except Exception as e:
         insight_block = "None"
