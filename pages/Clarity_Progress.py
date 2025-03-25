@@ -4,6 +4,9 @@ import json
 import os
 import matplotlib.pyplot as plt
 from datetime import datetime
+st.markdown("### 🚧 Clarity Progress (In Progress)")
+st.caption("This feature is under development — the Mirror still tracks your growth behind the scenes.")
+
 
 st.set_page_config(page_title="Clarity Progress", page_icon="📈")
 st.title("📈 Clarity Evolution")
