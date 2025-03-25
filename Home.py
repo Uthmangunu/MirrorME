@@ -26,7 +26,8 @@ if "user" not in st.session_state:
     st.title("🪞 MirrorMe — Your Evolving AI Twin")
     st.markdown("Build a version of you that speaks your mind. Adaptive. Expressive. Real.")
     if st.button("🔐 Login to Begin"):
-       st.switch_page("Login")  # 👈 Must match page_title of login.py
+      st.switch_page("pages/Login.py")  # ✅ Use this exact string
+ # 👈 Must match page_title of login.py
   # Adjust if login is in root
     st.stop()
 
