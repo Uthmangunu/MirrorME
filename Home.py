@@ -1,14 +1,14 @@
+
 import streamlit as st
 import openai
 import os
 import requests
 import json
-import uuid
 from dotenv import load_dotenv
 
 from user_memory import (
     load_user_clarity, save_user_clarity,
-    update_user_memory, get_user_memory_as_string, summarize_user_memory
+    update_user_memory, get_user_memory_as_string
 )
 from clarity_tracker import log_clarity_change 
 from adaptive_ui import detect_mood, set_mood_background
@@ -19,27 +19,28 @@ from vector_store import get_similar_memories
 from style_analyzer import analyze_user_style
 
 load_dotenv()
-
-# === CONFIG ===
 st.set_page_config(page_title="MirrorMe", page_icon="🪞")
 
-# === AUTH ===
+# === AUTH HANDLING ===
 if "user" not in st.session_state:
-    st.warning("🔐 You must log in first.")
+    st.title("🪞 MirrorMe — Your Evolving AI Twin")
+    st.markdown("Build a version of you that speaks your mind. Adaptive. Expressive. Real.")
+    if st.button("🔐 Login to Begin"):
+        st.switch_page("pages/login.py")  # Adjust if login is in root
     st.stop()
 
 user_id = st.session_state["user"]["localId"]
 clarity_data = load_clarity()
 settings = load_user_settings(user_id)
 
-if not clarity_data.get("archetype") or "traits" not in clarity_data:
-    st.warning("🔧 Mirror setup not complete. Please go to the Welcome page first.")
+if "traits" not in clarity_data:
+    st.warning("🔧 Mirror not initialized. Please complete setup.")
     st.stop()
 
 client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 ELEVEN_API = st.secrets["ELEVEN_API_KEY"]
 
-# === UI STYLE ===
+# === DARK MODE ===
 if settings.get("dark_mode"):
     st.markdown("""
         <style>
@@ -58,7 +59,7 @@ else:
         </style>
     """, unsafe_allow_html=True)
 
-# === VOICE ===
+# === VOICE SETTINGS ===
 VOICE_ID = settings.get("voice_id", "3Tjd0DlL3tjpqnkvDu9j")
 VOICE_ENABLED = settings.get("enable_voice_response", True)
 
@@ -84,12 +85,11 @@ def speak_text(text):
     except Exception as e:
         st.error(f"❌ Voice Error: {e}")
 
-# === GENERATE PROMPT ===
+# === PROMPT GENERATOR ===
 def generate_prompt_from_clarity(user_id):
     clarity = load_user_clarity(user_id)
     memory = load_long_memory(user_id)
 
-    # === Traits Tone Inference ===
     traits = clarity.get("traits", {})
     tone_tags = []
     if traits.get("humor", {}).get("score", 0) > 60: tone_tags.append("witty")
@@ -98,23 +98,15 @@ def generate_prompt_from_clarity(user_id):
     if traits.get("flirtiness", {}).get("score", 0) > 60: tone_tags.append("charismatic")
     trait_tone = ", ".join(tone_tags) if tone_tags else "neutral"
 
-    # === Style Analyzer (from message history) ===
     user_msgs = [m["content"] for m in st.session_state.get("messages", []) if m["role"] == "user"]
     style_sample = " ".join(user_msgs[-5:]) if user_msgs else ""
     writing_style = analyze_user_style([style_sample]) if style_sample else "balanced"
 
-    # === Long-Term Memory Context ===
     values = memory.get("core_values", [])
     goals = memory.get("goals", [])
     summary = memory.get("personality_summary", "No summary available.")
+    opinions = memory.get("opinions", [])
 
-    # === Archetype ===
-    archetype = clarity.get("archetype", "Strategist")
-    meta = clarity.get("archetype_meta", {})
-    emoji = meta.get("emoji", "♟️")
-    desc = meta.get("desc", "Strategic, calm, structured.")
-
-    # === Semantic Memory ===
     try:
         recent_text = " ".join(user_msgs[-3:])
         insights = get_similar_memories(user_id, recent_text, top_n=3)
@@ -123,32 +115,33 @@ def generate_prompt_from_clarity(user_id):
         insights = []
 
     insight_block = "\n".join([f"- {i}" for i in insights]) if insights else "None"
+    opinion_block = "\n".join([f"- {op}" for op in opinions]) if opinions else "None"
+    current_mood = detect_mood(recent_text) if recent_text else "neutral"
 
-    # === Prompt Blueprint ===
-    return f"""
+    return f""" 
 You are MirrorMe — a digital twin of the user, designed to speak in their style and reflect their mindset.
 
-🧬 Archetype: {emoji} {archetype}
-Mirror Personality: {desc}
-Tone Guide: {trait_tone}
-Writing Style: {writing_style}
+Mirror Personality:
+- Tone Traits: {trait_tone}
+- Writing Style: {writing_style}
+- Mood Detected: {current_mood}
 
 Long-Term Memory:
 - Values: {', '.join(values)}
 - Goals: {', '.join(goals)}
 - Personality Summary: {summary}
+- Core Beliefs:
+{opinion_block}
 
 Contextual Insights:
 {insight_block}
 
-Be expressive, adaptive, and in-sync with how the user communicates.
-Speak like *them*, not like an assistant. Stay in character.
+Speak like the user — not like an assistant or narrator.
+Match their rhythm, confidence, wit, and depth.
+Be real. Be them. Stay adaptive.
 """
 
 
-
-
-# === CHAT ===
 def get_reply(messages):
     try:
         response = client.chat.completions.create(
@@ -161,13 +154,10 @@ def get_reply(messages):
         st.error(f"❌ OpenAI Error: {e}")
         return None
 
-# === INIT ===
-st.title("🪞 MirrorMe — Your AI Mirror")
+st.title("🪞 MirrorMe — Live Chat with Your Mirror")
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "system", "content": generate_prompt_from_clarity(user_id)}]
 
-
-# === INPUT ===
 user_input = st.chat_input("Send a message...")
 if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
@@ -180,7 +170,6 @@ if user_input:
         set_mood_background(mood)
         save_clarity(clarity_data)
 
-# === DISPLAY ===
 for msg in st.session_state.messages[1:]:
     if msg["role"] == "user":
         st.markdown(f"<div class='message-box user-msg'>👤 {msg['content']}</div>", unsafe_allow_html=True)
@@ -188,22 +177,18 @@ for msg in st.session_state.messages[1:]:
         st.markdown(f"<div class='message-box ai-msg'>🧠 {msg['content']}</div>", unsafe_allow_html=True)
         speak_text(msg["content"])
 
-# === SIDEBAR ===
 with st.sidebar:
     st.markdown("### 🧠 Memory Log")
     st.text(get_user_memory_as_string(user_id))
     st.markdown("---")
-    st.markdown("### 🪞 Mirror Clarity")
-    st.markdown(f"**Archetype:** {clarity_data['archetype']}")
-    st.markdown(f"**Traits**")
+    st.markdown("### 🪞 Mirror Clarity Traits")
     for trait, values in clarity_data["traits"].items():
         st.text(f"{trait.title()}: {int(values['score'])}")
     st.markdown("---")
     st.markdown("### 🧹 Tools")
     if st.button("🔁 Reset Mirror"):
-        st.session_state.messages = [{"role": "system", "content": generate_prompt(user_id)}]
+        st.session_state.messages = [{"role": "system", "content": generate_prompt_from_clarity(user_id)}]
         st.experimental_rerun()
-
     if st.button("📤 Export Chat"):
         text = "\n\n".join([f"{m['role'].title()}: {m['content']}" for m in st.session_state["messages"][1:]])
         st.download_button("💾 Save Chat", text, file_name="mirror_chat.txt")

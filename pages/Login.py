@@ -31,11 +31,11 @@ if "user" not in st.session_state:
 
 # === Logged In View ===
 if "user" in st.session_state:
-    user_id = st.session_state["user"]["localId"]
-    st.success(f"✅ Logged in as: {st.session_state['user']['email']}")
-    
-    # Show feedback button ONLY for you
-    if st.session_state["user"]["email"] == "uthman.admin@mirrorme.app":
+    user_id = st.session_state["user"].get("localId", "N/A")
+    email = st.session_state["user"].get("email", "Unknown")
+    st.success(f"✅ Logged in as: {email}")
+
+    if email == "uthman.admin@mirrorme.app":
         from components.feedback_button import feedback_button
         feedback_button(user_id)
 
@@ -54,14 +54,19 @@ else:
 
     if st.button("🚀 Submit"):
         try:
-            user = login(email, password) if mode == "Login" else signup(email, password)
-            if user:
-                st.success("🎉 Welcome, you're in.")
-                user["email"] = email  # store email for UI
+            auth_fn = login if mode == "Login" else signup
+            user = auth_fn(email, password)
+
+            if user and "localId" in user:
+                user["email"] = email  # Attach email for local UI
                 st.session_state["user"] = user
                 if remember:
                     save_auth_cache(user)
+                st.success("🎉 You're in!")
                 st.rerun()
+            else:
+                st.error("❌ Auth failed: No user data returned.")
+
         except Exception as e:
             error_msg = str(e)
             if "INVALID_PASSWORD" in error_msg:
