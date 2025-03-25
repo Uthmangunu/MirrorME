@@ -156,7 +156,8 @@ def get_reply(messages):
 # === INIT ===
 st.title("🪞 MirrorMe — Your AI Mirror")
 if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "system", "content": generate_prompt(user_id)}]
+    st.session_state.messages = [{"role": "system", "content": generate_prompt_from_clarity(user_id)}]
+
 
 # === INPUT ===
 user_input = st.chat_input("Send a message...")
