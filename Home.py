@@ -146,8 +146,10 @@ def get_reply(messages):
 st.title("🪞 MirrorMe — Your AI Mirror")
 
 if st.sidebar.button("🧹 Reset Mirror Session"):
-    st.session_state.messages = [{"role": "system", "content": generate_prompt_from_clarity(user_id)}]
-    st.experimental_rerun()
+    st.session_state["messages"] = [{"role": "system", "content": generate_prompt_from_clarity(user_id)}]
+    st.success("Mirror reset!")
+    st.stop()
+
 
 if st.sidebar.button("📥 Export Chat"):
     history_text = "\n\n".join([f"{m['role'].title()}: {m['content']}" for m in st.session_state.get("messages", [])[1:]])
