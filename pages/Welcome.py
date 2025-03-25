@@ -2,7 +2,7 @@ import streamlit as st
 from clarity_core import load_clarity, save_clarity
 import matplotlib.pyplot as plt
 from components.feedback_button import feedback_button
-feedback_button(user_id)
+
 
 
 st.set_page_config(page_title="Welcome to MirrorMe", page_icon="🪞")
@@ -118,3 +118,4 @@ if submitted:
     st.success("✅ Mirror Personality Profile Saved. You’re ready.")
     if st.button("🚀 Launch My Mirror"):
         st.switch_page("Home.py")
+feedback_button(user_id)

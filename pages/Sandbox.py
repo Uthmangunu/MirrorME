@@ -4,7 +4,7 @@ from long_memory import load_long_memory
 import openai
 import os
 from components.feedback_button import feedback_button
-feedback_button(user_id)
+
 
 
 st.set_page_config(page_title="🕶 Sandbox Mode", page_icon="🧠")
@@ -69,3 +69,4 @@ if user_input:
 for msg in st.session_state.sandbox_messages[1:]:
     role_icon = "👤" if msg["role"] == "user" else "🧠"
     st.markdown(f"{role_icon} {msg['content']}")
+feedback_button(user_id)

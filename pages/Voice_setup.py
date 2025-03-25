@@ -4,7 +4,7 @@ import requests
 from dotenv import load_dotenv
 from firebase_client import save_doc, get_doc
 from components.feedback_button import feedback_button
-feedback_button(user_id)
+
 
 
 # === Page Config ===
@@ -96,3 +96,4 @@ if uploaded_audio:
 # === Footer ===
 st.markdown("---")
 st.caption("This voice will be used every time your Mirror speaks.")
+feedback_button(user_id)

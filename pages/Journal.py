@@ -13,7 +13,7 @@ from vector_store import store_vector, get_similar_memories
 from utils.feedback_logger import log_feedback  # NEW
 import ast
 from components.feedback_button import feedback_button
-feedback_button(user_id)
+
 
 
 # === 🔐 Load API Keys ===
@@ -132,3 +132,4 @@ if os.path.exists(f"user_journals/{user_id}"):
     for entry in sorted(os.listdir(f"user_journals/{user_id}"), reverse=True):
         with open(f"user_journals/{user_id}/{entry}", "r") as f:
             st.expander(entry.replace(".txt", "")).text(f.read())
+feedback_button(user_id)  # NEW
