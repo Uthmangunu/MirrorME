@@ -97,3 +97,9 @@ if uploaded_audio:
 st.markdown("---")
 st.caption("This voice will be used every time your Mirror speaks.")
 feedback_button(user_id)
+st.markdown("### 🪞 Mirror Identity Tagline")
+tagline = st.text_input("Describe how your Mirror should behave (tone, attitude, etc.):", max_chars=150)
+
+if tagline:
+    st.session_state["mirror_tagline"] = tagline
+    st.success("✅ Tagline saved for prompt injection.")
