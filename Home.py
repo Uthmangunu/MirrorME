@@ -1,3 +1,4 @@
+
 import streamlit as st
 import openai
 import os
@@ -14,7 +15,7 @@ from adaptive_ui import detect_mood, set_mood_background, animated_response, ren
 from long_memory import load_long_memory
 from clarity_core import load_clarity, save_clarity, apply_trait_xp
 from user_settings import load_user_settings
-from vector_store import get_similar_memories  # NEW
+from vector_store import get_similar_memories
 
 st.set_page_config(page_title="MirrorMe", page_icon="🪞")
 
@@ -66,7 +67,10 @@ def speak_text(text):
         return
     try:
         url = f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}"
-        headers = {"xi-api-key": ELEVEN_API, "Content-Type": "application/json"}
+        headers = {
+            "xi-api-key": ELEVEN_API,
+            "Content-Type": "application/json"
+        }
         payload = {
             "text": text,
             "model_id": "eleven_monolingual_v1",
@@ -74,9 +78,11 @@ def speak_text(text):
         }
         response = requests.post(url, headers=headers, json=payload)
         if response.status_code == 200:
-            with open("response.mp3", "wb") as f:
+            filename = f"{user_id}_response.mp3"
+            with open(filename, "wb") as f:
                 f.write(response.content)
-            st.audio("response.mp3", format="audio/mp3")
+            st.audio(filename, format="audio/mp3")
+            os.remove(filename)
     except Exception as e:
         st.error(f"❌ ElevenLabs Error: {e}")
 
@@ -96,9 +102,8 @@ def generate_prompt_from_clarity(user_id):
     emoji = meta.get("emoji", "♟️")
     desc = meta.get("desc", "Strategic, calm, structured.")
 
-    # === 🔁 Semantic memory recall ===
     recent_text = " ".join([m["content"] for m in st.session_state.get("messages", [])[-3:] if m["role"] == "user"])
-    insights = get_similar_memories(user_id, recent_text, top_n=3)
+    insights = get_similar_memories(user_id, recent_text, top_n=3) or []
     insight_block = "\n".join([f"- {i}" for i in insights]) if insights else "None"
 
     return f"""
@@ -119,8 +124,6 @@ Long-Term Memory:
 Speak in a way that reflects this tone and personality. Be expressive, insightful, and act like their emotional reflection. Stay in character.
 """
 
-# 🧠 continue with rest of Home.py unchanged...
-
 def get_reply(messages):
     try:
         response = client.chat.completions.create(
@@ -134,6 +137,14 @@ def get_reply(messages):
         return None
 
 st.title("🪞 MirrorMe — Your AI Mirror")
+
+if st.sidebar.button("🧹 Reset Mirror Session"):
+    st.session_state.messages = [{"role": "system", "content": generate_prompt_from_clarity(user_id)}]
+    st.experimental_rerun()
+
+if st.sidebar.button("📥 Export Chat"):
+    history_text = "\n\n".join([f"{m['role'].title()}: {m['content']}" for m in st.session_state.get("messages", [])[1:]])
+    st.download_button("📤 Download Chat History", history_text, file_name="mirror_chat.txt")
 
 with st.sidebar:
     st.markdown("### 🧠 Memory Log")
@@ -167,6 +178,9 @@ if user_input:
         set_mood_background(mood)
         save_clarity(clarity_data)
 
+if len(st.session_state.messages) > 10:
+    st.session_state.messages = [st.session_state.messages[0]] + st.session_state.messages[-9:]
+
 for i, msg in enumerate(st.session_state.messages[1:], start=1):
     with st.container():
         if msg["role"] == "user":
@@ -174,3 +188,7 @@ for i, msg in enumerate(st.session_state.messages[1:], start=1):
         elif msg["role"] == "assistant":
             st.markdown(f"<div class='message-box ai-msg'>🧠 MirrorMe: {msg['content']}</div>", unsafe_allow_html=True)
             speak_text(msg["content"])
+            if "insights" in locals() and insights:
+                with st.expander("🔎 Contextual Memory Recalled", expanded=False):
+                    for insight in insights:
+                        st.markdown(f"- _{insight}_")
