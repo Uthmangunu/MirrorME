@@ -5,16 +5,14 @@ import requests
 import json
 from dotenv import load_dotenv
 
-from user_memory import (
-    load_user_clarity, save_user_clarity,
-    update_user_memory, get_user_memory_as_string
-)
-from clarity_tracker import log_clarity_change 
+from clarity_core import load_user_clarity, save_user_clarity, apply_trait_xp
+from memory_engine import load_long_memory, update_user_memory, get_user_memory_as_string
+from clarity_tracker import log_clarity_change
 from adaptive_ui import detect_mood, set_mood_background
-from long_memory import load_long_memory
-from clarity_core import load_clarity, save_clarity, apply_trait_xp
 from user_settings import load_user_settings
 from generate_prompt import generate_prompt_from_clarity
+from style_analyzer import analyze_user_style
+from vector_store import get_similar_memories
 
 load_dotenv()
 st.set_page_config(page_title="MirrorMe", page_icon="🪞")
@@ -28,7 +26,7 @@ if "user" not in st.session_state:
     st.stop()
 
 user_id = st.session_state["user"]["localId"]
-clarity_data = load_clarity()
+clarity_data = load_user_clarity(user_id)
 settings = load_user_settings(user_id)
 
 if "traits" not in clarity_data:
@@ -116,7 +114,7 @@ if user_input:
         update_user_memory(user_id, user_input, reply)
         mood = detect_mood(user_input + " " + reply)
         set_mood_background(mood)
-        save_clarity(clarity_data)
+        save_user_clarity(user_id, clarity_data)
 
 # === DISPLAY ===
 for msg in st.session_state.messages[1:]:
