@@ -2,10 +2,8 @@ import os
 from dotenv import load_dotenv
 import pyrebase
 
-# === ✅ Load Environment Variables ===
 load_dotenv()
 
-# === 🔧 Firebase Config ===
 firebase_config = {
     "apiKey": os.getenv("FIREBASE_API_KEY"),
     "authDomain": os.getenv("FIREBASE_AUTH_DOMAIN"),
@@ -14,14 +12,12 @@ firebase_config = {
     "messagingSenderId": os.getenv("FIREBASE_MESSAGING_SENDER_ID"),
     "appId": os.getenv("FIREBASE_APP_ID"),
     "measurementId": os.getenv("FIREBASE_MEASUREMENT_ID"),
-    "databaseURL": ""  # Optional if not using Realtime DB
+    "databaseURL": ""
 }
 
-# === 🔧 Initialize Firebase ===
 firebase = pyrebase.initialize_app(firebase_config)
 auth = firebase.auth()
 
-# === 🔐 Login User ===
 def login(email, password):
     try:
         user = auth.sign_in_with_email_and_password(email, password)
@@ -33,7 +29,6 @@ def login(email, password):
     except Exception as e:
         raise Exception(extract_firebase_error(e))
 
-# === 🆕 Sign Up User ===
 def signup(email, password):
     try:
         user = auth.create_user_with_email_and_password(email, password)
@@ -45,7 +40,6 @@ def signup(email, password):
     except Exception as e:
         raise Exception(extract_firebase_error(e))
 
-# === 🧠 Error Message Parser ===
 def extract_firebase_error(error):
     try:
         error_dict = error.args[1]

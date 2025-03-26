@@ -8,7 +8,6 @@ st.title("🔐 MirrorMe Login")
 
 AUTH_CACHE = ".auth_cache.json"
 
-# === Auth Cache Helpers ===
 def save_auth_cache(user):
     with open(AUTH_CACHE, "w") as f:
         json.dump(user, f)
@@ -23,16 +22,16 @@ def clear_auth_cache():
     if os.path.exists(AUTH_CACHE):
         os.remove(AUTH_CACHE)
 
-# === Auto Login from Cache ===
+# Auto-login from cache if available
 if "user" not in st.session_state:
     cached_user = load_auth_cache()
     if cached_user:
         st.session_state["user"] = cached_user
 
-# === Logged In View ===
+# If logged in
 if "user" in st.session_state:
-    user_id = st.session_state["user"].get("localId", "N/A")
-    email = st.session_state["user"].get("email", "Unknown")
+    user_id = st.session_state["user"]["localId"]
+    email = st.session_state["user"]["email"]
     st.success(f"✅ Logged in as: {email}")
 
     if email == "uthman.admin@mirrorme.app":
@@ -44,7 +43,6 @@ if "user" in st.session_state:
         del st.session_state["user"]
         st.rerun()
 
-# === Login / Sign Up Form ===
 else:
     st.subheader("🔑 Access MirrorMe")
     mode = st.radio("Mode", ["Login", "Sign Up"], horizontal=True)
@@ -56,9 +54,8 @@ else:
         try:
             auth_fn = login if mode == "Login" else signup
             user = auth_fn(email, password)
-
             if user and "localId" in user:
-                user["email"] = email  # Attach email for local UI
+                user["email"] = email
                 st.session_state["user"] = user
                 if remember:
                     save_auth_cache(user)
@@ -66,7 +63,6 @@ else:
                 st.rerun()
             else:
                 st.error("❌ Auth failed: No user data returned.")
-
         except Exception as e:
             error_msg = str(e)
             if "INVALID_PASSWORD" in error_msg:
