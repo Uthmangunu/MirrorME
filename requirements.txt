@@ -4,7 +4,7 @@ openai>=1.0.0
 requests>=2.27
 python-dotenv
 
-# --- Firebase Auth ---
+# --- Firebase Auth (safe fork) ---
 pyrebase4
 
 # --- Voice & Audio ---
@@ -15,7 +15,7 @@ SpeechRecognition
 # --- Plotting (Clarity radar chart) ---
 matplotlib
 
-# --- Google Cloud (Firestore) ---
+# --- Google Cloud (Firestore & Auth) ---
 google-cloud-firestore
 google-auth
 
