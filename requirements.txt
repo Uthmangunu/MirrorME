@@ -21,4 +21,3 @@ google-auth
 
 # --- Misc Helpers ---
 setuptools
-pyrebase
