@@ -228,47 +228,44 @@ with title_container:
             .mood-container {
                 margin-top: 1.5rem;
             }
+            .chat-container {
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+                margin-top: 1rem;
+            }
+            .message-box {
+                border: 1px solid #444;
+                border-radius: 10px;
+                padding: 0.75em;
+                background-color: #1a1d23;
+                color: white;
+                margin-bottom: 0.5rem;
+            }
             </style>
-            <div class="mood-container">
         """, unsafe_allow_html=True)
         # Only show animation class if mood changed recently
         animation_class = "mood-changed" if (time.time() - st.session_state.last_mood_change_time) < 1 else ""
         render_mood_indicator(st.session_state.current_mood, size=40, animation_class=animation_class)
-        st.markdown("</div>", unsafe_allow_html=True)
-
-# Add typewriter styling
-st.markdown("""
-    <style>
-    .typewriter {
-        overflow: hidden;
-        border-right: 2px solid #90EE90;
-        white-space: nowrap;
-        margin: 0;
-        animation: 
-            typing 3.5s steps(40, end),
-            blink-caret .75s step-end infinite;
-    }
-    
-    @keyframes typing {
-        from { width: 0 }
-        to { width: 100% }
-    }
-    
-    @keyframes blink-caret {
-        from, to { border-color: transparent }
-        50% { border-color: #90EE90 }
-    }
-    </style>
-""", unsafe_allow_html=True)
 
 # Create a container for all messages
-message_container = st.container()
+chat_container = st.container()
+
+# Display previous messages first
+with chat_container:
+    st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+    for msg in st.session_state.messages[1:]:
+        if msg["role"] == "user":
+            st.markdown(f"<div class='message-box user-msg'>👤 {msg['content']}</div>", unsafe_allow_html=True)
+        else:
+            st.markdown(f"<div class='message-box ai-msg'>🧠 {msg['content']}</div>", unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # Handle user input and mood updates
 user_input = st.chat_input("Send a message...")
 if user_input:
     # Add user message to chat
-    with message_container:
+    with chat_container:
         st.markdown(f"<div class='message-box user-msg'>👤 {user_input}</div>", unsafe_allow_html=True)
     st.session_state.messages.append({"role": "user", "content": user_input})
     clarity_data = apply_trait_xp(clarity_data, "dm")
@@ -298,14 +295,6 @@ if user_input:
         
         # Speak the complete response
         speak_text(full_response)
-
-# Display previous messages (excluding the most recent ones that are already shown)
-with message_container:
-    for msg in st.session_state.messages[1:-2]:  # Exclude the last user message and AI response
-        if msg["role"] == "user":
-            st.markdown(f"<div class='message-box user-msg'>👤 {msg['content']}</div>", unsafe_allow_html=True)
-        else:
-            st.markdown(f"<div class='message-box ai-msg'>🧠 {msg['content']}</div>", unsafe_allow_html=True)
 
 with st.sidebar:
     st.markdown("### 🧠 Memory Log")

@@ -169,12 +169,7 @@ if st.button("Save Personality Profile"):
         user_data = {
             "user_id": user_id,
             "traits": dict(st.session_state.traits),  # Convert to regular dict
-            "values": {
-                "core_values": st.session_state.values["core_values"],
-                "beliefs": st.session_state.values["beliefs"],
-                "goals": st.session_state.values["goals"],
-                "interests": st.session_state.values["interests"]
-            },
+            "values": dict(st.session_state.values),  # Convert to regular dict
             "persona_mode": st.session_state.persona_mode,
             "current_mood": st.session_state.current_mood,
             "mood_changed": st.session_state.mood_changed,
