@@ -349,7 +349,38 @@ if "user" not in st.session_state:
 # === Initialize User Data ===
 user_id = st.session_state.user["localId"]
 username = st.session_state.user.get("displayName", "User")
-clarity_data = load_clarity()
+
+# Load clarity data with proper error handling
+try:
+    clarity_data = load_user_clarity(user_id)
+    if not clarity_data:
+        clarity_data = {
+            "traits": {
+                "humor": {"score": 50, "xp": 0},
+                "empathy": {"score": 50, "xp": 0},
+                "ambition": {"score": 50, "xp": 0},
+                "flirtiness": {"score": 50, "xp": 0}
+            },
+            "clarity_level": 0,
+            "total_xp": 0,
+            "xp_to_next_level": 100
+        }
+        save_user_clarity(user_id, clarity_data)
+except Exception as e:
+    st.error(f"Error loading clarity data: {str(e)}")
+    clarity_data = {
+        "traits": {
+            "humor": {"score": 50, "xp": 0},
+            "empathy": {"score": 50, "xp": 0},
+            "ambition": {"score": 50, "xp": 0},
+            "flirtiness": {"score": 50, "xp": 0}
+        },
+        "clarity_level": 0,
+        "total_xp": 0,
+        "xp_to_next_level": 100
+    }
+    save_user_clarity(user_id, clarity_data)
+
 settings = load_user_settings(user_id)
 
 # Add topbar
@@ -396,7 +427,18 @@ if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
     
     # Update clarity data
-    clarity_data = apply_trait_xp(clarity_data, "dm")
+    clarity_data = load_user_clarity(user_id)
+    if clarity_data:
+        # Apply XP to traits
+        for trait in clarity_data.get("traits", {}):
+            if trait in clarity_data["traits"]:
+                clarity_data["traits"][trait]["xp"] += 1
+                # Update score based on XP (1 XP = 0.1 score, max 100)
+                clarity_data["traits"][trait]["score"] = min(
+                    clarity_data["traits"][trait]["score"] + 0.1,
+                    100
+                )
+        save_user_clarity(user_id, clarity_data)
     
     # Get AI response
     response_placeholder = st.empty()
@@ -420,9 +462,6 @@ if user_input:
             st.session_state.last_mood_change_time = time.time()
         set_mood_background(mood)
         
-        # Save data
-        save_clarity(clarity_data)
-        
         # Speak response if enabled
         if settings.get("enable_voice_response", True):
             speak_text(full_response)
@@ -438,6 +477,16 @@ with st.sidebar:
         </div>
     """.format(get_user_memory_as_string(user_id)), unsafe_allow_html=True)
     
+    # Ensure clarity_data has the correct structure
+    traits = clarity_data.get("traits", {})
+    if not traits:
+        traits = {
+            "humor": {"score": 50, "xp": 0},
+            "empathy": {"score": 50, "xp": 0},
+            "ambition": {"score": 50, "xp": 0},
+            "flirtiness": {"score": 50, "xp": 0}
+        }
+    
     st.markdown("""
         <div class="sidebar-content">
             <div class="sidebar-title">🪞 Mirror Traits</div>
@@ -449,7 +498,7 @@ with st.sidebar:
             <span class="trait-name">{trait.title()}</span>
             <span class="trait-value">{int(values.get('score', 50))}</span>
         </div>
-        """ for trait, values in clarity_data.get("traits", {}).items()
+        """ for trait, values in traits.items()
     ])), unsafe_allow_html=True)
     
     st.markdown("""
