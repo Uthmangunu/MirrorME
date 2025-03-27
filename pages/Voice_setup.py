@@ -15,81 +15,45 @@ import plotly.graph_objects as go
 from scipy.io import wavfile
 
 # === Page Config ===
-st.set_page_config(page_title="MirrorMe - Voice Setup", page_icon="🎙️", layout="wide")
+st.set_page_config(page_title="MirrorMe - Voice Setup", page_icon="🎙️", layout="centered")
 
-# Add custom CSS
+# Add minimal CSS
 st.markdown("""
 <style>
-.recording-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+.main {
+    max-width: 800px;
+    margin: 0 auto;
     padding: 2rem;
-    background: linear-gradient(145deg, #ffffff, #f0f0f0);
-    border-radius: 20px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    margin: 2rem auto;
-    max-width: 600px;
 }
 
-.recording-button {
-    font-size: 80px;
-    text-align: center;
-    padding: 30px;
-    border-radius: 100%;
-    background-color: #FF4B4B;
-    color: white;
-    cursor: pointer;
-    transition: all 0.3s ease;
+.recording-container {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     margin: 1rem 0;
-}
-
-.recording-button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 20px rgba(255, 75, 75, 0.3);
-}
-
-.recording-button.recording {
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(255,75,75, 0.7); }
-    70% { box-shadow: 0 0 0 30px rgba(255,75,75, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(255,75,75, 0); }
 }
 
 .timer {
     font-size: 2rem;
     font-weight: bold;
     color: #FF4B4B;
+    text-align: center;
     margin: 1rem 0;
-    font-family: 'Helvetica Neue', sans-serif;
 }
 
-.recording-text {
-    font-size: 1.2rem;
-    color: #666;
-    margin: 0.5rem 0;
-    font-family: 'Helvetica Neue', sans-serif;
-}
-
-.waveform-container {
-    width: 100%;
-    height: 100px;
+.waveform {
+    height: 60px;
+    background: #f5f5f5;
+    border-radius: 5px;
     margin: 1rem 0;
-    background: rgba(255, 75, 75, 0.1);
-    border-radius: 10px;
     overflow: hidden;
 }
 
-.tab-content {
-    padding: 2rem;
-    background: white;
-    border-radius: 20px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    margin: 1rem 0;
+.stButton>button {
+    width: 100%;
+    margin: 0.5rem 0;
+    border-radius: 5px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -135,203 +99,149 @@ ELEVEN_API_KEY = os.getenv("ELEVEN_API_KEY")
 current = get_doc("settings", user_id) or {}
 st.session_state.voice_id = current.get("voice_id")
 
-# === Auto Preview: Generate & Play Voice ===
-st.title("🎙️ Mirror Voice Setup")
-st.markdown("Record your voice directly here or upload a sample to create your Mirror's voice.")
+# === Main UI ===
+st.title("Voice Setup")
 
 # Check for existing voice ID
 if st.session_state.voice_id:
-    st.success("✅ You already have a voice profile set up!")
-
-# === Create tabs for recording and uploading ===
-tab1, tab2 = st.tabs(["🎙️ Record", "📁 Upload"])
-
-with tab1:
-    st.markdown('<div class="tab-content">', unsafe_allow_html=True)
-    
-    # Create centered recording container
-    st.markdown('<div class="recording-container">', unsafe_allow_html=True)
-    
-    # Title and instructions
-    st.markdown("### 🎙️ Record Your Voice")
-    st.markdown("Speak naturally for 30-60 seconds to create your Mirror voice")
-    
-    # Recording button and status
-    recording_class = "recording-button recording" if st.session_state.is_recording else "recording-button"
-    st.markdown(f'<div class="{recording_class}">🎙️</div>', unsafe_allow_html=True)
-    
-    # Timer display
-    if st.session_state.is_recording:
-        elapsed_time = time.time() - st.session_state.recording_start_time
-        minutes = int(elapsed_time // 60)
-        seconds = int(elapsed_time % 60)
-        st.markdown(f'<div class="timer">{minutes:02d}:{seconds:02d}</div>', unsafe_allow_html=True)
-        st.markdown('<div class="recording-text">Recording in progress...</div>', unsafe_allow_html=True)
-    
-    # Waveform visualization
-    if st.session_state.is_recording and st.session_state.audio_levels:
-        st.markdown('<div class="waveform-container">', unsafe_allow_html=True)
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            y=st.session_state.audio_levels[-50:],
-            mode='lines',
-            line=dict(color='#ff4b4b', width=2),
-            fill='tozeroy',
-            fillcolor='rgba(255, 75, 75, 0.2)'
-        ))
-        fig.update_layout(
-            height=100,
-            margin=dict(l=0, r=0, t=0, b=0),
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            showlegend=False,
-            xaxis=dict(showgrid=False, showticklabels=False),
-            yaxis=dict(showgrid=False, showticklabels=False, range=[0, 1])
-        )
-        st.plotly_chart(fig, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    # WebRTC recorder (hidden)
-    rec = webrtc_streamer(
-        key="voice_recorder",
-        mode=WebRtcMode.SENDONLY,
-        audio_receiver_size=1024,
-        media_stream_constraints={"audio": True, "video": False},
-        async_processing=True
-    )
-    
-    # Handle recording state
-    if rec.state.playing and not st.session_state.is_recording:
-        st.session_state.is_recording = True
-        st.session_state.recording_start_time = time.time()
-        st.session_state.audio_levels = []
-        st.session_state.audio_data = []
-    elif not rec.state.playing and st.session_state.is_recording:
-        st.session_state.is_recording = False
-        st.session_state.recording_start_time = None
-        st.session_state.show_preview = True
-    
-    # Update audio levels and collect data
-    if rec.audio_receiver and st.session_state.is_recording:
-        try:
-            frame = rec.audio_receiver.get_frames(timeout=0.1)[0]
-            audio_data = frame.to_ndarray()
-            level = np.abs(audio_data).mean()
-            st.session_state.audio_levels.append(level)
-            st.session_state.audio_data.extend(audio_data.flatten())
-        except:
-            pass
-    
-    # Close recording container
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Preview section
-    if st.session_state.show_preview and st.session_state.audio_data:
-        st.markdown("### 🎵 Preview Recording")
-        
-        # Convert audio data to WAV format
-        audio_data = np.array(st.session_state.audio_data)
-        sample_rate = 48000
-        
-        # Create a temporary WAV file
-        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_file:
-            wavfile.write(temp_file.name, sample_rate, audio_data)
-            
-            # Display audio player
-            st.audio(temp_file.name)
-            
-            # Add buttons for actions
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("✅ Use This Recording"):
-                    with st.spinner("Processing your voice sample..."):
-                        # Send to ElevenLabs
-                        voice_id = create_voice_in_elevenlabs(user_id, temp_file.name)
-                        
-                        if voice_id:
-                            # Save to Firestore
-                            if save_voice_id_to_firestore(user_id, voice_id):
-                                st.session_state.voice_id = voice_id
-                                st.success("✅ Voice profile created successfully!")
-                                
-                                # Play test audio
-                                st.markdown("### 🎵 Test Your Voice")
-                                test_audio = generate_voice_response(
-                                    "Hey, it's your Mirror. I'm excited to be speaking with you in your own voice!",
-                                    voice_id
-                                )
-                                if test_audio:
-                                    st.audio(test_audio, format="audio/mp3")
-                                else:
-                                    st.warning("⚠️ Voice profile created but test audio generation failed.")
-                            else:
-                                st.error("❌ Failed to save voice ID to database. Please try again.")
-                        else:
-                            st.error("❌ Failed to create voice profile. Please try recording again.")
-                        
-                        # Clean up temporary file
-                        os.unlink(temp_file.name)
-                        
-                        # Reset recording state
-                        st.session_state.show_preview = False
-                        st.session_state.audio_data = []
-                        st.session_state.audio_levels = []
-                        st.experimental_rerun()
-            
-            with col2:
-                if st.button("🔄 Record Again"):
-                    st.session_state.show_preview = False
-                    st.session_state.audio_data = []
-                    st.session_state.audio_levels = []
-                    st.experimental_rerun()
-    
-    # Close tab content
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with tab2:
-    st.subheader("📁 Upload Voice Sample")
-    uploaded_file = st.file_uploader("Upload a voice sample (MP3 or WAV)", type=["mp3", "wav"])
-    
-    if uploaded_file:
-        with st.spinner("Processing audio file..."):
-            # Create a temporary file
-            with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_file.name)[1]) as tmp_file:
-                tmp_file.write(uploaded_file.read())
-                tmp_file_path = tmp_file.name
-            
-            # Show file info
-            st.markdown("### 📊 File Information")
-            st.markdown(f"- File Name: {uploaded_file.name}")
-            st.markdown(f"- File Size: {uploaded_file.size / 1024:.1f} KB")
-            st.markdown(f"- File Type: {uploaded_file.type}")
-            
-            # Preview uploaded file
-            st.markdown("### 🎵 Preview Your Audio")
-            st.audio(tmp_file_path)
-            
-            if st.button("🚀 Upload to ElevenLabs"):
-                with st.spinner("Processing your voice sample..."):
-                    voice_id = create_voice_in_elevenlabs(user_id, tmp_file_path)
-                    if voice_id:
-                        if save_voice_id_to_firestore(user_id, voice_id):
-                            st.session_state.voice_id = voice_id
-                            st.success("✅ Voice profile created successfully!")
-                        else:
-                            st.error("Failed to save voice ID to database.")
-                
-                # Clean up temporary file
-                os.unlink(tmp_file_path)
-
-# === Test voice button ===
-if st.session_state.voice_id:
-    st.subheader("🔊 Test Your Mirror Voice")
-    if st.button("Play Test Message"):
+    st.success("✅ Voice profile already set up")
+    if st.button("🔊 Test Voice"):
         audio = generate_voice_response(
             "Hey, it's your Mirror. I'm excited to be speaking with you in your own voice!",
             st.session_state.voice_id
         )
         if audio:
             st.audio(audio, format="audio/mp3")
+    st.stop()
+
+# === Recording Interface ===
+st.markdown('<div class="recording-container">', unsafe_allow_html=True)
+
+# Recording controls
+if not st.session_state.is_recording:
+    if st.button("🎙️ Start Recording"):
+        st.session_state.is_recording = True
+        st.session_state.recording_start_time = time.time()
+        st.session_state.audio_levels = []
+        st.session_state.audio_data = []
+        st.experimental_rerun()
+else:
+    if st.button("⏹️ Stop Recording"):
+        st.session_state.is_recording = False
+        st.session_state.recording_start_time = None
+        st.session_state.show_preview = True
+        
+        # Process recorded audio
+        if st.session_state.audio_data:
+            audio_data = np.array(st.session_state.audio_data)
+            sample_rate = 48000
+            
+            # Create a temporary WAV file
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_file:
+                wavfile.write(temp_file.name, sample_rate, audio_data)
+                st.session_state.recording_path = temp_file.name
+        st.experimental_rerun()
+
+# Timer display
+if st.session_state.is_recording:
+    elapsed_time = time.time() - st.session_state.recording_start_time
+    minutes = int(elapsed_time // 60)
+    seconds = int(elapsed_time % 60)
+    st.markdown(f'<div class="timer">{minutes:02d}:{seconds:02d}</div>', unsafe_allow_html=True)
+
+# Waveform visualization
+if st.session_state.is_recording and st.session_state.audio_levels:
+    st.markdown('<div class="waveform">', unsafe_allow_html=True)
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        y=st.session_state.audio_levels[-50:],
+        mode='lines',
+        line=dict(color='#ff4b4b', width=2),
+        fill='tozeroy',
+        fillcolor='rgba(255, 75, 75, 0.2)'
+    ))
+    fig.update_layout(
+        height=60,
+        margin=dict(l=0, r=0, t=0, b=0),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        showlegend=False,
+        xaxis=dict(showgrid=False, showticklabels=False),
+        yaxis=dict(showgrid=False, showticklabels=False, range=[0, 1])
+    )
+    st.plotly_chart(fig, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# WebRTC recorder (hidden)
+rec = webrtc_streamer(
+    key="voice_recorder",
+    mode=WebRtcMode.SENDONLY,
+    audio_receiver_size=1024,
+    media_stream_constraints={"audio": True, "video": False},
+    async_processing=True
+)
+
+# Update audio levels and collect data
+if rec.audio_receiver and st.session_state.is_recording:
+    try:
+        frame = rec.audio_receiver.get_frames(timeout=0.1)[0]
+        audio_data = frame.to_ndarray()
+        level = np.abs(audio_data).mean()
+        st.session_state.audio_levels.append(level)
+        st.session_state.audio_data.extend(audio_data.flatten())
+    except:
+        pass
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+# Preview section
+if st.session_state.show_preview and st.session_state.recording_path:
+    st.markdown("### Preview")
+    st.audio(st.session_state.recording_path)
+    
+    if st.button("✅ Use This Recording"):
+        with st.spinner("Processing..."):
+            voice_id = create_voice_in_elevenlabs(user_id, st.session_state.recording_path)
+            
+            if voice_id:
+                if save_voice_id_to_firestore(user_id, voice_id):
+                    st.session_state.voice_id = voice_id
+                    st.success("✅ Voice profile created!")
+                    
+                    # Play test audio
+                    test_audio = generate_voice_response(
+                        "Hey, it's your Mirror. I'm excited to be speaking with you in your own voice!",
+                        voice_id
+                    )
+                    if test_audio:
+                        st.audio(test_audio, format="audio/mp3")
+                else:
+                    st.error("Failed to save voice ID")
+            else:
+                st.error("Failed to create voice profile")
+            
+            # Clean up
+            os.unlink(st.session_state.recording_path)
+            st.session_state.show_preview = False
+            st.session_state.recording_path = None
+            st.session_state.audio_data = []
+            st.session_state.audio_levels = []
+            st.experimental_rerun()
+    
+    if st.button("🔄 Record Again"):
+        st.session_state.show_preview = False
+        st.session_state.recording_path = None
+        st.session_state.audio_data = []
+        st.session_state.audio_levels = []
+        st.experimental_rerun()
+
+# === Helpful tips ===
+st.markdown("""
+### Tips
+- Record in a quiet environment
+- Speak naturally for 30-60 seconds
+- Avoid background noise
+""")
 
 # === Voice settings ===
 if st.session_state.voice_id:
@@ -348,18 +258,6 @@ if st.session_state.voice_id:
         if db:
             ref = db.collection("users").document(user_id).collection("personality").document("voice")
             ref.update({"use_voice": True})
-
-# === Helpful tips ===
-st.markdown("""
-### 💡 Tips for Best Results
-1. Record in a quiet environment
-2. Speak naturally and clearly
-3. Include a variety of sentences
-4. Avoid background noise
-5. Keep the recording between 30-60 seconds
-
-Your voice will be used to make Mirror's responses feel more personal and natural.
-""")
 
 # === Footer ===
 st.markdown("---")
