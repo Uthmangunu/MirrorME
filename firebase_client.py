@@ -6,6 +6,7 @@ from google.oauth2 import service_account
 import os
 import json
 import streamlit as st
+import requests
 
 # === 🔥 Initialize Firebase Admin SDK ===
 def init_firebase_admin():
@@ -120,3 +121,76 @@ def get_all_docs(collection):
     if db is None:
         return []
     return [doc.to_dict() for doc in db.collection(collection).stream()]
+
+def sign_in_with_email_and_password(email, password):
+    """
+    Sign in a user with email and password using Firebase Authentication.
+    """
+    try:
+        response = requests.post(
+            "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword",
+            params={"key": st.secrets["FIREBASE_API_KEY"]},
+            json={"email": email, "password": password}
+        )
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            error_data = response.json()
+            error_message = error_data.get("error", {}).get("message", "Invalid email or password.")
+            raise Exception(error_message)
+            
+    except Exception as e:
+        raise Exception(f"Authentication failed: {str(e)}")
+
+def sign_up_with_email_and_password(email, password):
+    """
+    Sign up a new user with email and password using Firebase Authentication.
+    """
+    try:
+        response = requests.post(
+            "https://identitytoolkit.googleapis.com/v1/accounts:signUp",
+            params={"key": st.secrets["FIREBASE_API_KEY"]},
+            json={"email": email, "password": password}
+        )
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            error_data = response.json()
+            error_message = error_data.get("error", {}).get("message", "Registration failed.")
+            raise Exception(error_message)
+            
+    except Exception as e:
+        raise Exception(f"Registration failed: {str(e)}")
+
+def save_doc(collection, doc_id, data):
+    """
+    Save a document to Firestore.
+    """
+    try:
+        response = requests.post(
+            f"https://firestore.googleapis.com/v1/projects/{st.secrets['FIREBASE_PROJECT_ID']}/databases/(default)/documents/{collection}/{doc_id}",
+            params={"key": st.secrets["FIREBASE_API_KEY"]},
+            json={"fields": data}
+        )
+        return response.status_code == 200
+    except Exception as e:
+        print(f"Error saving document: {str(e)}")
+        return False
+
+def get_doc(collection, doc_id):
+    """
+    Get a document from Firestore.
+    """
+    try:
+        response = requests.get(
+            f"https://firestore.googleapis.com/v1/projects/{st.secrets['FIREBASE_PROJECT_ID']}/databases/(default)/documents/{collection}/{doc_id}",
+            params={"key": st.secrets["FIREBASE_API_KEY"]}
+        )
+        if response.status_code == 200:
+            return response.json().get("fields", {})
+        return None
+    except Exception as e:
+        print(f"Error getting document: {str(e)}")
+        return None
