@@ -1,11 +1,26 @@
 import streamlit as st
+import matplotlib.pyplot as plt
+from dotenv import load_dotenv
 from firebase_client import get_doc, save_doc, get_all_docs
 from datetime import datetime
 from components.feedback_button import feedback_button
+
+# Set page config first (must be the first Streamlit command)
+st.set_page_config(page_title="MirrorMe - Feed", page_icon="��")
+
+# Check if user is logged in
+if "user" not in st.session_state:
+    st.warning("⚠️ Please log in to access this page.")
+    if st.button("🔐 Login"):
+        st.switch_page("Login.py")
+    st.stop()
+
+# Get user ID from session state
+user_id = st.session_state["user"]["localId"]
+
+# Now we can safely call feedback_button with the user_id
 feedback_button(user_id)
 
-
-st.set_page_config(page_title="🌍 Mirror Feed", page_icon="🧠")
 st.title("🌍 Explore Public Mirrors")
 
 mirrors = get_all_docs("public_mirrors")

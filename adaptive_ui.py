@@ -338,7 +338,7 @@ def create_animated_input(mood, size=20, animation_class=""):
     
     st.markdown(f"""
         <style>
-        .animated-input-container {{
+        .stChatInputContainer {{
             position: relative;
             display: flex;
             align-items: center;
@@ -360,6 +360,7 @@ def create_animated_input(mood, size=20, animation_class=""):
             cursor: pointer;
             box-shadow: 0 0 10px {color}40;
             flex-shrink: 0;
+            margin-right: 10px;
         }}
         
         .mood-indicator:hover {{
@@ -442,8 +443,6 @@ def create_animated_input(mood, size=20, animation_class=""):
             background: transparent !important;
         }}
         </style>
-        <div class="animated-input-container">
-            <div class="mood-indicator {animation_class}" title="{mood.title()}"></div>
-            <div class="mood-tooltip">{mood.title()}</div>
-        </div>
+        <div class="mood-indicator {animation_class}" title="{mood.title()}"></div>
+        <div class="mood-tooltip">{mood.title()}</div>
     """, unsafe_allow_html=True)
