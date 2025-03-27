@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import json
 from components.topbar import topbar
+from firebase_client import sign_in_with_email_and_password
 
 # === Page Config ===
 st.set_page_config(
