@@ -468,20 +468,24 @@ with st.sidebar:
     st.markdown("""
         <style>
         [data-testid=baseButton-primary] {
-            display: none;
+            display: none !important;
         }
         [data-testid=baseButton-secondary] {
-            display: none;
+            display: none !important;
         }
         </style>
     """, unsafe_allow_html=True)
     
-    if st.button("🔁 Reset Chat", key="reset_chat"):
-        st.session_state.messages = [{"role": "system", "content": generate_prompt_from_clarity(user_id)}]
-        st.session_state.current_mood = "neutral"
-        st.session_state.last_mood_change_time = 0
-        st.rerun()
+    # Hidden buttons that will be triggered by the custom buttons
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🔁 Reset Chat", key="reset_chat"):
+            st.session_state.messages = [{"role": "system", "content": generate_prompt_from_clarity(user_id)}]
+            st.session_state.current_mood = "neutral"
+            st.session_state.last_mood_change_time = 0
+            st.rerun()
     
-    if st.button("📤 Export Chat", key="export_chat"):
-        text = "\n\n".join([f"{m['role'].title()}: {m['content']}" for m in st.session_state["messages"][1:]])
-        st.download_button("💾 Save Chat", text, file_name="mirror_chat.txt")
+    with col2:
+        if st.button("📤 Export Chat", key="export_chat"):
+            text = "\n\n".join([f"{m['role'].title()}: {m['content']}" for m in st.session_state["messages"][1:]])
+            st.download_button("💾 Save Chat", text, file_name="mirror_chat.txt")
