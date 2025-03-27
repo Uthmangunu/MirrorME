@@ -15,13 +15,14 @@ from adaptive_ui import set_mood_background, adjust_ui_for_persona, create_trait
 from components.feedback_button import feedback_button
 from google.cloud import firestore
 from datetime import datetime
+import time
 
 # Set page config first (must be the first Streamlit command)
 st.set_page_config(page_title="MirrorMe - Clarity", page_icon="🧠")
 
 # Check if user is logged in
 if "user" not in st.session_state or not st.session_state.user:
-    st.warning("⚠️ Please log in to access this page.")
+    st.warning("⚠️ Please Log In to Access This Page.")
     if st.button("🔐 Login"):
         st.markdown("""
             <script>
@@ -36,132 +37,126 @@ user_id = st.session_state.user["localId"]
 # Initialize session state for traits and values if not exists
 if "traits" not in st.session_state:
     st.session_state.traits = {
-        "humor": 50,
-        "empathy": 50,
-        "logic": 50,
-        "boldness": 50,
-        "memory": 50,
-        "depth": 50,
-        "adaptability": 50
+        "Humor": 50,
+        "Empathy": 50,
+        "Logic": 50,
+        "Boldness": 50,
+        "Memory": 50,
+        "Depth": 50,
+        "Adaptability": 50
     }
 if "values" not in st.session_state:
     st.session_state.values = {
-        "core_values": [],
-        "beliefs": [],
-        "goals": [],
-        "interests": []
+        "Core Values": [],
+        "Beliefs": [],
+        "Goals": [],
+        "Interests": []
     }
 if "persona_mode" not in st.session_state:
-    st.session_state.persona_mode = "balanced"  # Set default to match available options
+    st.session_state.persona_mode = "Balanced"  # Set default to match available options
 if "current_mood" not in st.session_state:
-    st.session_state.current_mood = "neutral"
+    st.session_state.current_mood = "Neutral"
 if "mood_changed" not in st.session_state:
     st.session_state.mood_changed = False
 if "last_mood_change_time" not in st.session_state:
-    st.session_state.last_mood_change_time = 0
+    st.session_state.last_mood_change_time = time.time()
 
-# Sidebar for persona selection and mood display
-with st.sidebar:
-    st.title("🔮 Mirror Settings")
-    
-    # Persona mode selection
-    st.markdown("### 🎭 Mirror Persona")
-    persona_mode = st.selectbox(
-        "Choose how your Mirror should behave",
-        options=["balanced", "professional", "casual", "creative", "analytical"],
-        index=["balanced", "professional", "casual", "creative", "analytical"].index(st.session_state.persona_mode)
-    )
-    st.session_state.persona_mode = persona_mode
-    
-    # Display current mood
-    st.markdown(f"### Current Mood: {st.session_state.current_mood.capitalize()}")
-    
-    # Mood detection from recent messages
-    if 'recent_messages' in st.session_state:
-        current_mood = detect_mood_from_text(" ".join(st.session_state.recent_messages[-3:]))
-        if current_mood != st.session_state.current_mood:
-            st.session_state.current_mood = current_mood
-            st.experimental_rerun()
+# Load existing clarity data
+clarity_data = load_clarity()
 
-# Main content
-st.title("MirrorMe Personality Mirror")
+# === Main UI ===
+st.title("🧠 MirrorMe — Personality Settings")
 
-# Apply UI adjustments based on persona and mood
-adjust_ui_for_persona(st.session_state.persona_mode)
-set_mood_background(st.session_state.current_mood)
+# === Persona Mode Selection ===
+st.subheader("🎭 Persona Mode")
+persona_mode = st.selectbox(
+    "Choose How Your Mirror Should Behave",
+    ["Balanced", "Empathetic", "Analytical", "Creative", "Professional"],
+    index=["Balanced", "Empathetic", "Analytical", "Creative", "Professional"].index(st.session_state.persona_mode)
+)
+st.session_state.persona_mode = persona_mode
 
-# Trait Engine 2.0
-st.header("🎭 Trait Engine 2.0")
-st.markdown("Adjust your Mirror's personality traits to match your own:")
+# === Trait Engine 2.0 ===
+st.subheader("⚙️ Trait Engine 2.0")
+st.caption("Adjust Your Mirror's Core Personality Traits")
 
 # Create two columns for trait sliders
 col1, col2 = st.columns(2)
 
 with col1:
-    st.session_state.traits['humor'] = create_trait_slider("Humor", key="trait_humor")
-    st.session_state.traits['empathy'] = create_trait_slider("Empathy", key="trait_empathy")
-    st.session_state.traits['logic'] = create_trait_slider("Logic", key="trait_logic")
-    st.session_state.traits['boldness'] = create_trait_slider("Boldness", key="trait_boldness")
+    st.session_state.traits["Humor"] = create_trait_slider("Humor", st.session_state.traits["Humor"])
+    st.session_state.traits["Empathy"] = create_trait_slider("Empathy", st.session_state.traits["Empathy"])
+    st.session_state.traits["Logic"] = create_trait_slider("Logic", st.session_state.traits["Logic"])
+    st.session_state.traits["Boldness"] = create_trait_slider("Boldness", st.session_state.traits["Boldness"])
 
 with col2:
-    st.session_state.traits['memory'] = create_trait_slider("Memory", key="trait_memory")
-    st.session_state.traits['depth'] = create_trait_slider("Depth", key="trait_depth")
-    st.session_state.traits['adaptability'] = create_trait_slider("Adaptability", key="trait_adaptability")
+    st.session_state.traits["Memory"] = create_trait_slider("Memory", st.session_state.traits["Memory"])
+    st.session_state.traits["Depth"] = create_trait_slider("Depth", st.session_state.traits["Depth"])
+    st.session_state.traits["Adaptability"] = create_trait_slider("Adaptability", st.session_state.traits["Adaptability"])
 
-# Values System
-st.header("💫 Core Values")
-st.markdown("Share your core values and beliefs:")
+# === Trait Visualization ===
+st.subheader("📊 Trait Distribution")
+trait_names = list(st.session_state.traits.keys())
+trait_values = list(st.session_state.traits.values())
 
-values_text = st.text_area(
-    "Describe your values and beliefs:",
-    height=150,
-    help="Your Mirror will learn from your values to better reflect your personality"
-)
+# Create bar chart
+fig, ax = plt.subplots(figsize=(10, 6))
+bars = ax.bar(trait_names, trait_values, color='#FF4B4B')
+ax.set_ylim(0, 100)
+ax.set_title("Your Mirror's Personality Traits")
+ax.set_ylabel("Trait Level")
 
-if values_text:
-    extracted_values = extract_values_from_text(values_text)
-    
-    # Update the appropriate category in values
-    for category, values in extracted_values.items():
-        if category in st.session_state.values:
-            st.session_state.values[category] = values
-    
-    # Display extracted values
-    st.markdown("### Detected Values:")
-    for category, values in extracted_values.items():
-        if values:  # Only show categories that have values
-            st.markdown(f"#### {category.replace('_', ' ').title()}:")
-            for value in values:
-                st.markdown(f"- {value.capitalize()}")
+# Add value labels on top of bars
+for bar in bars:
+    height = bar.get_height()
+    ax.text(bar.get_x() + bar.get_width()/2., height,
+            f'{int(height)}%',
+            ha='center', va='bottom')
 
-# Personality Visualization
-st.header("🎯 Personality Radar")
-fig, ax = plt.subplots(figsize=(8, 8), subplot_kw=dict(projection='polar'))
+# Rotate x-axis labels for better readability
+plt.xticks(rotation=45, ha='right')
 
-# Plot traits on radar chart
-traits = list(st.session_state.traits.keys())
-values = list(st.session_state.traits.values())
-
-angles = np.linspace(0, 2*np.pi, len(traits), endpoint=False)
-values = np.concatenate((values, [values[0]]))  # Close the plot
-angles = np.concatenate((angles, [angles[0]]))  # Close the plot
-
-ax.plot(angles, values)
-ax.fill(angles, values, alpha=0.25)
-ax.set_xticks(angles[:-1])
-ax.set_xticklabels(traits)
-
+# Adjust layout to prevent label cutoff
 plt.tight_layout()
+
+# Display the chart
 st.pyplot(fig)
 
-def get_firestore_client():
-    """Initialize and return a Firestore client."""
-    try:
-        from google.cloud import firestore
-        return firestore.Client()
-    except Exception as e:
-        st.error(f"Failed to initialize Firestore client: {str(e)}")
-        return None
+# === Values Section ===
+st.subheader("💫 Core Values & Beliefs")
+st.caption("Share What Matters Most to You")
+
+# Core Values
+st.markdown("#### Core Values")
+st.session_state.values["Core Values"] = create_value_checkbox(
+    "What Are Your Core Values?",
+    ["Honesty", "Integrity", "Creativity", "Growth", "Connection", "Freedom", "Justice", "Balance"],
+    st.session_state.values["Core Values"]
+)
+
+# Beliefs
+st.markdown("#### Beliefs")
+st.session_state.values["Beliefs"] = create_value_checkbox(
+    "What Do You Believe In?",
+    ["Personal Growth", "Social Justice", "Environmental Care", "Scientific Progress", "Spiritual Growth", "Community", "Innovation", "Tradition"],
+    st.session_state.values["Beliefs"]
+)
+
+# Goals
+st.markdown("#### Goals")
+st.session_state.values["Goals"] = create_value_checkbox(
+    "What Are Your Goals?",
+    ["Career Growth", "Personal Development", "Health & Wellness", "Relationships", "Learning", "Financial Success", "Creative Expression", "Social Impact"],
+    st.session_state.values["Goals"]
+)
+
+# Interests
+st.markdown("#### Interests")
+st.session_state.values["Interests"] = create_value_checkbox(
+    "What Are Your Interests?",
+    ["Technology", "Arts", "Science", "Philosophy", "Sports", "Travel", "Music", "Literature"],
+    st.session_state.values["Interests"]
+)
 
 # Save personality data
 if st.button("💾 Save Profile"):
@@ -174,10 +169,10 @@ if st.button("💾 Save Profile"):
         
         # Create values dictionary
         values = {
-            "core_values": core_values,
-            "beliefs": beliefs,
-            "goals": goals,
-            "interests": interests
+            "Core Values": core_values,
+            "Beliefs": beliefs,
+            "Goals": goals,
+            "Interests": interests
         }
         
         # Save to Firestore
@@ -191,16 +186,16 @@ if st.button("💾 Save Profile"):
             clarity_data["values"] = values
             save_clarity(clarity_data)
             
-            st.success("✅ Profile saved successfully!")
+            st.success("✅ Profile Saved Successfully!")
         else:
-            st.error("Failed to connect to database. Please try again later.")
+            st.error("Failed to Connect to Database. Please Try Again Later.")
     except Exception as e:
-        st.error(f"❌ Error saving profile: {str(e)}")
+        st.error(f"❌ Error Saving Profile: {str(e)}")
 
 # Feedback system
-st.header("💡 Feedback")
+st.subheader("💡 Feedback")
 feedback = st.text_area(
-    "How well does your Mirror reflect your personality?",
+    "How Well Does Your Mirror Reflect Your Personality?",
     height=100
 )
 
@@ -212,12 +207,17 @@ if feedback:
     
     # Update session state traits based on new XP
     clarity = load_clarity()
-    for trait in st.session_state.traits:
-        if trait in clarity["traits"]:
-            st.session_state.traits[trait] = clarity["traits"][trait]["score"] / 100
-    
-    st.success("Thank you for your feedback! Your Mirror is learning...")
-    st.experimental_rerun()
+    st.session_state.traits = clarity.get("traits", st.session_state.traits)
+    st.success("✅ Feedback Processed Successfully!")
+
+def get_firestore_client():
+    """Initialize and return a Firestore client."""
+    try:
+        from google.cloud import firestore
+        return firestore.Client()
+    except Exception as e:
+        st.error(f"Failed to initialize Firestore client: {str(e)}")
+        return None
 
 # Add feedback button after user authentication
 feedback_button(user_id)
