@@ -20,7 +20,7 @@ import json
 from components.topbar import topbar
 from firebase_client import get_doc, save_doc
 
-# === Page Config ===
+# === Page Config === (Must be first Streamlit command)
 st.set_page_config(
     page_title="MirrorMe - Clarity",
     page_icon="🧠",
@@ -79,6 +79,44 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# === Initialize Session State ===
+if "user" not in st.session_state:
+    st.session_state.user = None
+
+if "traits" not in st.session_state:
+    st.session_state.traits = {
+        "Humor": 50,
+        "Empathy": 50,
+        "Logic": 50,
+        "Boldness": 50,
+        "Memory": 50,
+        "Depth": 50,
+        "Adaptability": 50
+    }
+
+if "values" not in st.session_state:
+    st.session_state.values = {
+        "core_values": [],
+        "beliefs": [],
+        "goals": [],
+        "interests": []
+    }
+
+if "persona_mode" not in st.session_state:
+    st.session_state.persona_mode = "Balanced"
+
+if "current_mood" not in st.session_state:
+    st.session_state.current_mood = "Neutral"
+
+if "mood_changed" not in st.session_state:
+    st.session_state.mood_changed = False
+
+if "last_mood_change_time" not in st.session_state:
+    st.session_state.last_mood_change_time = time.time()
+
+if "show_settings" not in st.session_state:
+    st.session_state.show_settings = False
+
 # === Require Login ===
 if "user" not in st.session_state or not st.session_state.user:
     st.warning("⚠️ Please Log In to Access This Page.")
@@ -96,6 +134,13 @@ topbar(username)
 current = get_doc("settings", user_id) or {}
 st.session_state.core_values = current.get("core_values", [])
 st.session_state.mirror_tagline = current.get("mirror_tagline", "")
+
+# Load existing clarity data
+clarity_data = load_clarity()
+
+# Update session state with existing data if available
+if clarity_data and "values" in clarity_data:
+    st.session_state.values.update(clarity_data["values"])
 
 # === Main UI ===
 st.markdown('<div class="clarity-container">', unsafe_allow_html=True)
