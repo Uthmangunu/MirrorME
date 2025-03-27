@@ -35,6 +35,7 @@ if "traits" not in st.session_state:
         "Adaptability": 50
     }
 
+# Initialize values dictionary with default empty lists
 if "values" not in st.session_state:
     st.session_state.values = {
         "core_values": [],
@@ -74,6 +75,10 @@ user_id = st.session_state.user["localId"]
 
 # Load existing clarity data
 clarity_data = load_clarity()
+
+# Update session state with existing data if available
+if clarity_data and "values" in clarity_data:
+    st.session_state.values.update(clarity_data["values"])
 
 # === Main UI ===
 col1, col2 = st.columns([3, 1])
@@ -146,49 +151,53 @@ st.caption("Share What Matters Most to You")
 
 # Core Values
 st.markdown("#### Core Values")
-st.session_state.values["core_values"] = create_value_checkbox(
+selected_core_values = create_value_checkbox(
     "What Are Your Core Values?",
     ["Honesty", "Integrity", "Creativity", "Growth", "Connection", "Freedom", "Justice", "Balance"],
-    st.session_state.values.get("core_values", []),
+    st.session_state.values["core_values"],
     key="core_values"
 )
+st.session_state.values["core_values"] = selected_core_values
 
 # Beliefs
 st.markdown("#### Beliefs")
-st.session_state.values["beliefs"] = create_value_checkbox(
+selected_beliefs = create_value_checkbox(
     "What Do You Believe In?",
     ["Personal Growth", "Social Justice", "Environmental Care", "Scientific Progress", "Spiritual Growth", "Community", "Innovation", "Tradition"],
-    st.session_state.values.get("beliefs", []),
+    st.session_state.values["beliefs"],
     key="beliefs"
 )
+st.session_state.values["beliefs"] = selected_beliefs
 
 # Goals
 st.markdown("#### Goals")
-st.session_state.values["goals"] = create_value_checkbox(
+selected_goals = create_value_checkbox(
     "What Are Your Goals?",
     ["Career Growth", "Personal Development", "Health & Wellness", "Relationships", "Learning", "Financial Success", "Creative Expression", "Social Impact"],
-    st.session_state.values.get("goals", []),
+    st.session_state.values["goals"],
     key="goals"
 )
+st.session_state.values["goals"] = selected_goals
 
 # Interests
 st.markdown("#### Interests")
-st.session_state.values["interests"] = create_value_checkbox(
+selected_interests = create_value_checkbox(
     "What Are Your Interests?",
     ["Technology", "Arts", "Science", "Philosophy", "Sports", "Travel", "Music", "Literature"],
-    st.session_state.values.get("interests", []),
+    st.session_state.values["interests"],
     key="interests"
 )
+st.session_state.values["interests"] = selected_interests
 
 # Save personality data
 if st.button("💾 Save Profile"):
     try:
         # Get values from session state
         values = {
-            "core_values": st.session_state.values.get("core_values", []),
-            "beliefs": st.session_state.values.get("beliefs", []),
-            "goals": st.session_state.values.get("goals", []),
-            "interests": st.session_state.values.get("interests", [])
+            "core_values": st.session_state.values["core_values"],
+            "beliefs": st.session_state.values["beliefs"],
+            "goals": st.session_state.values["goals"],
+            "interests": st.session_state.values["interests"]
         }
         
         # Save to Firestore
