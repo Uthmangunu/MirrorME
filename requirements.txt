@@ -6,6 +6,7 @@ python-dotenv
 
 # --- Firebase Auth ---
 pyrebase4
+firebase-admin
 
 # --- Voice & Audio ---
 PyJWT

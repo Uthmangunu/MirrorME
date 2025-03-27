@@ -1,44 +1,75 @@
 # firebase_client.py
+import firebase_admin
+from firebase_admin import credentials, initialize_app
 from google.cloud import firestore
 from google.oauth2 import service_account
 import os
 import json
 import streamlit as st
 
+# === 🔥 Initialize Firebase Admin SDK ===
+def init_firebase_admin():
+    try:
+        if not firebase_admin._apps:
+            if "GOOGLE_APPLICATION_CREDENTIALS" in st.secrets:
+                try:
+                    # Get credentials from secrets
+                    service_account_info = json.loads(st.secrets["GOOGLE_APPLICATION_CREDENTIALS"])
+                    
+                    # Clean the credentials dictionary
+                    service_account_info = {k: v for k, v in service_account_info.items() if v is not None}
+                    
+                    # Ensure private_key is properly formatted
+                    if "private_key" in service_account_info:
+                        service_account_info["private_key"] = service_account_info["private_key"].replace("\\n", "\n")
+                    
+                    # Initialize Firebase Admin SDK
+                    cred = credentials.Certificate(service_account_info)
+                    initialize_app(cred)
+                    print("✅ Firebase Admin SDK initialized successfully")
+                    return True
+                except json.JSONDecodeError as e:
+                    st.error(f"❌ Invalid JSON in credentials: {e}")
+                    return False
+                except Exception as e:
+                    st.error(f"❌ Firebase Admin SDK initialization failed: {e}")
+                    return False
+            else:
+                st.error("❌ GOOGLE_APPLICATION_CREDENTIALS not found in secrets")
+                return False
+        return True
+    except Exception as e:
+        st.error(f"❌ Firebase Admin SDK initialization failed: {e}")
+        return False
+
 # === 🔥 Initialize Firestore ===
 def init_firestore():
     try:
+        # Initialize Firebase Admin SDK first
+        if not init_firebase_admin():
+            return None
+            
         # Debug: Print available secrets
-        st.write("Available secrets:", list(st.secrets.keys()))
+        print("Available secrets:", list(st.secrets.keys()))
         
         # Check if we have the service account credentials
         if "GOOGLE_APPLICATION_CREDENTIALS" in st.secrets:
             try:
                 # Get the credentials from secrets
-                creds_data = st.secrets["GOOGLE_APPLICATION_CREDENTIALS"]
-                
-                # If it's a string, try to parse it as JSON
-                if isinstance(creds_data, str):
-                    try:
-                        creds_dict = json.loads(creds_data)
-                    except json.JSONDecodeError as e:
-                        st.error(f"❌ Invalid JSON in credentials: {e}")
-                        return None
-                else:
-                    creds_dict = creds_data
+                service_account_info = json.loads(st.secrets["GOOGLE_APPLICATION_CREDENTIALS"])
                 
                 # Clean the credentials dictionary
-                creds_dict = {k: v for k, v in creds_dict.items() if v is not None}
+                service_account_info = {k: v for k, v in service_account_info.items() if v is not None}
                 
                 # Ensure private_key is properly formatted
-                if "private_key" in creds_dict:
-                    creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+                if "private_key" in service_account_info:
+                    service_account_info["private_key"] = service_account_info["private_key"].replace("\\n", "\n")
                 
                 # Create credentials object
-                creds = service_account.Credentials.from_service_account_info(creds_dict)
+                creds = service_account.Credentials.from_service_account_info(service_account_info)
                 
                 # Initialize Firestore client
-                return firestore.Client(credentials=creds, project=creds_dict.get("project_id"))
+                return firestore.Client(credentials=creds, project=service_account_info.get("project_id"))
             except Exception as e:
                 st.error(f"❌ Error processing credentials: {e}")
                 return None
