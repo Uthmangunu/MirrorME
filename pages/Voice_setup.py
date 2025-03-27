@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import tempfile
 import time
 from components.feedback_button import feedback_button
+from components.topbar import topbar
 from streamlit_webrtc import webrtc_streamer, WebRtcMode
 import soundfile as sf
 from io import BytesIO
@@ -15,95 +16,11 @@ import plotly.graph_objects as go
 from scipy.io import wavfile
 
 # === Page Config ===
-st.set_page_config(page_title="MirrorMe - Voice Setup", page_icon="🎙️", layout="centered")
-
-# Add minimal CSS
-st.markdown("""
-<style>
-/* Hide WebRTC elements */
-.stWebRtc {
-    display: none !important;
-}
-
-/* Hide specific WebRTC buttons */
-.stWebRtc button {
-    display: none !important;
-}
-
-/* Hide WebRTC container */
-.stWebRtc > div {
-    display: none !important;
-}
-
-.main {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 2rem;
-}
-
-.recording-container {
-    background: white;
-    padding: 2rem;
-    border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin: 1rem 0;
-}
-
-.timer {
-    font-size: 2rem;
-    font-weight: bold;
-    color: #FF4B4B;
-    text-align: center;
-    margin: 1rem 0;
-}
-
-.waveform {
-    height: 60px;
-    background: #f5f5f5;
-    border-radius: 5px;
-    margin: 1rem 0;
-    overflow: hidden;
-}
-
-.stButton>button {
-    width: 100%;
-    margin: 0.5rem 0;
-    border-radius: 5px;
-}
-
-.preview-container {
-    background: #f8f9fa;
-    padding: 1rem;
-    border-radius: 5px;
-    margin: 1rem 0;
-}
-
-.recording-status {
-    text-align: center;
-    color: #FF4B4B;
-    font-weight: bold;
-    margin: 0.5rem 0;
-}
-
-.recording-timer {
-    font-size: 2rem;
-    font-weight: bold;
-    color: #FF4B4B;
-    text-align: center;
-    margin: 1rem 0;
-    font-family: monospace;
-}
-
-.waveform-container {
-    height: 60px;
-    background: #f5f5f5;
-    border-radius: 5px;
-    margin: 1rem 0;
-    overflow: hidden;
-    position: relative;
-}
-</style>
-""", unsafe_allow_html=True)
+st.set_page_config(
+    page_title="MirrorMe - Voice Setup",
+    page_icon="🎙️",
+    layout="centered"
+)
 
 # === 🔐 Require Login ===
 if "user" not in st.session_state:
@@ -137,6 +54,10 @@ if not st.session_state.user:
     st.stop()
 
 user_id = st.session_state.user["localId"]
+username = st.session_state.user.get("displayName", "User")
+
+# Add topbar
+topbar(username)
 
 # === Load API Key ===
 load_dotenv()

@@ -6,9 +6,155 @@ import json
 import tempfile
 from dotenv import load_dotenv
 import time
+from components.topbar import topbar
 
-# Set page config first (must be the first Streamlit command)
-st.set_page_config(page_title="MirrorMe", page_icon="🪞")
+# === Page Config ===
+st.set_page_config(
+    page_title="MirrorMe - Your AI Reflection",
+    page_icon="🪞",
+    layout="centered"
+)
+
+# Add custom CSS
+st.markdown("""
+<style>
+.landing-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 80vh;
+    text-align: center;
+    padding: 2rem;
+}
+
+.logo {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.tagline {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 2rem;
+}
+
+.subtagline {
+    font-size: 1.2rem;
+    color: #666;
+    margin-bottom: 3rem;
+    max-width: 600px;
+}
+
+.button-container {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stButton>button {
+    padding: 0.5rem 2rem;
+    font-size: 1.1rem;
+    border-radius: 5px;
+    transition: all 0.2s ease;
+}
+
+.stButton>button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-top: 4rem;
+    padding: 2rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.feature-card {
+    padding: 1.5rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.feature-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.feature-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.feature-description {
+    color: #666;
+    font-size: 0.9rem;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# === Main Content ===
+st.markdown('<div class="landing-container">', unsafe_allow_html=True)
+
+# Logo and Tagline
+st.markdown('<div class="logo">🪞</div>', unsafe_allow_html=True)
+st.markdown('<div class="tagline">Not just an assistant — a reflection.</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtagline">Your AI companion that learns, adapts, and mirrors your personality.</div>', unsafe_allow_html=True)
+
+# Action Buttons
+st.markdown('<div class="button-container">', unsafe_allow_html=True)
+col1, col2 = st.columns(2)
+with col1:
+    if st.button("🧠 Start Building Your Mirror", key="start"):
+        st.switch_page("pages/Clarity.py")
+with col2:
+    if st.button("🔐 Login / Register", key="login"):
+        st.switch_page("pages/Login.py")
+st.markdown('</div>', unsafe_allow_html=True)
+
+# Features Section
+st.markdown('<div class="features">', unsafe_allow_html=True)
+
+# Feature 1
+st.markdown("""
+<div class="feature-card">
+    <div class="feature-icon">🧠</div>
+    <div class="feature-title">Personalized AI</div>
+    <div class="feature-description">An AI that learns your personality and adapts to your communication style.</div>
+</div>
+""", unsafe_allow_html=True)
+
+# Feature 2
+st.markdown("""
+<div class="feature-card">
+    <div class="feature-icon">🎙️</div>
+    <div class="feature-title">Voice Cloning</div>
+    <div class="feature-description">Hear your Mirror speak in your own voice, making interactions feel natural.</div>
+</div>
+""", unsafe_allow_html=True)
+
+# Feature 3
+st.markdown("""
+<div class="feature-card">
+    <div class="feature-icon">📓</div>
+    <div class="feature-title">Personal Journal</div>
+    <div class="feature-description">Track your thoughts and emotions with an AI that understands your context.</div>
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+# Humor Injection
+st.caption("⚠️ MirrorMe reflects more than just your words. Emotional stability not included.")
+
+st.markdown('</div>', unsafe_allow_html=True)
 
 from user_memory import (
     load_user_clarity, save_user_clarity,
