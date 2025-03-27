@@ -60,6 +60,13 @@ st.markdown("""
 .stWebRtc {
     display: none !important;
 }
+
+.preview-container {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 5px;
+    margin: 1rem 0;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -200,44 +207,51 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 # Preview section
 if st.session_state.show_preview and st.session_state.recording_path:
-    st.markdown("### Preview")
+    st.markdown('<div class="preview-container">', unsafe_allow_html=True)
+    st.markdown("### Preview Recording")
+    
+    # Display audio player
     st.audio(st.session_state.recording_path)
     
-    if st.button("✅ Use This Recording"):
-        with st.spinner("Processing..."):
-            voice_id = create_voice_in_elevenlabs(user_id, st.session_state.recording_path)
-            
-            if voice_id:
-                if save_voice_id_to_firestore(user_id, voice_id):
-                    st.session_state.voice_id = voice_id
-                    st.success("✅ Voice profile created!")
-                    
-                    # Play test audio
-                    test_audio = generate_voice_response(
-                        "Hey, it's your Mirror. I'm excited to be speaking with you in your own voice!",
-                        voice_id
-                    )
-                    if test_audio:
-                        st.audio(test_audio, format="audio/mp3")
+    # Add buttons for actions
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("✅ Use This Recording"):
+            with st.spinner("Processing..."):
+                voice_id = create_voice_in_elevenlabs(user_id, st.session_state.recording_path)
+                
+                if voice_id:
+                    if save_voice_id_to_firestore(user_id, voice_id):
+                        st.session_state.voice_id = voice_id
+                        st.success("✅ Voice profile created!")
+                        
+                        # Play test audio
+                        test_audio = generate_voice_response(
+                            "Hey, it's your Mirror. I'm excited to be speaking with you in your own voice!",
+                            voice_id
+                        )
+                        if test_audio:
+                            st.audio(test_audio, format="audio/mp3")
+                    else:
+                        st.error("Failed to save voice ID")
                 else:
-                    st.error("Failed to save voice ID")
-            else:
-                st.error("Failed to create voice profile")
-            
-            # Clean up
-            os.unlink(st.session_state.recording_path)
+                    st.error("Failed to create voice profile")
+                
+                # Clean up
+                os.unlink(st.session_state.recording_path)
+                st.session_state.show_preview = False
+                st.session_state.recording_path = None
+                st.session_state.audio_data = []
+                st.session_state.audio_levels = []
+    
+    with col2:
+        if st.button("🔄 Record Again"):
             st.session_state.show_preview = False
             st.session_state.recording_path = None
             st.session_state.audio_data = []
             st.session_state.audio_levels = []
-            st.experimental_rerun()
     
-    if st.button("🔄 Record Again"):
-        st.session_state.show_preview = False
-        st.session_state.recording_path = None
-        st.session_state.audio_data = []
-        st.session_state.audio_levels = []
-        st.experimental_rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # === Helpful tips ===
 st.markdown("""
