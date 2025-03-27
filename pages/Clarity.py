@@ -47,10 +47,10 @@ if "traits" not in st.session_state:
     }
 if "values" not in st.session_state:
     st.session_state.values = {
-        "Core Values": [],
-        "Beliefs": [],
-        "Goals": [],
-        "Interests": []
+        "core_values": [],
+        "beliefs": [],
+        "goals": [],
+        "interests": []
     }
 if "persona_mode" not in st.session_state:
     st.session_state.persona_mode = "Balanced"  # Set default to match available options
@@ -128,37 +128,37 @@ st.caption("Share What Matters Most to You")
 
 # Core Values
 st.markdown("#### Core Values")
-st.session_state.values["Core Values"] = create_value_checkbox(
+st.session_state.values["core_values"] = create_value_checkbox(
     "What Are Your Core Values?",
     ["Honesty", "Integrity", "Creativity", "Growth", "Connection", "Freedom", "Justice", "Balance"],
-    st.session_state.values["Core Values"],
+    st.session_state.values["core_values"],
     key="core_values"
 )
 
 # Beliefs
 st.markdown("#### Beliefs")
-st.session_state.values["Beliefs"] = create_value_checkbox(
+st.session_state.values["beliefs"] = create_value_checkbox(
     "What Do You Believe In?",
     ["Personal Growth", "Social Justice", "Environmental Care", "Scientific Progress", "Spiritual Growth", "Community", "Innovation", "Tradition"],
-    st.session_state.values["Beliefs"],
+    st.session_state.values["beliefs"],
     key="beliefs"
 )
 
 # Goals
 st.markdown("#### Goals")
-st.session_state.values["Goals"] = create_value_checkbox(
+st.session_state.values["goals"] = create_value_checkbox(
     "What Are Your Goals?",
     ["Career Growth", "Personal Development", "Health & Wellness", "Relationships", "Learning", "Financial Success", "Creative Expression", "Social Impact"],
-    st.session_state.values["Goals"],
+    st.session_state.values["goals"],
     key="goals"
 )
 
 # Interests
 st.markdown("#### Interests")
-st.session_state.values["Interests"] = create_value_checkbox(
+st.session_state.values["interests"] = create_value_checkbox(
     "What Are Your Interests?",
     ["Technology", "Arts", "Science", "Philosophy", "Sports", "Travel", "Music", "Literature"],
-    st.session_state.values["Interests"],
+    st.session_state.values["interests"],
     key="interests"
 )
 
@@ -166,17 +166,11 @@ st.session_state.values["Interests"] = create_value_checkbox(
 if st.button("💾 Save Profile"):
     try:
         # Get values from session state
-        core_values = st.session_state.core_values if hasattr(st.session_state, "core_values") else []
-        beliefs = st.session_state.beliefs if hasattr(st.session_state, "beliefs") else []
-        goals = st.session_state.goals if hasattr(st.session_state, "goals") else []
-        interests = st.session_state.interests if hasattr(st.session_state, "interests") else []
-        
-        # Create values dictionary
         values = {
-            "Core Values": core_values,
-            "Beliefs": beliefs,
-            "Goals": goals,
-            "Interests": interests
+            "core_values": st.session_state.values["core_values"],
+            "beliefs": st.session_state.values["beliefs"],
+            "goals": st.session_state.values["goals"],
+            "interests": st.session_state.values["interests"]
         }
         
         # Save to Firestore
