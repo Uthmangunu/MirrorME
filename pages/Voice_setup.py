@@ -20,6 +20,21 @@ st.set_page_config(page_title="MirrorMe - Voice Setup", page_icon="🎙️", lay
 # Add minimal CSS
 st.markdown("""
 <style>
+/* Hide WebRTC elements */
+.stWebRtc {
+    display: none !important;
+}
+
+/* Hide specific WebRTC buttons */
+.stWebRtc button {
+    display: none !important;
+}
+
+/* Hide WebRTC container */
+.stWebRtc > div {
+    display: none !important;
+}
+
 .main {
     max-width: 800px;
     margin: 0 auto;
@@ -54,11 +69,6 @@ st.markdown("""
     width: 100%;
     margin: 0.5rem 0;
     border-radius: 5px;
-}
-
-/* Hide WebRTC elements */
-.stWebRtc {
-    display: none !important;
 }
 
 .preview-container {
@@ -203,7 +213,8 @@ with st.container():
         mode=WebRtcMode.SENDONLY,
         audio_receiver_size=1024,
         media_stream_constraints={"audio": True, "video": False},
-        async_processing=True
+        async_processing=True,
+        rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
     )
 
 # Real-time waveform update
