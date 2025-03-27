@@ -361,6 +361,7 @@ def create_animated_input(mood, size=20, animation_class=""):
             box-shadow: 0 0 10px {color}40;
             flex-shrink: 0;
             margin-right: 10px;
+            z-index: 1000;
         }}
         
         .mood-indicator:hover {{
@@ -428,7 +429,7 @@ def create_animated_input(mood, size=20, animation_class=""):
             pointer-events: none;
             opacity: 0;
             transition: opacity 0.3s ease;
-            z-index: 1000;
+            z-index: 1001;
         }}
         
         .mood-indicator:hover + .mood-tooltip {{

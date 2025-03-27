@@ -15,19 +15,18 @@ from components.feedback_button import feedback_button
 from google.cloud import firestore
 from datetime import datetime
 
-# Set page config as first command
-st.set_page_config(
-    page_title="MirrorMe - Clarity",
-    page_icon="🔮",
-    layout="wide"
-)
+# Set page config first (must be the first Streamlit command)
+st.set_page_config(page_title="MirrorMe - Clarity", page_icon="🧠")
 
-# Check authentication
-if 'user_id' not in st.session_state:
-    st.warning("Please log in to access this page.")
+# Check if user is logged in
+if "user" not in st.session_state or not st.session_state.user:
+    st.warning("⚠️ Please log in to access this page.")
+    if st.button("🔐 Login"):
+        st.switch_page("Login.py")
     st.stop()
 
-user_id = st.session_state.user_id
+# Get user ID from session state
+user_id = st.session_state.user["localId"]
 
 # Initialize session state for traits and values if not exists
 if 'traits' not in st.session_state:
