@@ -208,7 +208,6 @@ with st.container():
 
 # Real-time waveform update
 if rec.audio_receiver and st.session_state.is_recording:
-    placeholder = st.empty()
     waveform_container = st.empty()
     
     while st.session_state.is_recording:
