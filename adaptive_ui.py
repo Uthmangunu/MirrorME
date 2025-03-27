@@ -3,12 +3,35 @@ import time
 from typing import Dict, Any
 
 # === Mood to Color Mapping ===
-MOOD_COLOR_MAP = {
-    "calm": "#2E8B57",
-    "sad": "#4169E1",
-    "angry": "#B22222",
-    "happy": "#FFD700",
-    "neutral": "#708090"
+MOOD_COLORS = {
+    "calm": {
+        "color": "#3498DB",  # Soft blue
+        "glow": "#3498DB33"  # Semi-transparent version for glow
+    },
+    "sad": {
+        "color": "#95A5A6",  # Muted gray
+        "glow": "#95A5A633"
+    },
+    "playful": {
+        "color": "#F1C40F",  # Bright yellow
+        "glow": "#F1C40F33"
+    },
+    "excited": {
+        "color": "#2ECC71",  # Vibrant green
+        "glow": "#2ECC7133"
+    },
+    "angry": {
+        "color": "#E74C3C",  # Deep red
+        "glow": "#E74C3C33"
+    },
+    "thoughtful": {
+        "color": "#9B59B6",  # Purple
+        "glow": "#9B59B633"
+    },
+    "neutral": {
+        "color": "#BDC3C7",  # Light gray
+        "glow": "#BDC3C733"
+    }
 }
 
 # === Determine Mood from Text ===
@@ -29,38 +52,39 @@ def detect_mood(text):
 def set_mood_background(mood: str) -> None:
     """
     Set the UI background and theme based on the user's mood.
+    Now uses a more subtle approach with the mood indicator.
     """
     # Define color schemes for different moods
     mood_colors = {
         "calm": {
-            "bg_color": "#E6F3FF",
+            "bg_color": "#FFFFFF",
             "text_color": "#2C3E50",
             "accent_color": "#3498DB"
         },
         "sad": {
-            "bg_color": "#F5F5F5",
+            "bg_color": "#FFFFFF",
             "text_color": "#34495E",
             "accent_color": "#95A5A6"
         },
         "excited": {
-            "bg_color": "#FFF3E0",
+            "bg_color": "#FFFFFF",
             "text_color": "#E65100",
-            "accent_color": "#FF9800"
+            "accent_color": "#F1C40F"
         },
         "angry": {
-            "bg_color": "#FFEBEE",
+            "bg_color": "#FFFFFF",
             "text_color": "#B71C1C",
-            "accent_color": "#F44336"
+            "accent_color": "#E74C3C"
         },
         "playful": {
-            "bg_color": "#F3E5F5",
+            "bg_color": "#FFFFFF",
             "text_color": "#4A148C",
-            "accent_color": "#9C27B0"
+            "accent_color": "#9B59B6"
         },
         "thoughtful": {
-            "bg_color": "#E8F5E9",
+            "bg_color": "#FFFFFF",
             "text_color": "#1B5E20",
-            "accent_color": "#4CAF50"
+            "accent_color": "#2ECC71"
         },
         "neutral": {
             "bg_color": "#FFFFFF",
@@ -186,3 +210,56 @@ def create_value_checkbox(value: str, key: str = None) -> bool:
         key=key,
         help=f"Select if {value.lower()} is one of your core values"
     )
+
+def render_mood_indicator(mood: str, size: int = 20) -> None:
+    """
+    Render a small, colored circle indicator for the current mood.
+    Includes hover effect and animation.
+    """
+    colors = MOOD_COLORS.get(mood, MOOD_COLORS["neutral"])
+    
+    st.markdown(f"""
+        <style>
+        .mood-indicator {{
+            display: inline-block;
+            width: {size}px;
+            height: {size}px;
+            background-color: {colors['color']};
+            border-radius: 50%;
+            margin-left: 10px;
+            position: relative;
+            animation: pulse 2s infinite;
+        }}
+        .mood-indicator::after {{
+            content: "Mood: {mood.capitalize()}";
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }}
+        .mood-indicator:hover::after {{
+            opacity: 1;
+        }}
+        @keyframes pulse {{
+            0% {{
+                box-shadow: 0 0 0 0 {colors['glow']};
+            }}
+            70% {{
+                box-shadow: 0 0 0 10px {colors['glow']}00;
+            }}
+            100% {{
+                box-shadow: 0 0 0 0 {colors['glow']}00;
+            }}
+        }}
+        </style>
+        <div class="mood-indicator"></div>
+    """, unsafe_allow_html=True)

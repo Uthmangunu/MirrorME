@@ -14,7 +14,7 @@ from user_memory import (
     update_user_memory, get_user_memory_as_string
 )
 from clarity_tracker import log_clarity_change 
-from adaptive_ui import detect_mood, set_mood_background
+from adaptive_ui import detect_mood, set_mood_background, render_mood_indicator
 from long_memory import load_long_memory
 from clarity_core import load_clarity, save_clarity, apply_trait_xp
 from user_settings import load_user_settings
@@ -219,7 +219,19 @@ def get_reply(messages):
         st.error(f"❌ OpenAI Error: {e}")
         return None
 
-st.title("🪞 MirrorMe — Live Chat with Your Mirror")
+# Initialize session state for current_mood if not exists
+if "current_mood" not in st.session_state:
+    st.session_state.current_mood = "neutral"
+
+# Create a container for the title and mood indicator
+title_container = st.container()
+with title_container:
+    col1, col2 = st.columns([1, 20])
+    with col1:
+        render_mood_indicator(st.session_state.current_mood)
+    with col2:
+        st.title("🪞 MirrorMe — Live Chat with Your Mirror")
+
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "system", "content": generate_prompt_from_clarity(user_id)}]
 
@@ -232,8 +244,10 @@ if user_input:
         st.session_state.messages.append({"role": "assistant", "content": reply})
         update_user_memory(user_id, user_input, reply)
         mood = detect_mood(user_input + " " + reply)
+        st.session_state.current_mood = mood
         set_mood_background(mood)
         save_clarity(clarity_data)
+        st.experimental_rerun()  # Rerun to update the mood indicator
 
 for msg in st.session_state.messages[1:]:
     if msg["role"] == "user":
