@@ -3,6 +3,7 @@ import openai
 import os
 import requests
 import json
+import tempfile
 from dotenv import load_dotenv
 
 from user_memory import (
@@ -18,6 +19,16 @@ from vector_store import get_similar_memories
 from style_analyzer import analyze_user_style
 
 load_dotenv()
+
+# === Firebase Admin SDK Credential Setup ===
+if "GOOGLE_APPLICATION_CREDENTIALS" in st.secrets:
+    service_account_info = json.loads(st.secrets["GOOGLE_APPLICATION_CREDENTIALS"])
+    with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
+        json.dump(service_account_info, f)
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = f.name
+else:
+    st.error("❌ GOOGLE_APPLICATION_CREDENTIALS not found in secrets.")
+
 st.set_page_config(page_title="MirrorMe", page_icon="🪞")
 
 # === AUTH HANDLING ===
