@@ -115,13 +115,19 @@ values_text = st.text_area(
 
 if values_text:
     extracted_values = extract_values_from_text(values_text)
-    st.session_state.values.update(extracted_values)
+    
+    # Update the appropriate category in values
+    for category, values in extracted_values.items():
+        if category in st.session_state.values:
+            st.session_state.values[category] = values
     
     # Display extracted values
     st.markdown("### Detected Values:")
-    for value, present in extracted_values.items():
-        if present:
-            st.markdown(f"- {value.capitalize()}")
+    for category, values in extracted_values.items():
+        if values:  # Only show categories that have values
+            st.markdown(f"#### {category.replace('_', ' ').title()}:")
+            for value in values:
+                st.markdown(f"- {value.capitalize()}")
 
 # Personality Visualization
 st.header("🎯 Personality Radar")
