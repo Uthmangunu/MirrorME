@@ -12,6 +12,9 @@ firebase-admin
 PyJWT
 pydub
 SpeechRecognition
+streamlit-webrtc>=0.47.1
+soundfile>=0.12.1
+numpy>=1.24.0
 
 # --- Plotting (Clarity radar chart) ---
 matplotlib
