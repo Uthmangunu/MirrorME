@@ -51,43 +51,36 @@ def detect_mood(text):
 # === Mood-Based Highlight Styling ===
 def set_mood_background(mood: str) -> None:
     """
-    Set the UI background and theme based on the user's mood.
-    Now uses a more subtle approach with the mood indicator.
+    Set the UI theme based on the user's mood.
+    Only affects accent colors, not background.
     """
     # Define color schemes for different moods
     mood_colors = {
         "calm": {
-            "bg_color": "#FFFFFF",
             "text_color": "#2C3E50",
             "accent_color": "#3498DB"
         },
         "sad": {
-            "bg_color": "#FFFFFF",
             "text_color": "#34495E",
             "accent_color": "#95A5A6"
         },
         "excited": {
-            "bg_color": "#FFFFFF",
             "text_color": "#E65100",
             "accent_color": "#F1C40F"
         },
         "angry": {
-            "bg_color": "#FFFFFF",
             "text_color": "#B71C1C",
             "accent_color": "#E74C3C"
         },
         "playful": {
-            "bg_color": "#FFFFFF",
             "text_color": "#4A148C",
             "accent_color": "#9B59B6"
         },
         "thoughtful": {
-            "bg_color": "#FFFFFF",
             "text_color": "#1B5E20",
             "accent_color": "#2ECC71"
         },
         "neutral": {
-            "bg_color": "#FFFFFF",
             "text_color": "#000000",
             "accent_color": "#2196F3"
         }
@@ -96,13 +89,9 @@ def set_mood_background(mood: str) -> None:
     # Get color scheme for current mood
     colors = mood_colors.get(mood, mood_colors["neutral"])
     
-    # Apply custom CSS
+    # Apply custom CSS - only affecting accent colors
     st.markdown(f"""
         <style>
-        .stApp {{
-            background-color: {colors['bg_color']};
-            color: {colors['text_color']};
-        }}
         .stButton>button {{
             background-color: {colors['accent_color']};
             color: white;
@@ -226,9 +215,21 @@ def render_mood_indicator(mood: str, size: int = 20) -> None:
             height: {size}px;
             background-color: {colors['color']};
             border-radius: 50%;
-            margin-left: 10px;
+            margin: 0 10px;
             position: relative;
-            animation: pulse 2s infinite;
+            animation: morph 4s infinite, pulse 2s infinite;
+            transition: all 0.3s ease;
+        }}
+        .mood-indicator::before {{
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, {colors['color']}ff, {colors['color']}00);
+            animation: glow 2s infinite;
         }}
         .mood-indicator::after {{
             content: "Mood: {mood.capitalize()}";
@@ -246,8 +247,19 @@ def render_mood_indicator(mood: str, size: int = 20) -> None:
             transition: opacity 0.3s;
             pointer-events: none;
         }}
+        .mood-indicator:hover {{
+            transform: scale(1.1);
+            box-shadow: 0 0 20px {colors['glow']};
+        }}
         .mood-indicator:hover::after {{
             opacity: 1;
+        }}
+        @keyframes morph {{
+            0% {{ border-radius: 50%; }}
+            25% {{ border-radius: 60% 40% 30% 70%; }}
+            50% {{ border-radius: 30% 60% 70% 40%; }}
+            75% {{ border-radius: 40% 30% 60% 70%; }}
+            100% {{ border-radius: 50%; }}
         }}
         @keyframes pulse {{
             0% {{
@@ -259,6 +271,11 @@ def render_mood_indicator(mood: str, size: int = 20) -> None:
             100% {{
                 box-shadow: 0 0 0 0 {colors['glow']}00;
             }}
+        }}
+        @keyframes glow {{
+            0% {{ opacity: 0.5; }}
+            50% {{ opacity: 0.8; }}
+            100% {{ opacity: 0.5; }}
         }}
         </style>
         <div class="mood-indicator"></div>

@@ -226,11 +226,13 @@ if "current_mood" not in st.session_state:
 # Create a container for the title and mood indicator
 title_container = st.container()
 with title_container:
-    col1, col2 = st.columns([1, 20])
+    col1, col2, col3 = st.columns([1, 20, 1])
     with col1:
-        render_mood_indicator(st.session_state.current_mood)
+        render_mood_indicator(st.session_state.current_mood, size=30)  # Increased size
     with col2:
         st.title("🪞 MirrorMe — Live Chat with Your Mirror")
+    with col3:
+        render_mood_indicator(st.session_state.current_mood, size=30)  # Mirror effect
 
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "system", "content": generate_prompt_from_clarity(user_id)}]
