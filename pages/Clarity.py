@@ -47,7 +47,7 @@ if "values" not in st.session_state:
         "interests": []
     }
 if "persona_mode" not in st.session_state:
-    st.session_state.persona_mode = "balanced"
+    st.session_state.persona_mode = "balanced"  # Set default to match available options
 if "current_mood" not in st.session_state:
     st.session_state.current_mood = "neutral"
 if "mood_changed" not in st.session_state:
@@ -60,11 +60,13 @@ with st.sidebar:
     st.title("🔮 Mirror Settings")
     
     # Persona mode selection
+    st.markdown("### 🎭 Mirror Persona")
     persona_mode = st.selectbox(
-        "Choose your Mirror's persona:",
-        ["Professional", "Friendly", "Creative"],
-        key="persona_mode"
+        "Choose how your Mirror should behave",
+        options=["balanced", "professional", "casual", "creative", "analytical"],
+        index=["balanced", "professional", "casual", "creative", "analytical"].index(st.session_state.persona_mode)
     )
+    st.session_state.persona_mode = persona_mode
     
     # Display current mood
     st.markdown(f"### Current Mood: {st.session_state.current_mood.capitalize()}")

@@ -357,10 +357,10 @@ st.markdown("""
         color: white;
     }
     .user-msg { 
-        color: #FFD700; 
+        color: white; 
     }
     .ai-msg { 
-        color: #90EE90; 
+        color: white; 
     }
     .stMarkdown { 
         color: white; 
@@ -372,6 +372,9 @@ st.markdown("""
     }
     .stChatInputContainer {
         background-color: #1a1d23 !important;
+    }
+    .typewriter {
+        color: white;
     }
     </style>
 """, unsafe_allow_html=True)
