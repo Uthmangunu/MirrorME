@@ -250,6 +250,7 @@ st.pyplot(fig)
 # === Save Button ===
 if st.button("💾 Save Settings", key="save_settings"):
     try:
+        # Prepare settings data
         settings = {
             "core_values": st.session_state.core_values,
             "personality_traits": st.session_state.personality_traits,
@@ -257,14 +258,20 @@ if st.button("💾 Save Settings", key="save_settings"):
             "updated_at": datetime.now().isoformat()
         }
         
-        if save_doc("settings", user_id, settings):
+        # Save to Firestore
+        success = save_doc("settings", user_id, settings)
+        
+        if success:
             st.success("✅ Settings saved successfully!")
             # Redirect to Home after successful save
             st.switch_page("Home.py")
         else:
-            st.error("❌ Failed to save settings. Please try again.")
+            st.error("❌ Failed to save settings. Please check your connection and try again.")
+            st.info("If the problem persists, try refreshing the page or logging out and back in.")
+            
     except Exception as e:
         st.error(f"❌ Error saving settings: {str(e)}")
+        st.info("Please try again or contact support if the issue persists.")
 
 st.markdown('</div>', unsafe_allow_html=True)
 

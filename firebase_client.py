@@ -84,44 +84,89 @@ def init_firestore():
 
 # === 🔧 Firestore Helpers ===
 def get_doc(collection, doc_id):
-    db = init_firestore()
-    if db is None:
+    """
+    Get a document from Firestore.
+    """
+    try:
+        db = init_firestore()
+        if db is None:
+            return {}
+        doc = db.collection(collection).document(doc_id).get()
+        return doc.to_dict() if doc.exists else {}
+    except Exception as e:
+        print(f"Error getting document: {str(e)}")
         return {}
-    doc = db.collection(collection).document(doc_id).get()
-    return doc.to_dict() if doc.exists else {}
 
-def save_doc(collection, user_id, data, append_to_array=None):
+def save_doc(collection, doc_id, data, append_to_array=None):
+    """
+    Save a document to Firestore.
+    """
     try:
         db = init_firestore()
         if not db:
             return False
             
-        doc_ref = db.collection(collection).document(user_id)
+        doc_ref = db.collection(collection).document(doc_id)
         if append_to_array:
             doc_ref.set({append_to_array: firestore.ArrayUnion([data])}, merge=True)
         else:
-            doc_ref.set(data, merge=True)
+            # Convert data to Firestore format
+            firestore_data = {}
+            for key, value in data.items():
+                if isinstance(value, dict):
+                    firestore_data[key] = value
+                elif isinstance(value, list):
+                    firestore_data[key] = value
+                else:
+                    firestore_data[key] = value
+            doc_ref.set(firestore_data, merge=True)
         return True
     except Exception as e:
         st.error(f"❌ Error saving document: {str(e)}")
         return False
 
 def update_doc(collection, doc_id, data):
-    db = init_firestore()
-    if db:
-        db.collection(collection).document(doc_id).update(data)
+    """
+    Update a document in Firestore.
+    """
+    try:
+        db = init_firestore()
+        if db:
+            db.collection(collection).document(doc_id).update(data)
+            return True
+        return False
+    except Exception as e:
+        st.error(f"❌ Error updating document: {str(e)}")
+        return False
 
 def delete_doc(collection, doc_id):
-    db = init_firestore()
-    if db:
-        db.collection(collection).document(doc_id).delete()
+    """
+    Delete a document from Firestore.
+    """
+    try:
+        db = init_firestore()
+        if db:
+            db.collection(collection).document(doc_id).delete()
+            return True
+        return False
+    except Exception as e:
+        st.error(f"❌ Error deleting document: {str(e)}")
+        return False
 
 def get_all_docs(collection):
-    db = init_firestore()
-    if db is None:
+    """
+    Get all documents from a collection.
+    """
+    try:
+        db = init_firestore()
+        if db is None:
+            return []
+        return [doc.to_dict() for doc in db.collection(collection).stream()]
+    except Exception as e:
+        st.error(f"❌ Error getting documents: {str(e)}")
         return []
-    return [doc.to_dict() for doc in db.collection(collection).stream()]
 
+# === 🔐 Authentication Functions ===
 def sign_in_with_email_and_password(email, password):
     """
     Sign in a user with email and password using Firebase Authentication.
@@ -163,34 +208,3 @@ def sign_up_with_email_and_password(email, password):
             
     except Exception as e:
         raise Exception(f"Registration failed: {str(e)}")
-
-def save_doc(collection, doc_id, data):
-    """
-    Save a document to Firestore.
-    """
-    try:
-        response = requests.post(
-            f"https://firestore.googleapis.com/v1/projects/{st.secrets['FIREBASE_PROJECT_ID']}/databases/(default)/documents/{collection}/{doc_id}",
-            params={"key": st.secrets["FIREBASE_API_KEY"]},
-            json={"fields": data}
-        )
-        return response.status_code == 200
-    except Exception as e:
-        print(f"Error saving document: {str(e)}")
-        return False
-
-def get_doc(collection, doc_id):
-    """
-    Get a document from Firestore.
-    """
-    try:
-        response = requests.get(
-            f"https://firestore.googleapis.com/v1/projects/{st.secrets['FIREBASE_PROJECT_ID']}/databases/(default)/documents/{collection}/{doc_id}",
-            params={"key": st.secrets["FIREBASE_API_KEY"]}
-        )
-        if response.status_code == 200:
-            return response.json().get("fields", {})
-        return None
-    except Exception as e:
-        print(f"Error getting document: {str(e)}")
-        return None
