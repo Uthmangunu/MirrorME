@@ -244,8 +244,40 @@ with tab1:
             col1, col2 = st.columns(2)
             with col1:
                 if st.button("✅ Use This Recording"):
-                    st.session_state.recording_path = temp_file.name
-                    st.success("Recording saved! You can now proceed with voice setup.")
+                    with st.spinner("Processing your voice sample..."):
+                        # Send to ElevenLabs
+                        voice_id = create_voice_in_elevenlabs(user_id, temp_file.name)
+                        
+                        if voice_id:
+                            # Save to Firestore
+                            if save_voice_id_to_firestore(user_id, voice_id):
+                                st.session_state.voice_id = voice_id
+                                st.success("✅ Voice profile created successfully!")
+                                
+                                # Play test audio
+                                st.markdown("### 🎵 Test Your Voice")
+                                test_audio = generate_voice_response(
+                                    "Hey, it's your Mirror. I'm excited to be speaking with you in your own voice!",
+                                    voice_id
+                                )
+                                if test_audio:
+                                    st.audio(test_audio, format="audio/mp3")
+                                else:
+                                    st.warning("⚠️ Voice profile created but test audio generation failed.")
+                            else:
+                                st.error("❌ Failed to save voice ID to database. Please try again.")
+                        else:
+                            st.error("❌ Failed to create voice profile. Please try recording again.")
+                        
+                        # Clean up temporary file
+                        os.unlink(temp_file.name)
+                        
+                        # Reset recording state
+                        st.session_state.show_preview = False
+                        st.session_state.audio_data = []
+                        st.session_state.audio_levels = []
+                        st.experimental_rerun()
+            
             with col2:
                 if st.button("🔄 Record Again"):
                     st.session_state.show_preview = False
@@ -352,7 +384,7 @@ def create_voice_in_elevenlabs(user_id, file_path):
     """Create a voice clone in ElevenLabs."""
     url = "https://api.elevenlabs.io/v1/voices/add"
     headers = {
-        "xi-api-key": os.getenv("ELEVENLABS_API_KEY")
+        "xi-api-key": ELEVEN_API_KEY
     }
     
     try:
@@ -368,7 +400,13 @@ def create_voice_in_elevenlabs(user_id, file_path):
             response = requests.post(url, headers=headers, files=files, data=data)
 
             if response.status_code == 200:
-                return response.json().get("voice_id")
+                voice_id = response.json().get("voice_id")
+                if voice_id:
+                    st.info(f"🔍 Voice ID: {voice_id}")  # Show voice ID for debugging
+                    return voice_id
+                else:
+                    st.error("No voice ID returned from ElevenLabs API")
+                    return None
             else:
                 st.error(f"Voice creation failed: {response.text}")
                 return None
@@ -384,7 +422,8 @@ def save_voice_id_to_firestore(user_id, voice_id):
             ref = db.collection("users").document(user_id).collection("personality").document("voice")
             ref.set({
                 "voice_id": voice_id,
-                "created_at": firestore.SERVER_TIMESTAMP
+                "created_at": firestore.SERVER_TIMESTAMP,
+                "updated_at": firestore.SERVER_TIMESTAMP
             })
             return True
         return False
