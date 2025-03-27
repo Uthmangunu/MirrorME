@@ -170,34 +170,33 @@ def adjust_ui_for_persona(persona: str) -> None:
         </style>
     """, unsafe_allow_html=True)
 
-def create_trait_slider(trait: str, min_val: float = 0.0, max_val: float = 1.0, 
-                       default: float = 0.5, key: str = None) -> float:
-    """
-    Create a styled slider for trait adjustment.
-    """
+def create_trait_slider(trait_name, value, key=None):
+    """Create a slider for a personality trait with a unique key."""
     if key is None:
-        key = f"trait_{trait}"
+        key = f"trait_{trait_name.lower()}"
     
     return st.slider(
-        trait,
-        min_value=min_val,
-        max_value=max_val,
-        value=default,
+        trait_name,
+        min_value=0,
+        max_value=100,
+        value=value,
         key=key,
-        help=f"Adjust your {trait.lower()} level"
+        help=f"Adjust your Mirror's {trait_name} level"
     )
 
-def create_value_checkbox(value: str, key: str = None) -> bool:
-    """
-    Create a styled checkbox for value selection.
-    """
+def create_value_checkbox(label, options, selected_values=None, key=None):
+    """Create a multi-select checkbox for values with a unique key."""
     if key is None:
-        key = f"value_{value}"
+        key = f"values_{label.lower().replace(' ', '_')}"
+    if selected_values is None:
+        selected_values = []
     
-    return st.checkbox(
-        value,
+    return st.multiselect(
+        label,
+        options=options,
+        default=selected_values,
         key=key,
-        help=f"Select if {value.lower()} is one of your core values"
+        help=f"Select your {label.lower()}"
     )
 
 def render_mood_indicator(mood, size=20, animation_class=""):

@@ -84,15 +84,15 @@ st.caption("Adjust Your Mirror's Core Personality Traits")
 col1, col2 = st.columns(2)
 
 with col1:
-    st.session_state.traits["Humor"] = create_trait_slider("Humor", st.session_state.traits["Humor"])
-    st.session_state.traits["Empathy"] = create_trait_slider("Empathy", st.session_state.traits["Empathy"])
-    st.session_state.traits["Logic"] = create_trait_slider("Logic", st.session_state.traits["Logic"])
-    st.session_state.traits["Boldness"] = create_trait_slider("Boldness", st.session_state.traits["Boldness"])
+    st.session_state.traits["Humor"] = create_trait_slider("Humor", st.session_state.traits["Humor"], key="trait_humor")
+    st.session_state.traits["Empathy"] = create_trait_slider("Empathy", st.session_state.traits["Empathy"], key="trait_empathy")
+    st.session_state.traits["Logic"] = create_trait_slider("Logic", st.session_state.traits["Logic"], key="trait_logic")
+    st.session_state.traits["Boldness"] = create_trait_slider("Boldness", st.session_state.traits["Boldness"], key="trait_boldness")
 
 with col2:
-    st.session_state.traits["Memory"] = create_trait_slider("Memory", st.session_state.traits["Memory"])
-    st.session_state.traits["Depth"] = create_trait_slider("Depth", st.session_state.traits["Depth"])
-    st.session_state.traits["Adaptability"] = create_trait_slider("Adaptability", st.session_state.traits["Adaptability"])
+    st.session_state.traits["Memory"] = create_trait_slider("Memory", st.session_state.traits["Memory"], key="trait_memory")
+    st.session_state.traits["Depth"] = create_trait_slider("Depth", st.session_state.traits["Depth"], key="trait_depth")
+    st.session_state.traits["Adaptability"] = create_trait_slider("Adaptability", st.session_state.traits["Adaptability"], key="trait_adaptability")
 
 # === Trait Visualization ===
 st.subheader("📊 Trait Distribution")
@@ -131,7 +131,8 @@ st.markdown("#### Core Values")
 st.session_state.values["Core Values"] = create_value_checkbox(
     "What Are Your Core Values?",
     ["Honesty", "Integrity", "Creativity", "Growth", "Connection", "Freedom", "Justice", "Balance"],
-    st.session_state.values["Core Values"]
+    st.session_state.values["Core Values"],
+    key="core_values"
 )
 
 # Beliefs
@@ -139,7 +140,8 @@ st.markdown("#### Beliefs")
 st.session_state.values["Beliefs"] = create_value_checkbox(
     "What Do You Believe In?",
     ["Personal Growth", "Social Justice", "Environmental Care", "Scientific Progress", "Spiritual Growth", "Community", "Innovation", "Tradition"],
-    st.session_state.values["Beliefs"]
+    st.session_state.values["Beliefs"],
+    key="beliefs"
 )
 
 # Goals
@@ -147,7 +149,8 @@ st.markdown("#### Goals")
 st.session_state.values["Goals"] = create_value_checkbox(
     "What Are Your Goals?",
     ["Career Growth", "Personal Development", "Health & Wellness", "Relationships", "Learning", "Financial Success", "Creative Expression", "Social Impact"],
-    st.session_state.values["Goals"]
+    st.session_state.values["Goals"],
+    key="goals"
 )
 
 # Interests
@@ -155,7 +158,8 @@ st.markdown("#### Interests")
 st.session_state.values["Interests"] = create_value_checkbox(
     "What Are Your Interests?",
     ["Technology", "Arts", "Science", "Philosophy", "Sports", "Travel", "Music", "Literature"],
-    st.session_state.values["Interests"]
+    st.session_state.values["Interests"],
+    key="interests"
 )
 
 # Save personality data
