@@ -21,38 +21,81 @@ st.markdown("""
     color: white;
 }
 
-.clarity-container {
+.settings-container {
     max-width: 800px;
-    margin: 2rem auto;
+    margin: 0 auto;
     padding: 2rem;
+}
+
+.section {
     background: rgba(255, 255, 255, 0.05);
+    padding: 2rem;
     border-radius: 12px;
+    margin-bottom: 2rem;
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.stButton>button {
-    width: 100%;
-    background: #FF4B4B;
+.section-title {
+    font-size: 1.5rem;
+    font-weight: bold;
     color: white;
-    border: none;
-    padding: 0.8rem;
+    margin-bottom: 1rem;
+}
+
+.section-description {
+    color: #a0a0a0;
+    margin-bottom: 1.5rem;
+}
+
+.value-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
     border-radius: 8px;
-    font-size: 1.1rem;
     transition: all 0.3s ease;
 }
 
-.stButton>button:hover {
+.value-option:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.value-option.selected {
+    background: rgba(255, 75, 75, 0.2);
+    border: 1px solid rgba(255, 75, 75, 0.3);
+}
+
+.save-button {
+    background: #FF4B4B;
+    color: white;
+    padding: 0.8rem 2rem;
+    border-radius: 8px;
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.save-button:hover {
     background: #e03e3e;
     transform: translateY(-2px);
     box-shadow: 0 4px 15px rgba(255, 75, 75, 0.3);
 }
 
-.stCheckbox>label {
-    color: white;
+.success-message {
+    color: #4CAF50;
+    padding: 1rem;
+    border-radius: 8px;
+    background: rgba(76, 175, 80, 0.1);
+    margin-top: 1rem;
 }
 
-.stRadio>label {
-    color: white;
+.error-message {
+    color: #f44336;
+    padding: 1rem;
+    border-radius: 8px;
+    background: rgba(244, 67, 54, 0.1);
+    margin-top: 1rem;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -66,14 +109,13 @@ if "core_values" not in st.session_state:
 
 if "personality_traits" not in st.session_state:
     st.session_state.personality_traits = {
-        "Humor": 50,
-        "Empathy": 50,
-        "Logic": 50,
-        "Boldness": 50,
-        "Memory": 50,
-        "Depth": 50,
-        "Adaptability": 50
+        "humor": 50,
+        "empathy": 50,
+        "logic": 50
     }
+
+if "mirror_tagline" not in st.session_state:
+    st.session_state.mirror_tagline = ""
 
 # === Require Login ===
 if "user" not in st.session_state or not st.session_state.user:
@@ -91,20 +133,36 @@ topbar(username)
 # === Load Current Settings ===
 current = get_doc("settings", user_id) or {}
 st.session_state.core_values = current.get("core_values", [])
-st.session_state.personality_traits = current.get("personality_traits", st.session_state.personality_traits)
+st.session_state.personality_traits = current.get("personality_traits", {
+    "humor": 50,
+    "empathy": 50,
+    "logic": 50
+})
+st.session_state.mirror_tagline = current.get("mirror_tagline", "")
 
 # === Main UI ===
-st.title("🧠 MirrorMe — Personality Settings")
+st.markdown('<div class="settings-container">', unsafe_allow_html=True)
 
 # === Core Values Section ===
-st.subheader("💫 Core Values")
-st.caption("Select the values that best represent you")
+st.title("🧠 Mirror Clarity")
+st.markdown("""
+<div class="section-description">
+    Define your core values and personality traits to create a Mirror that truly reflects who you are.
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+<div class="section">
+    <div class="section-title">Core Values</div>
+    <div class="section-description">Select the values that define your character and guide your decisions.</div>
+</div>
+""", unsafe_allow_html=True)
 
 # Core values options
 core_values_options = [
-    "Authenticity", "Empathy", "Growth", "Integrity", "Creativity",
-    "Resilience", "Curiosity", "Compassion", "Excellence", "Balance",
-    "Innovation", "Harmony", "Leadership", "Wisdom", "Joy"
+    "Authenticity", "Growth", "Creativity", "Integrity", "Empathy",
+    "Excellence", "Innovation", "Leadership", "Resilience", "Wisdom",
+    "Balance", "Curiosity", "Justice", "Passion", "Service"
 ]
 
 # Create three columns for core values
@@ -130,64 +188,75 @@ with col3:
 st.session_state.core_values = selected_core_values
 
 # === Personality Traits Section ===
-st.subheader("⚙️ Personality Traits")
-st.caption("Adjust your Mirror's core personality traits")
+st.markdown("""
+<div class="section">
+    <div class="section-title">Personality Traits</div>
+    <div class="section-description">Adjust the sliders to match your personality characteristics.</div>
+</div>
+""", unsafe_allow_html=True)
 
 # Create two columns for trait sliders
 col1, col2 = st.columns(2)
 
 with col1:
-    st.session_state.personality_traits["Humor"] = st.slider(
+    st.session_state.personality_traits["humor"] = st.slider(
         "Humor",
         min_value=0,
         max_value=100,
-        value=st.session_state.personality_traits["Humor"],
+        value=st.session_state.personality_traits["humor"],
         key="trait_humor"
     )
-    st.session_state.personality_traits["Empathy"] = st.slider(
+    st.session_state.personality_traits["empathy"] = st.slider(
         "Empathy",
         min_value=0,
         max_value=100,
-        value=st.session_state.personality_traits["Empathy"],
+        value=st.session_state.personality_traits["empathy"],
         key="trait_empathy"
     )
-    st.session_state.personality_traits["Logic"] = st.slider(
+    st.session_state.personality_traits["logic"] = st.slider(
         "Logic",
         min_value=0,
         max_value=100,
-        value=st.session_state.personality_traits["Logic"],
+        value=st.session_state.personality_traits["logic"],
         key="trait_logic"
-    )
-    st.session_state.personality_traits["Boldness"] = st.slider(
-        "Boldness",
-        min_value=0,
-        max_value=100,
-        value=st.session_state.personality_traits["Boldness"],
-        key="trait_boldness"
     )
 
 with col2:
-    st.session_state.personality_traits["Memory"] = st.slider(
-        "Memory",
+    st.session_state.personality_traits["humor"] = st.slider(
+        "Humor",
         min_value=0,
         max_value=100,
-        value=st.session_state.personality_traits["Memory"],
-        key="trait_memory"
+        value=st.session_state.personality_traits["humor"],
+        key="trait_humor"
     )
-    st.session_state.personality_traits["Depth"] = st.slider(
-        "Depth",
+    st.session_state.personality_traits["empathy"] = st.slider(
+        "Empathy",
         min_value=0,
         max_value=100,
-        value=st.session_state.personality_traits["Depth"],
-        key="trait_depth"
+        value=st.session_state.personality_traits["empathy"],
+        key="trait_empathy"
     )
-    st.session_state.personality_traits["Adaptability"] = st.slider(
-        "Adaptability",
+    st.session_state.personality_traits["logic"] = st.slider(
+        "Logic",
         min_value=0,
         max_value=100,
-        value=st.session_state.personality_traits["Adaptability"],
-        key="trait_adaptability"
+        value=st.session_state.personality_traits["logic"],
+        key="trait_logic"
     )
+
+# === Mirror Tagline Section ===
+st.markdown("""
+<div class="section">
+    <div class="section-title">Mirror Tagline</div>
+    <div class="section-description">Create a short tagline that captures your Mirror's essence.</div>
+</div>
+""", unsafe_allow_html=True)
+
+st.session_state.mirror_tagline = st.text_input(
+    "Your Mirror's Tagline",
+    value=st.session_state.mirror_tagline,
+    placeholder="e.g., 'A reflection of growth and authenticity'"
+)
 
 # === Trait Visualization ===
 st.subheader("📊 Trait Distribution")
@@ -218,12 +287,13 @@ plt.tight_layout()
 st.pyplot(fig)
 
 # === Save Button ===
-if st.button("💾 Save Settings"):
+if st.button("💾 Save Settings", key="save_settings"):
     try:
         # Prepare settings data
         settings = {
             "core_values": st.session_state.core_values,
             "personality_traits": st.session_state.personality_traits,
+            "mirror_tagline": st.session_state.mirror_tagline,
             "updated_at": datetime.now().isoformat()
         }
         
@@ -232,9 +302,8 @@ if st.button("💾 Save Settings"):
         
         if success:
             st.success("✅ Settings saved successfully!")
-            # Update local state to match saved data
-            st.session_state.core_values = settings["core_values"]
-            st.session_state.personality_traits = settings["personality_traits"]
+            # Redirect to Home after successful save
+            st.switch_page("Home.py")
         else:
             st.error("❌ Failed to save settings. Please check your connection and try again.")
             st.info("If the problem persists, try refreshing the page or logging out and back in.")
@@ -242,6 +311,8 @@ if st.button("💾 Save Settings"):
     except Exception as e:
         st.error(f"❌ Error saving settings: {str(e)}")
         st.info("Please try again or contact support if the issue persists.")
+
+st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown("""
 This system helps us build a digital version of you that's **not just smart**, but deeply **you**. 
