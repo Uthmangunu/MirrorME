@@ -10,11 +10,10 @@ from streamlit_webrtc import webrtc_streamer
 import soundfile as sf
 from io import BytesIO
 import numpy as np
+from firebase_client import get_doc, save_doc
 
 # === Page Config ===
 st.set_page_config(page_title="MirrorMe - Voice Setup", page_icon="🎙️")
-st.title("🎙️ Mirror Voice Setup")
-st.markdown("Record your voice directly here or upload a sample to create your Mirror's voice.")
 
 # === 🔐 Require Login ===
 if "user" not in st.session_state:
@@ -40,78 +39,18 @@ ELEVEN_API_KEY = os.getenv("ELEVEN_API_KEY")
 
 # === Load Current Settings ===
 current = get_doc("settings", user_id) or {}
-current_id = current.get("voice_id", "21m00Tcm4TlvDq8ikWAM")
-current_voice_name = next((k for k, v in preset_voices.items() if v == current_id), None)
-
-# === Predefined Voice Options ===
-preset_voices = {
-    "Uthman Vibe (Calm + Smooth)": "3Tjd0DlL3tjpqnkvDu9j",
-    "Witty Confidant": "EXAVITQu4vr4xnSDxMaL",
-    "Playful Narrator": "ErXwobaYiN019PkySvjV",
-    "Chill Deep (Default)": "21m00Tcm4TlvDq8ikWAM"
-}
-
-# === Load Current Settings ===
-current = get_doc("settings", user_id) or {}
-current_id = current.get("voice_id", "21m00Tcm4TlvDq8ikWAM")
-current_voice_name = next((k for k, v in preset_voices.items() if v == current_id), None)
-
-# === UI: Select Voice Style ===
-st.markdown("### 🎙️ Pick a Pre-Trained Voice")
-chosen_voice = st.selectbox(
-    "Choose a voice style:",
-    options=list(preset_voices.keys()),
-    index=list(preset_voices.keys()).index(current_voice_name) if current_voice_name else 0
-)
-
-selected_voice_id = preset_voices[chosen_voice]
+st.session_state.voice_id = current.get("voice_id")
 
 # === Auto Preview: Generate & Play Voice ===
-st.markdown("#### 🧪 Hear how your Mirror sounds")
-test_phrase = "Hey, I'm your Mirror. Let's see how I sound."
+st.title("🎙️ Mirror Voice Setup")
+st.markdown("Record your voice directly here or upload a sample to create your Mirror's voice.")
 
-def speak(text, voice_id):
-    try:
-        url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}/stream"
-        headers = {
-            "xi-api-key": ELEVEN_API_KEY,
-            "Content-Type": "application/json"
-        }
-        payload = {
-            "text": text,
-            "model_id": "eleven_monolingual_v1",
-            "voice_settings": {
-                "stability": 0.5,
-                "similarity_boost": 0.9
-            }
-        }
-        response = requests.post(url, headers=headers, json=payload)
-        if response.status_code == 200:
-            audio_path = f"preview_{voice_id}.mp3"
-            with open(audio_path, "wb") as f:
-                f.write(response.content)
-            st.audio(audio_path, format="audio/mp3")
-        else:
-            st.error("❌ Failed to fetch voice preview.")
-    except Exception as e:
-        st.error(f"Error: {e}")
+# Check for existing voice ID
+if st.session_state.voice_id:
+    st.success("✅ You already have a voice profile set up!")
 
-speak(test_phrase, selected_voice_id)
-
-# === Save Selection ===
-if st.button("✅ Save Voice Selection"):
-    save_doc("settings", user_id, {
-        "voice_id": selected_voice_id,
-        "enable_voice_response": True
-    })
-    st.success("✅ Your Mirror voice is set!")
-
-# === Upload Custom Voice ===
-st.markdown("### 🧬 Upload Your Own Voice (optional)")
-st.caption("_This is just for future cloning, not used yet._")
-
-# Create tabs for recording and uploading
-tab1, tab2 = st.tabs(["�� Record Voice", "📁 Upload File"])
+# === Create tabs for recording and uploading ===
+tab1, tab2 = st.tabs(["🎤 Record Voice", "📁 Upload File"])
 
 with tab1:
     st.subheader("🎤 Record Your Voice")
@@ -235,3 +174,94 @@ tagline = st.text_input("Describe how your Mirror should behave (tone, attitude,
 if tagline:
     st.session_state["mirror_tagline"] = tagline
     st.success("✅ Tagline saved for prompt injection.")
+
+def get_firestore_client():
+    """Initialize and return a Firestore client."""
+    try:
+        return firestore.Client()
+    except Exception as e:
+        st.error(f"Failed to initialize Firestore client: {str(e)}")
+        return None
+
+def create_voice_in_elevenlabs(user_id, file_path):
+    """Create a voice clone in ElevenLabs."""
+    url = "https://api.elevenlabs.io/v1/voices/add"
+    headers = {
+        "xi-api-key": os.getenv("ELEVENLABS_API_KEY")
+    }
+    
+    try:
+        with open(file_path, 'rb') as f:
+            files = {
+                'files': f
+            }
+            data = {
+                "name": f"MirrorVoice_{user_id}",
+                "description": "MirrorMe clone voice",
+                "labels": {"user_id": user_id}
+            }
+            response = requests.post(url, headers=headers, files=files, data=data)
+
+            if response.status_code == 200:
+                return response.json().get("voice_id")
+            else:
+                st.error(f"Voice creation failed: {response.text}")
+                return None
+    except Exception as e:
+        st.error(f"Error creating voice: {str(e)}")
+        return None
+
+def save_voice_id_to_firestore(user_id, voice_id):
+    """Save the voice ID to Firestore."""
+    try:
+        db = get_firestore_client()
+        if db:
+            ref = db.collection("users").document(user_id).collection("personality").document("voice")
+            ref.set({
+                "voice_id": voice_id,
+                "created_at": firestore.SERVER_TIMESTAMP
+            })
+            return True
+        return False
+    except Exception as e:
+        st.error(f"Error saving voice ID: {str(e)}")
+        return False
+
+def get_voice_id_from_firestore(user_id):
+    """Retrieve the voice ID from Firestore."""
+    try:
+        db = get_firestore_client()
+        if db:
+            doc = db.collection("users").document(user_id).collection("personality").document("voice").get()
+            if doc.exists:
+                return doc.to_dict().get("voice_id")
+        return None
+    except Exception as e:
+        st.error(f"Error retrieving voice ID: {str(e)}")
+        return None
+
+def generate_voice_response(text, voice_id):
+    """Generate audio from text using ElevenLabs."""
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
+    headers = {
+        "xi-api-key": os.getenv("ELEVENLABS_API_KEY"),
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "text": text,
+        "voice_settings": {
+            "stability": 0.4,
+            "similarity_boost": 0.8
+        }
+    }
+    
+    try:
+        response = requests.post(url, headers=headers, json=payload)
+        if response.ok:
+            return response.content
+        else:
+            st.error(f"Voice generation failed: {response.text}")
+            return None
+    except Exception as e:
+        st.error(f"Error generating voice: {str(e)}")
+        return None
