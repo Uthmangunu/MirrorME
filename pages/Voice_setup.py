@@ -67,6 +67,13 @@ st.markdown("""
     border-radius: 5px;
     margin: 1rem 0;
 }
+
+.recording-status {
+    text-align: center;
+    color: #FF4B4B;
+    font-weight: bold;
+    margin: 0.5rem 0;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -140,10 +147,15 @@ else:
     if st.button("⏹️ Stop Recording"):
         st.session_state.is_recording = False
         st.session_state.recording_start_time = None
-        st.session_state.show_preview = True
         
-        # Process recorded audio
-        if st.session_state.audio_data:
+        # Validate recording length
+        if len(st.session_state.audio_data) < 48000 * 2:  # less than 2 seconds
+            st.error("Recording too short. Please speak for at least 3 seconds.")
+            st.session_state.show_preview = False
+        else:
+            st.session_state.show_preview = True
+            
+            # Process recorded audio
             audio_data = np.array(st.session_state.audio_data)
             sample_rate = 48000
             
@@ -158,29 +170,7 @@ if st.session_state.is_recording:
     minutes = int(elapsed_time // 60)
     seconds = int(elapsed_time % 60)
     st.markdown(f'<div class="timer">{minutes:02d}:{seconds:02d}</div>', unsafe_allow_html=True)
-
-# Waveform visualization
-if st.session_state.is_recording and st.session_state.audio_levels:
-    st.markdown('<div class="waveform">', unsafe_allow_html=True)
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        y=st.session_state.audio_levels[-50:],
-        mode='lines',
-        line=dict(color='#ff4b4b', width=2),
-        fill='tozeroy',
-        fillcolor='rgba(255, 75, 75, 0.2)'
-    ))
-    fig.update_layout(
-        height=60,
-        margin=dict(l=0, r=0, t=0, b=0),
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        showlegend=False,
-        xaxis=dict(showgrid=False, showticklabels=False),
-        yaxis=dict(showgrid=False, showticklabels=False, range=[0, 1])
-    )
-    st.plotly_chart(fig, use_container_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('<div class="recording-status">Recording in progress...</div>', unsafe_allow_html=True)
 
 # WebRTC recorder (hidden)
 with st.container():
@@ -192,16 +182,40 @@ with st.container():
         async_processing=True
     )
 
-# Update audio levels and collect data
+# Real-time waveform update
 if rec.audio_receiver and st.session_state.is_recording:
-    try:
-        frame = rec.audio_receiver.get_frames(timeout=0.1)[0]
-        audio_data = frame.to_ndarray()
-        level = np.abs(audio_data).mean()
-        st.session_state.audio_levels.append(level)
-        st.session_state.audio_data.extend(audio_data.flatten())
-    except:
-        pass
+    placeholder = st.empty()
+    while st.session_state.is_recording:
+        try:
+            frame = rec.audio_receiver.get_frames(timeout=0.1)[0]
+            audio_data = frame.to_ndarray()
+            level = np.abs(audio_data).mean()
+            st.session_state.audio_levels.append(level)
+            st.session_state.audio_data.extend(audio_data.flatten())
+
+            # Live waveform display
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(
+                y=st.session_state.audio_levels[-50:],
+                mode='lines',
+                line=dict(color='#ff4b4b', width=2),
+                fill='tozeroy',
+                fillcolor='rgba(255, 75, 75, 0.2)'
+            ))
+            fig.update_layout(
+                height=60,
+                margin=dict(l=0, r=0, t=0, b=0),
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)',
+                showlegend=False,
+                xaxis=dict(showgrid=False, showticklabels=False),
+                yaxis=dict(showgrid=False, showticklabels=False, range=[0, 1])
+            )
+            placeholder.plotly_chart(fig, use_container_width=True)
+
+            time.sleep(0.05)
+        except:
+            continue
 
 st.markdown('</div>', unsafe_allow_html=True)
 
@@ -217,7 +231,7 @@ if st.session_state.show_preview and st.session_state.recording_path:
     col1, col2 = st.columns(2)
     with col1:
         if st.button("✅ Use This Recording"):
-            with st.spinner("Processing..."):
+            with st.spinner("🧬 Sending to ElevenLabs and cloning your voice..."):
                 voice_id = create_voice_in_elevenlabs(user_id, st.session_state.recording_path)
                 
                 if voice_id:
@@ -364,7 +378,7 @@ def generate_voice_response(text, voice_id):
     """Generate audio from text using ElevenLabs."""
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
     headers = {
-        "xi-api-key": os.getenv("ELEVENLABS_API_KEY"),
+        "xi-api-key": ELEVEN_API_KEY,
         "Content-Type": "application/json"
     }
     payload = {
