@@ -147,47 +147,64 @@ st.caption("Share What Matters Most to You")
 
 # Core Values
 st.markdown("#### Core Values")
+core_values_options = ["Honesty", "Integrity", "Creativity", "Growth", "Connection", "Freedom", "Justice", "Balance"]
 selected_core_values = create_value_checkbox(
     "What Are Your Core Values?",
-    ["Honesty", "Integrity", "Creativity", "Growth", "Connection", "Freedom", "Justice", "Balance"],
-    st.session_state.values.get("core_values", []),
+    core_values_options,
+    st.session_state.values.get("core_values", []) if isinstance(st.session_state.values, dict) else [],
     key="core_values"
 )
-st.session_state.values["core_values"] = selected_core_values
+if isinstance(st.session_state.values, dict):
+    st.session_state.values["core_values"] = selected_core_values
 
 # Beliefs
 st.markdown("#### Beliefs")
+beliefs_options = ["Personal Growth", "Social Justice", "Environmental Care", "Scientific Progress", "Spiritual Growth", "Community", "Innovation", "Tradition"]
 selected_beliefs = create_value_checkbox(
     "What Do You Believe In?",
-    ["Personal Growth", "Social Justice", "Environmental Care", "Scientific Progress", "Spiritual Growth", "Community", "Innovation", "Tradition"],
-    st.session_state.values.get("beliefs", []),
+    beliefs_options,
+    st.session_state.values.get("beliefs", []) if isinstance(st.session_state.values, dict) else [],
     key="beliefs"
 )
-st.session_state.values["beliefs"] = selected_beliefs
+if isinstance(st.session_state.values, dict):
+    st.session_state.values["beliefs"] = selected_beliefs
 
 # Goals
 st.markdown("#### Goals")
+goals_options = ["Career Growth", "Personal Development", "Health & Wellness", "Relationships", "Learning", "Financial Success", "Creative Expression", "Social Impact"]
 selected_goals = create_value_checkbox(
     "What Are Your Goals?",
-    ["Career Growth", "Personal Development", "Health & Wellness", "Relationships", "Learning", "Financial Success", "Creative Expression", "Social Impact"],
-    st.session_state.values.get("goals", []),
+    goals_options,
+    st.session_state.values.get("goals", []) if isinstance(st.session_state.values, dict) else [],
     key="goals"
 )
-st.session_state.values["goals"] = selected_goals
+if isinstance(st.session_state.values, dict):
+    st.session_state.values["goals"] = selected_goals
 
 # Interests
 st.markdown("#### Interests")
+interests_options = ["Technology", "Arts", "Science", "Philosophy", "Sports", "Travel", "Music", "Literature"]
 selected_interests = create_value_checkbox(
     "What Are Your Interests?",
-    ["Technology", "Arts", "Science", "Philosophy", "Sports", "Travel", "Music", "Literature"],
-    st.session_state.values.get("interests", []),
+    interests_options,
+    st.session_state.values.get("interests", []) if isinstance(st.session_state.values, dict) else [],
     key="interests"
 )
-st.session_state.values["interests"] = selected_interests
+if isinstance(st.session_state.values, dict):
+    st.session_state.values["interests"] = selected_interests
 
 # Save personality data
 if st.button("💾 Save Profile"):
     try:
+        # Ensure values is a dictionary
+        if not isinstance(st.session_state.values, dict):
+            st.session_state.values = {
+                "core_values": [],
+                "beliefs": [],
+                "goals": [],
+                "interests": []
+            }
+        
         # Get values from session state
         values = {
             "core_values": st.session_state.values.get("core_values", []),
