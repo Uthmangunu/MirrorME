@@ -74,6 +74,24 @@ st.markdown("""
     font-weight: bold;
     margin: 0.5rem 0;
 }
+
+.recording-timer {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #FF4B4B;
+    text-align: center;
+    margin: 1rem 0;
+    font-family: monospace;
+}
+
+.waveform-container {
+    height: 60px;
+    background: #f5f5f5;
+    border-radius: 5px;
+    margin: 1rem 0;
+    overflow: hidden;
+    position: relative;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -148,16 +166,22 @@ else:
         st.session_state.is_recording = False
         st.session_state.recording_start_time = None
         
+        # Calculate actual recording duration
+        sample_rate = 48000
+        duration = len(st.session_state.audio_data) / sample_rate
+        
+        # Debug info
+        st.info(f"🧪 Recorded {len(st.session_state.audio_data)} samples (~{duration:.2f} sec)")
+        
         # Validate recording length
-        if len(st.session_state.audio_data) < 48000 * 2:  # less than 2 seconds
-            st.error("Recording too short. Please speak for at least 3 seconds.")
+        if duration < 2.5:
+            st.error(f"Recording too short ({duration:.2f} sec). Please speak for at least 3 seconds.")
             st.session_state.show_preview = False
         else:
             st.session_state.show_preview = True
             
             # Process recorded audio
             audio_data = np.array(st.session_state.audio_data)
-            sample_rate = 48000
             
             # Create a temporary WAV file
             with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_file:
@@ -166,10 +190,10 @@ else:
 
 # Timer display
 if st.session_state.is_recording:
-    elapsed_time = time.time() - st.session_state.recording_start_time
-    minutes = int(elapsed_time // 60)
-    seconds = int(elapsed_time % 60)
-    st.markdown(f'<div class="timer">{minutes:02d}:{seconds:02d}</div>', unsafe_allow_html=True)
+    elapsed_time = int(time.time() - st.session_state.recording_start_time)
+    minutes = elapsed_time // 60
+    seconds = elapsed_time % 60
+    st.markdown(f'<div class="recording-timer">{minutes:02d}:{seconds:02d}</div>', unsafe_allow_html=True)
     st.markdown('<div class="recording-status">Recording in progress...</div>', unsafe_allow_html=True)
 
 # WebRTC recorder (hidden)
@@ -185,6 +209,8 @@ with st.container():
 # Real-time waveform update
 if rec.audio_receiver and st.session_state.is_recording:
     placeholder = st.empty()
+    waveform_container = st.empty()
+    
     while st.session_state.is_recording:
         try:
             frame = rec.audio_receiver.get_frames(timeout=0.1)[0]
@@ -193,27 +219,29 @@ if rec.audio_receiver and st.session_state.is_recording:
             st.session_state.audio_levels.append(level)
             st.session_state.audio_data.extend(audio_data.flatten())
 
-            # Live waveform display
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(
-                y=st.session_state.audio_levels[-50:],
-                mode='lines',
-                line=dict(color='#ff4b4b', width=2),
-                fill='tozeroy',
-                fillcolor='rgba(255, 75, 75, 0.2)'
-            ))
-            fig.update_layout(
-                height=60,
-                margin=dict(l=0, r=0, t=0, b=0),
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)',
-                showlegend=False,
-                xaxis=dict(showgrid=False, showticklabels=False),
-                yaxis=dict(showgrid=False, showticklabels=False, range=[0, 1])
-            )
-            placeholder.plotly_chart(fig, use_container_width=True)
+            # Only update waveform if we have enough data
+            if len(st.session_state.audio_levels) >= 50:
+                # Live waveform display
+                fig = go.Figure()
+                fig.add_trace(go.Scatter(
+                    y=st.session_state.audio_levels[-50:],
+                    mode='lines',
+                    line=dict(color='#ff4b4b', width=2),
+                    fill='tozeroy',
+                    fillcolor='rgba(255, 75, 75, 0.2)'
+                ))
+                fig.update_layout(
+                    height=60,
+                    margin=dict(l=0, r=0, t=0, b=0),
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    showlegend=False,
+                    xaxis=dict(showgrid=False, showticklabels=False),
+                    yaxis=dict(showgrid=False, showticklabels=False, range=[0, 1])
+                )
+                waveform_container.plotly_chart(fig, use_container_width=True)
 
-            time.sleep(0.05)
+            time.sleep(0.1)  # Reduced update frequency for better performance
         except:
             continue
 
