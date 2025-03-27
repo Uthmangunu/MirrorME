@@ -83,25 +83,6 @@ if "traits" not in clarity_data:
 client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 ELEVEN_API = st.secrets["ELEVEN_API_KEY"]
 
-# === DARK MODE ===
-if settings.get("dark_mode"):
-    st.markdown("""
-        <style>
-        .stApp { background-color: #0e1117; color: white; }
-        .message-box { border: 1px solid #444; border-radius: 10px; padding: 0.75em; background-color: #1a1d23; }
-        .user-msg { color: #FFD700; }
-        .ai-msg { color: #90EE90; }
-        </style>
-    """, unsafe_allow_html=True)
-else:
-    st.markdown("""
-        <style>
-        .message-box { border: 1px solid #ccc; border-radius: 10px; padding: 0.75em; background-color: #f9f9f9; }
-        .user-msg { color: #333; }
-        .ai-msg { color: #000; }
-        </style>
-    """, unsafe_allow_html=True)
-
 # === VOICE SETTINGS ===
 VOICE_ID = settings.get("voice_id", "3Tjd0DlL3tjpqnkvDu9j")
 VOICE_ENABLED = settings.get("enable_voice_response", True)
@@ -341,40 +322,3 @@ with st.sidebar:
     if st.button("📤 Export Chat"):
         text = "\n\n".join([f"{m['role'].title()}: {m['content']}" for m in st.session_state["messages"][1:]])
         st.download_button("💾 Save Chat", text, file_name="mirror_chat.txt")
-
-# Update dark mode styling
-st.markdown("""
-    <style>
-    .stApp { 
-        background-color: #0e1117; 
-        color: white; 
-    }
-    .message-box { 
-        border: 1px solid #444; 
-        border-radius: 10px; 
-        padding: 0.75em; 
-        background-color: #1a1d23; 
-        color: white;
-    }
-    .user-msg { 
-        color: white; 
-    }
-    .ai-msg { 
-        color: white; 
-    }
-    .stMarkdown { 
-        color: white; 
-    }
-    .stTextInput>div>div>input { 
-        background-color: #1a1d23 !important;
-        color: white !important;
-        border: 1px solid #444 !important;
-    }
-    .stChatInputContainer {
-        background-color: #1a1d23 !important;
-    }
-    .typewriter {
-        color: white;
-    }
-    </style>
-""", unsafe_allow_html=True)

@@ -49,65 +49,65 @@ def detect_mood(text):
         return "neutral"
 
 # === Mood-Based Highlight Styling ===
-def set_mood_background(mood: str) -> None:
-    """
-    Set the UI theme based on the user's mood.
-    Only affects accent colors, not background.
-    """
-    # Define color schemes for different moods
+def set_mood_background(mood):
+    """Set the background color based on the current mood."""
     mood_colors = {
-        "calm": {
-            "text_color": "#2C3E50",
-            "accent_color": "#3498DB"
-        },
-        "sad": {
-            "text_color": "#34495E",
-            "accent_color": "#95A5A6"
-        },
-        "excited": {
-            "text_color": "#E65100",
-            "accent_color": "#F1C40F"
-        },
-        "angry": {
-            "text_color": "#B71C1C",
-            "accent_color": "#E74C3C"
-        },
-        "playful": {
-            "text_color": "#4A148C",
-            "accent_color": "#9B59B6"
-        },
-        "thoughtful": {
-            "text_color": "#1B5E20",
-            "accent_color": "#2ECC71"
-        },
-        "neutral": {
-            "text_color": "#000000",
-            "accent_color": "#2196F3"
-        }
+        "happy": "#FFD700",  # Gold
+        "sad": "#4682B4",    # Steel Blue
+        "angry": "#FF4500",  # Orange Red
+        "neutral": "#808080", # Gray
+        "excited": "#FF69B4", # Hot Pink
+        "calm": "#98FB98",   # Pale Green
+        "anxious": "#DDA0DD", # Plum
+        "confident": "#FFA500", # Orange
+        "curious": "#20B2AA",  # Light Sea Green
+        "playful": "#FFB6C1",  # Light Pink
+        "thoughtful": "#B0C4DE", # Light Steel Blue
+        "energetic": "#FFD700",  # Gold
+        "focused": "#4B0082",    # Indigo
+        "creative": "#FF69B4",   # Hot Pink
+        "determined": "#FF4500", # Orange Red
+        "default": "#808080"     # Gray
     }
     
-    # Get color scheme for current mood
-    colors = mood_colors.get(mood, mood_colors["neutral"])
+    color = mood_colors.get(mood.lower(), mood_colors["default"])
     
-    # Apply custom CSS - only affecting accent colors
     st.markdown(f"""
         <style>
-        .stButton>button {{
-            background-color: {colors['accent_color']};
+        .stApp {{
+            background-color: #0e1117;
             color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 0.5rem 1rem;
-            transition: all 0.3s ease;
+        }}
+        .stButton>button {{
+            background-color: {color}40;
+            color: white;
+            border: 1px solid {color}80;
         }}
         .stButton>button:hover {{
-            background-color: {colors['accent_color']}dd;
-            transform: translateY(-2px);
+            background-color: {color}60;
         }}
         .stTextInput>div>div>input {{
-            background-color: white;
-            border: 1px solid {colors['accent_color']};
-            border-radius: 5px;
+            background-color: #1a1d23;
+            color: white;
+            border: 1px solid {color}40;
+        }}
+        .stSelectbox>div>div>select {{
+            background-color: #1a1d23;
+            color: white;
+            border: 1px solid {color}40;
+        }}
+        .stTextArea>div>div>textarea {{
+            background-color: #1a1d23;
+            color: white;
+            border: 1px solid {color}40;
+        }}
+        .stMarkdown {{
+            color: white;
+        }}
+        .message-box {{
+            background-color: #1a1d23;
+            border: 1px solid {color}40;
+            color: white;
         }}
         </style>
     """, unsafe_allow_html=True)
