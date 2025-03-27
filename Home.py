@@ -7,6 +7,7 @@ import tempfile
 from dotenv import load_dotenv
 import time
 from components.topbar import topbar
+from firebase_client import get_doc
 
 # === Page Config ===
 st.set_page_config(
