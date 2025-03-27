@@ -10,20 +10,39 @@ def init_firestore():
     try:
         # ✅ Hosted (Streamlit Cloud) — load credentials from st.secrets
         if "GOOGLE_APPLICATION_CREDENTIALS" in st.secrets:
-            creds_dict = json.loads(st.secrets["GOOGLE_APPLICATION_CREDENTIALS"])
-            creds = service_account.Credentials.from_service_account_info(creds_dict)
-            return firestore.Client(credentials=creds, project=creds_dict["project_id"])
+            try:
+                # Handle both string and dict formats
+                if isinstance(st.secrets["GOOGLE_APPLICATION_CREDENTIALS"], str):
+                    creds_dict = json.loads(st.secrets["GOOGLE_APPLICATION_CREDENTIALS"])
+                else:
+                    creds_dict = st.secrets["GOOGLE_APPLICATION_CREDENTIALS"]
+                
+                # Clean the credentials dictionary
+                creds_dict = {k: v for k, v in creds_dict.items() if v is not None}
+                
+                creds = service_account.Credentials.from_service_account_info(creds_dict)
+                return firestore.Client(credentials=creds, project=creds_dict.get("project_id"))
+            except json.JSONDecodeError as e:
+                st.error(f"❌ Invalid JSON in credentials: {e}")
+                return None
+            except Exception as e:
+                st.error(f"❌ Error processing credentials: {e}")
+                return None
 
         # ✅ Local environment — use path to service account JSON file
         elif os.getenv("GOOGLE_APPLICATION_CREDENTIALS"):
-            return firestore.Client()
+            try:
+                return firestore.Client()
+            except Exception as e:
+                st.error(f"❌ Error initializing Firestore client: {e}")
+                return None
 
         else:
             st.error("❌ Firestore credentials not found. Please check your secrets or environment variable.")
             return None
 
     except Exception as e:
-        st.error(f"❌ Firestore init failed: {e}")
+        st.error(f"❌ Firestore init failed: {str(e)}")
         return None
 
 # === 🔧 Firestore Helpers ===
