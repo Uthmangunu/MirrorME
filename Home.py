@@ -236,30 +236,29 @@ if "messages" not in st.session_state:
 # Create a container for the title and mood indicator
 title_container = st.container()
 with title_container:
-    st.title("🪞 MirrorMe — Live Chat with Your Mirror")
+    col1, col2 = st.columns([20, 1])
+    with col1:
+        st.title("🪞 MirrorMe — Live Chat with Your Mirror")
+    with col2:
+        # Only show animation class if mood changed recently
+        animation_class = "mood-changed" if (time.time() - st.session_state.last_mood_change_time) < 1 else ""
+        render_mood_indicator(st.session_state.current_mood, size=40, animation_class=animation_class)
 
-# Create a container for the chat input and mood indicator
-input_container = st.container()
-with input_container:
-    # Create the animated input box with mood indicator
-    animation_class = "mood-changed" if (time.time() - st.session_state.last_mood_change_time) < 1 else ""
-    create_animated_input(st.session_state.current_mood, size=20, animation_class=animation_class)
-    
-    # Handle user input and mood updates
-    user_input = st.chat_input("Send a message...")
-    if user_input:
-        st.session_state.messages.append({"role": "user", "content": user_input})
-        clarity_data = apply_trait_xp(clarity_data, "dm")
-        reply = get_reply(st.session_state.messages)
-        if reply:
-            st.session_state.messages.append({"role": "assistant", "content": reply})
-            update_user_memory(user_id, user_input, reply)
-            mood = detect_mood(user_input + " " + reply)
-            if mood != st.session_state.current_mood:
-                st.session_state.current_mood = mood
-                st.session_state.last_mood_change_time = time.time()
-            set_mood_background(mood)
-            save_clarity(clarity_data)
+# Handle user input and mood updates
+user_input = st.chat_input("Send a message...")
+if user_input:
+    st.session_state.messages.append({"role": "user", "content": user_input})
+    clarity_data = apply_trait_xp(clarity_data, "dm")
+    reply = get_reply(st.session_state.messages)
+    if reply:
+        st.session_state.messages.append({"role": "assistant", "content": reply})
+        update_user_memory(user_id, user_input, reply)
+        mood = detect_mood(user_input + " " + reply)
+        if mood != st.session_state.current_mood:
+            st.session_state.current_mood = mood
+            st.session_state.last_mood_change_time = time.time()
+        set_mood_background(mood)
+        save_clarity(clarity_data)
 
 for msg in st.session_state.messages[1:]:
     if msg["role"] == "user":
@@ -290,3 +289,37 @@ with st.sidebar:
     if st.button("📤 Export Chat"):
         text = "\n\n".join([f"{m['role'].title()}: {m['content']}" for m in st.session_state["messages"][1:]])
         st.download_button("💾 Save Chat", text, file_name="mirror_chat.txt")
+
+# Update dark mode styling
+st.markdown("""
+    <style>
+    .stApp { 
+        background-color: #0e1117; 
+        color: white; 
+    }
+    .message-box { 
+        border: 1px solid #444; 
+        border-radius: 10px; 
+        padding: 0.75em; 
+        background-color: #1a1d23; 
+        color: white;
+    }
+    .user-msg { 
+        color: #FFD700; 
+    }
+    .ai-msg { 
+        color: #90EE90; 
+    }
+    .stMarkdown { 
+        color: white; 
+    }
+    .stTextInput>div>div>input { 
+        background-color: #1a1d23 !important;
+        color: white !important;
+        border: 1px solid #444 !important;
+    }
+    .stChatInputContainer {
+        background-color: #1a1d23 !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
