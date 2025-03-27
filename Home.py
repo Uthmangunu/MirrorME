@@ -44,26 +44,34 @@ st.markdown("""
     flex-direction: column;
     gap: 1rem;
     margin-top: 1rem;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .message-box {
-    border: 1px solid #444;
-    border-radius: 10px;
-    padding: 0.75em;
-    background-color: #1a1d23;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1rem;
+    background-color: rgba(255, 255, 255, 0.05);
     color: white;
     margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
 }
 
-.mood-container {
-    margin-top: 1.5rem;
+.message-box:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 75, 75, 0.3);
 }
 
-.sidebar-content {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 1rem;
+.message-box.user-msg {
+    margin-left: 2rem;
+    border-left: 3px solid #FF4B4B;
+}
+
+.message-box.ai-msg {
+    margin-right: 2rem;
+    border-left: 3px solid #4CAF50;
 }
 
 .title-container {
@@ -71,10 +79,14 @@ st.markdown("""
     align-items: center;
     gap: 1rem;
     margin-bottom: 2rem;
+    padding: 1rem 2rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .chat-title {
-    font-size: 3rem;
+    font-size: 2.5rem;
     font-weight: bold;
     margin: 0;
     background: linear-gradient(45deg, #FF4B4B, #FF6B6B);
@@ -101,6 +113,97 @@ st.markdown("""
     0% { transform: scale(1); }
     50% { transform: scale(1.1); }
     100% { transform: scale(1); }
+}
+
+.sidebar-content {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.trait-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+}
+
+.trait-name {
+    color: #a0a0a0;
+}
+
+.trait-value {
+    color: #FF4B4B;
+    font-weight: bold;
+}
+
+.stChatInputContainer {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 1rem;
+    margin-top: 2rem;
+}
+
+.stChatInputContainer input {
+    background: transparent !important;
+    color: white !important;
+    border: none !important;
+}
+
+.stChatInputContainer input:focus {
+    box-shadow: none !important;
+}
+
+.stChatInputContainer button {
+    background: #FF4B4B !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 0.5rem 1rem !important;
+    transition: all 0.3s ease !important;
+}
+
+.stChatInputContainer button:hover {
+    background: #e03e3e !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 75, 75, 0.3);
+}
+
+.tool-button {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.8rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tool-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 75, 75, 0.3);
+    transform: translateY(-2px);
 }
 </style>
 """, unsafe_allow_html=True)
@@ -326,27 +429,47 @@ if user_input:
 
 # === Sidebar ===
 with st.sidebar:
-    st.markdown("### 🧠 Memory Log")
-    st.markdown('<div class="sidebar-content">', unsafe_allow_html=True)
-    st.text(get_user_memory_as_string(user_id))
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("""
+        <div class="sidebar-content">
+            <div class="sidebar-title">🧠 Memory Log</div>
+            <div style="max-height: 300px; overflow-y: auto;">
+                {}
+            </div>
+        </div>
+    """.format(get_user_memory_as_string(user_id)), unsafe_allow_html=True)
     
-    st.markdown("### 🪞 Mirror Traits")
-    st.markdown('<div class="sidebar-content">', unsafe_allow_html=True)
-    for trait, values in clarity_data.get("traits", {}).items():
-        score = values.get("score", 50)
-        st.text(f"{trait.title()}: {int(score)}")
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("""
+        <div class="sidebar-content">
+            <div class="sidebar-title">🪞 Mirror Traits</div>
+            {}
+        </div>
+    """.format("".join([
+        f"""
+        <div class="trait-bar">
+            <span class="trait-name">{trait.title()}</span>
+            <span class="trait-value">{int(values.get('score', 50))}</span>
+        </div>
+        """ for trait, values in clarity_data.get("traits", {}).items()
+    ])), unsafe_allow_html=True)
     
-    st.markdown("### 🧹 Tools")
-    st.markdown('<div class="sidebar-content">', unsafe_allow_html=True)
-    if st.button("🔁 Reset Chat"):
+    st.markdown("""
+        <div class="sidebar-content">
+            <div class="sidebar-title">🧹 Tools</div>
+            <button class="tool-button" onclick="document.querySelector('[data-testid=baseButton-primary]').click()">
+                🔁 Reset Chat
+            </button>
+            <button class="tool-button" onclick="document.querySelector('[data-testid=baseButton-secondary]').click()">
+                📤 Export Chat
+            </button>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    if st.button("🔁 Reset Chat", key="reset_chat", style="display: none;"):
         st.session_state.messages = [{"role": "system", "content": generate_prompt_from_clarity(user_id)}]
         st.session_state.current_mood = "neutral"
         st.session_state.last_mood_change_time = 0
         st.rerun()
     
-    if st.button("📤 Export Chat"):
+    if st.button("📤 Export Chat", key="export_chat", style="display: none;"):
         text = "\n\n".join([f"{m['role'].title()}: {m['content']}" for m in st.session_state["messages"][1:]])
         st.download_button("💾 Save Chat", text, file_name="mirror_chat.txt")
-    st.markdown('</div>', unsafe_allow_html=True)
