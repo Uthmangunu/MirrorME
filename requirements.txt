@@ -1,20 +1,20 @@
 # --- Core App Requirements ---
-streamlit
+streamlit==1.32.0
 openai>=1.0.0
-requests>=2.27
-python-dotenv
+requests==2.31.0
+python-dotenv==1.0.1
 
 # --- Firebase Auth ---
 pyrebase4
-firebase-admin
+firebase-admin==6.4.0
 
 # --- Voice & Audio ---
 PyJWT
 pydub
 SpeechRecognition
-streamlit-webrtc>=0.47.1
-soundfile>=0.12.1
-numpy>=1.24.0
+streamlit-webrtc==0.50.1
+soundfile==0.12.1
+numpy==1.26.4
 
 # --- Plotting (Clarity radar chart) ---
 matplotlib
@@ -25,3 +25,6 @@ google-auth
 
 # --- Misc Helpers ---
 setuptools
+
+# --- Added from the code block ---
+plotly==5.19.0
