@@ -55,6 +55,9 @@ if "mood_changed" not in st.session_state:
 if "last_mood_change_time" not in st.session_state:
     st.session_state.last_mood_change_time = time.time()
 
+if "show_settings" not in st.session_state:
+    st.session_state.show_settings = False
+
 # Check if user is logged in
 if not st.session_state.user:
     st.warning("⚠️ Please Log In to Access This Page.")
@@ -73,16 +76,23 @@ user_id = st.session_state.user["localId"]
 clarity_data = load_clarity()
 
 # === Main UI ===
-st.title("🧠 MirrorMe — Personality Settings")
+col1, col2 = st.columns([3, 1])
+with col1:
+    st.title("🧠 MirrorMe — Personality Settings")
+with col2:
+    if st.button("⚙️ Settings"):
+        st.session_state.show_settings = not st.session_state.show_settings
 
-# === Persona Mode Selection ===
-st.subheader("🎭 Persona Mode")
-persona_mode = st.selectbox(
-    "Choose How Your Mirror Should Behave",
-    ["Balanced", "Empathetic", "Analytical", "Creative", "Professional"],
-    index=["Balanced", "Empathetic", "Analytical", "Creative", "Professional"].index(st.session_state.persona_mode)
-)
-st.session_state.persona_mode = persona_mode
+# Settings Panel
+if st.session_state.show_settings:
+    with st.expander("⚙️ Settings", expanded=True):
+        st.subheader("🎭 Persona Mode")
+        persona_mode = st.selectbox(
+            "Choose How Your Mirror Should Behave",
+            ["Balanced", "Empathetic", "Analytical", "Creative", "Professional"],
+            index=["Balanced", "Empathetic", "Analytical", "Creative", "Professional"].index(st.session_state.persona_mode)
+        )
+        st.session_state.persona_mode = persona_mode
 
 # === Trait Engine 2.0 ===
 st.subheader("⚙️ Trait Engine 2.0")
@@ -139,7 +149,7 @@ st.markdown("#### Core Values")
 st.session_state.values["core_values"] = create_value_checkbox(
     "What Are Your Core Values?",
     ["Honesty", "Integrity", "Creativity", "Growth", "Connection", "Freedom", "Justice", "Balance"],
-    st.session_state.values["core_values"],
+    st.session_state.values.get("core_values", []),
     key="core_values"
 )
 
@@ -148,7 +158,7 @@ st.markdown("#### Beliefs")
 st.session_state.values["beliefs"] = create_value_checkbox(
     "What Do You Believe In?",
     ["Personal Growth", "Social Justice", "Environmental Care", "Scientific Progress", "Spiritual Growth", "Community", "Innovation", "Tradition"],
-    st.session_state.values["beliefs"],
+    st.session_state.values.get("beliefs", []),
     key="beliefs"
 )
 
@@ -157,7 +167,7 @@ st.markdown("#### Goals")
 st.session_state.values["goals"] = create_value_checkbox(
     "What Are Your Goals?",
     ["Career Growth", "Personal Development", "Health & Wellness", "Relationships", "Learning", "Financial Success", "Creative Expression", "Social Impact"],
-    st.session_state.values["goals"],
+    st.session_state.values.get("goals", []),
     key="goals"
 )
 
@@ -166,7 +176,7 @@ st.markdown("#### Interests")
 st.session_state.values["interests"] = create_value_checkbox(
     "What Are Your Interests?",
     ["Technology", "Arts", "Science", "Philosophy", "Sports", "Travel", "Music", "Literature"],
-    st.session_state.values["interests"],
+    st.session_state.values.get("interests", []),
     key="interests"
 )
 
@@ -175,10 +185,10 @@ if st.button("💾 Save Profile"):
     try:
         # Get values from session state
         values = {
-            "core_values": st.session_state.values["core_values"],
-            "beliefs": st.session_state.values["beliefs"],
-            "goals": st.session_state.values["goals"],
-            "interests": st.session_state.values["interests"]
+            "core_values": st.session_state.values.get("core_values", []),
+            "beliefs": st.session_state.values.get("beliefs", []),
+            "goals": st.session_state.values.get("goals", []),
+            "interests": st.session_state.values.get("interests", [])
         }
         
         # Save to Firestore
