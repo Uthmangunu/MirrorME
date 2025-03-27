@@ -55,6 +55,11 @@ st.markdown("""
     margin: 0.5rem 0;
     border-radius: 5px;
 }
+
+/* Hide WebRTC elements */
+.stWebRtc {
+    display: none !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -124,7 +129,6 @@ if not st.session_state.is_recording:
         st.session_state.recording_start_time = time.time()
         st.session_state.audio_levels = []
         st.session_state.audio_data = []
-        st.experimental_rerun()
 else:
     if st.button("⏹️ Stop Recording"):
         st.session_state.is_recording = False
@@ -140,7 +144,6 @@ else:
             with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_file:
                 wavfile.write(temp_file.name, sample_rate, audio_data)
                 st.session_state.recording_path = temp_file.name
-        st.experimental_rerun()
 
 # Timer display
 if st.session_state.is_recording:
@@ -173,13 +176,14 @@ if st.session_state.is_recording and st.session_state.audio_levels:
     st.markdown('</div>', unsafe_allow_html=True)
 
 # WebRTC recorder (hidden)
-rec = webrtc_streamer(
-    key="voice_recorder",
-    mode=WebRtcMode.SENDONLY,
-    audio_receiver_size=1024,
-    media_stream_constraints={"audio": True, "video": False},
-    async_processing=True
-)
+with st.container():
+    rec = webrtc_streamer(
+        key="voice_recorder",
+        mode=WebRtcMode.SENDONLY,
+        audio_receiver_size=1024,
+        media_stream_constraints={"audio": True, "video": False},
+        async_processing=True
+    )
 
 # Update audio levels and collect data
 if rec.audio_receiver and st.session_state.is_recording:
