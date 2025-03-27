@@ -1,124 +1,128 @@
 import streamlit as st
-from firebase_auth import signup, login
-import os
+import requests
 import json
+from components.topbar import topbar
 
-st.set_page_config(page_title="MirrorMe - Login", page_icon="🔐")
+# === Page Config ===
+st.set_page_config(
+    page_title="MirrorMe - Login",
+    page_icon="🔐",
+    layout="centered",
+    initial_sidebar_state="collapsed"
+)
 
-# Add custom CSS for better UI
+# === Custom CSS ===
 st.markdown("""
-    <style>
-    .stButton>button {
-        width: 100%;
-        margin-top: 1rem;
-        background-color: #FF4B4B;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        padding: 0.5rem 1rem;
-        font-weight: bold;
-    }
-    .stButton>button:hover {
-        background-color: #FF6B6B;
-    }
-    .stTextInput>div>div>input {
-        border-radius: 5px;
-    }
-    .stRadio>div {
-        flex-direction: row;
-        justify-content: center;
-        gap: 2rem;
-    }
-    </style>
+<style>
+.main {
+    background-color: #0E1117;
+    color: white;
+}
+
+.login-container {
+    max-width: 400px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.login-title {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    color: white;
+}
+
+.stTextInput>div>div>input {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.stTextInput>div>div>input:focus {
+    border-color: #FF4B4B;
+}
+
+.stButton>button {
+    width: 100%;
+    background: #FF4B4B;
+    color: white;
+    border: none;
+    padding: 0.8rem;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+}
+
+.stButton>button:hover {
+    background: #e03e3e;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 75, 75, 0.3);
+}
+
+.error-message {
+    color: #FF4B4B;
+    text-align: center;
+    margin: 1rem 0;
+}
+</style>
 """, unsafe_allow_html=True)
 
-# Main title with emoji
-st.title("🔐 MirrorMe Login")
+# === Check if already logged in ===
+if "user" in st.session_state and st.session_state.user:
+    st.switch_page("pages/Clarity.py")
 
-AUTH_CACHE = ".auth_cache.json"
+# === Login Form ===
+st.markdown('<div class="login-container">', unsafe_allow_html=True)
+st.markdown('<div class="login-title">🔐 Login to MirrorMe</div>', unsafe_allow_html=True)
 
-# === Auth Cache Helpers ===
-def save_auth_cache(user):
-    with open(AUTH_CACHE, "w") as f:
-        json.dump(user, f)
+# Email input
+email = st.text_input("Email", key="email_input")
 
-def load_auth_cache():
-    if os.path.exists(AUTH_CACHE):
-        with open(AUTH_CACHE, "r") as f:
-            return json.load(f)
-    return None
+# Password input
+password = st.text_input("Password", type="password", key="password_input")
 
-def clear_auth_cache():
-    if os.path.exists(AUTH_CACHE):
-        os.remove(AUTH_CACHE)
-
-# === Auto Login from Cache ===
-if "user" not in st.session_state:
-    cached_user = load_auth_cache()
-    if cached_user:
-        st.session_state["user"] = cached_user
-
-# === Logged In View ===
-if "user" in st.session_state:
-    user_id = st.session_state["user"].get("localId", "N/A")
-    email = st.session_state["user"].get("email", "Unknown")
-    st.success(f"✅ Logged In As: {email}")
-
-    if email == "uthman.admin@mirrorme.app":
-        from components.feedback_button import feedback_button
-        feedback_button(user_id)
-
-    if st.button("🚪 Log Out"):
-        clear_auth_cache()
-        del st.session_state["user"]
-        st.rerun()
-
-# === Login / Sign Up Form ===
-else:
-    st.subheader("🔑 Access MirrorMe")
-    
-    # Warning for shared computers
-    st.warning("⚠️ If You're Using a Shared Computer, Please Do Not Check 'Remember Me'.")
-    
-    # Mode selection with better styling
-    mode = st.radio(
-        "Select Mode",
-        ["Login", "Sign Up"],
-        horizontal=True,
-        label_visibility="collapsed"
-    )
-    
-    # Input fields with better styling
-    email = st.text_input("Email Address")
-    password = st.text_input("Password", type="password")
-    remember = st.checkbox("Remember Me", value=False)
-    
-    # Submit button
-    if st.button("🚀 Continue"):
+# Login button
+if st.button("Login"):
+    if not email or not password:
+        st.error("Please enter both email and password.")
+    else:
         try:
-            # Clear any existing cache before new login
-            clear_auth_cache()
+            # Firebase Authentication
+            response = requests.post(
+                "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword",
+                params={"key": st.secrets["FIREBASE_API_KEY"]},
+                json={"email": email, "password": password}
+            )
             
-            auth_fn = login if mode == "Login" else signup
-            user = auth_fn(email, password)
-
-            if user and "localId" in user:
-                user["email"] = email  # Attach email for local UI
-                st.session_state["user"] = user
-                if remember:
-                    save_auth_cache(user)
-                st.success("🎉 Welcome to MirrorMe!")
-                st.rerun()
+            if response.status_code == 200:
+                user_data = response.json()
+                st.session_state.user = user_data
+                st.session_state.user_id = user_data["localId"]
+                
+                # Save to local storage
+                st.markdown(f"""
+                    <script>
+                        localStorage.setItem('mirror_user', '{json.dumps(user_data)}');
+                    </script>
+                """, unsafe_allow_html=True)
+                
+                st.success("Login successful!")
+                st.switch_page("pages/Clarity.py")
             else:
-                st.error("❌ Authentication Failed: No User Data Returned.")
-
+                st.error("Invalid email or password.")
         except Exception as e:
-            error_msg = str(e)
-            if "INVALID_PASSWORD" in error_msg:
-                st.error("❌ Incorrect Password.")
-            elif "EMAIL_NOT_FOUND" in error_msg:
-                st.error("❌ Email Not Found. Try Signing Up.")
-            elif "EMAIL_EXISTS" in error_msg:
-                st.error("❌ Email Already in Use. Try Logging In.")
-            else:
-                st.error(f"❌ Authentication Failed: {error_msg}")
+            st.error(f"Login failed: {str(e)}")
+
+# Register link
+st.markdown("""
+<div style="text-align: center; margin-top: 1rem;">
+    <a href="/Register" style="color: #FF4B4B; text-decoration: none;">
+        Don't have an account? Register here
+    </a>
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown('</div>', unsafe_allow_html=True)
