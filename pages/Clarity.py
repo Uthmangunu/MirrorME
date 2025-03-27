@@ -63,11 +63,7 @@ if "show_settings" not in st.session_state:
 if not st.session_state.user:
     st.warning("⚠️ Please Log In to Access This Page.")
     if st.button("🔐 Login"):
-        st.markdown("""
-            <script>
-                window.location.href = "Login";
-            </script>
-        """, unsafe_allow_html=True)
+        st.switch_page("pages/Login.py")
     st.stop()
 
 # Get user ID from session state
@@ -154,7 +150,7 @@ st.markdown("#### Core Values")
 selected_core_values = create_value_checkbox(
     "What Are Your Core Values?",
     ["Honesty", "Integrity", "Creativity", "Growth", "Connection", "Freedom", "Justice", "Balance"],
-    st.session_state.values["core_values"],
+    st.session_state.values.get("core_values", []),
     key="core_values"
 )
 st.session_state.values["core_values"] = selected_core_values
@@ -164,7 +160,7 @@ st.markdown("#### Beliefs")
 selected_beliefs = create_value_checkbox(
     "What Do You Believe In?",
     ["Personal Growth", "Social Justice", "Environmental Care", "Scientific Progress", "Spiritual Growth", "Community", "Innovation", "Tradition"],
-    st.session_state.values["beliefs"],
+    st.session_state.values.get("beliefs", []),
     key="beliefs"
 )
 st.session_state.values["beliefs"] = selected_beliefs
@@ -174,7 +170,7 @@ st.markdown("#### Goals")
 selected_goals = create_value_checkbox(
     "What Are Your Goals?",
     ["Career Growth", "Personal Development", "Health & Wellness", "Relationships", "Learning", "Financial Success", "Creative Expression", "Social Impact"],
-    st.session_state.values["goals"],
+    st.session_state.values.get("goals", []),
     key="goals"
 )
 st.session_state.values["goals"] = selected_goals
@@ -184,7 +180,7 @@ st.markdown("#### Interests")
 selected_interests = create_value_checkbox(
     "What Are Your Interests?",
     ["Technology", "Arts", "Science", "Philosophy", "Sports", "Travel", "Music", "Literature"],
-    st.session_state.values["interests"],
+    st.session_state.values.get("interests", []),
     key="interests"
 )
 st.session_state.values["interests"] = selected_interests
@@ -194,10 +190,10 @@ if st.button("💾 Save Profile"):
     try:
         # Get values from session state
         values = {
-            "core_values": st.session_state.values["core_values"],
-            "beliefs": st.session_state.values["beliefs"],
-            "goals": st.session_state.values["goals"],
-            "interests": st.session_state.values["interests"]
+            "core_values": st.session_state.values.get("core_values", []),
+            "beliefs": st.session_state.values.get("beliefs", []),
+            "goals": st.session_state.values.get("goals", []),
+            "interests": st.session_state.values.get("interests", [])
         }
         
         # Save to Firestore
