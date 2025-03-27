@@ -46,14 +46,21 @@ if "user" in st.session_state:
 
 # === Login / Sign Up Form ===
 else:
-    st.subheader("🔑 Access MirrorMe")
+    st.subheader("�� Access MirrorMe")
+    
+    # Warning for shared computers
+    st.warning("⚠️ If you're using a shared computer, please do not check 'Remember Me'.")
+    
     mode = st.radio("Mode", ["Login", "Sign Up"], horizontal=True)
     email = st.text_input("Email")
     password = st.text_input("Password", type="password")
-    remember = st.checkbox("Remember Me", value=True)
-
+    remember = st.checkbox("Remember Me", value=False)  # Default to False for shared computers
+    
     if st.button("🚀 Submit"):
         try:
+            # Clear any existing cache before new login
+            clear_auth_cache()
+            
             auth_fn = login if mode == "Login" else signup
             user = auth_fn(email, password)
 
