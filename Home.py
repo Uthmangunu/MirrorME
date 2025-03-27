@@ -261,11 +261,15 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# Create a container for all messages
+message_container = st.container()
+
 # Handle user input and mood updates
 user_input = st.chat_input("Send a message...")
 if user_input:
     # Add user message to chat
-    st.markdown(f"<div class='message-box user-msg'>👤 {user_input}</div>", unsafe_allow_html=True)
+    with message_container:
+        st.markdown(f"<div class='message-box user-msg'>👤 {user_input}</div>", unsafe_allow_html=True)
     st.session_state.messages.append({"role": "user", "content": user_input})
     clarity_data = apply_trait_xp(clarity_data, "dm")
     
@@ -296,11 +300,12 @@ if user_input:
         speak_text(full_response)
 
 # Display previous messages (excluding the most recent ones that are already shown)
-for msg in st.session_state.messages[1:-2]:  # Exclude the last user message and AI response
-    if msg["role"] == "user":
-        st.markdown(f"<div class='message-box user-msg'>👤 {msg['content']}</div>", unsafe_allow_html=True)
-    else:
-        st.markdown(f"<div class='message-box ai-msg'>🧠 {msg['content']}</div>", unsafe_allow_html=True)
+with message_container:
+    for msg in st.session_state.messages[1:-2]:  # Exclude the last user message and AI response
+        if msg["role"] == "user":
+            st.markdown(f"<div class='message-box user-msg'>👤 {msg['content']}</div>", unsafe_allow_html=True)
+        else:
+            st.markdown(f"<div class='message-box ai-msg'>🧠 {msg['content']}</div>", unsafe_allow_html=True)
 
 with st.sidebar:
     st.markdown("### 🧠 Memory Log")
