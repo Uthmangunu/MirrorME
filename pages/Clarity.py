@@ -195,53 +195,14 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Create two columns for trait sliders
-col1, col2 = st.columns(2)
-
-with col1:
-    st.session_state.personality_traits["humor"] = st.slider(
-        "Humor",
+# Personality Traits Sliders
+for trait, value in st.session_state.personality_traits.items():
+    st.session_state.personality_traits[trait] = st.slider(
+        trait.title(),
         min_value=0,
         max_value=100,
-        value=st.session_state.personality_traits["humor"],
-        key="trait_humor"
-    )
-    st.session_state.personality_traits["empathy"] = st.slider(
-        "Empathy",
-        min_value=0,
-        max_value=100,
-        value=st.session_state.personality_traits["empathy"],
-        key="trait_empathy"
-    )
-    st.session_state.personality_traits["logic"] = st.slider(
-        "Logic",
-        min_value=0,
-        max_value=100,
-        value=st.session_state.personality_traits["logic"],
-        key="trait_logic"
-    )
-
-with col2:
-    st.session_state.personality_traits["humor"] = st.slider(
-        "Humor",
-        min_value=0,
-        max_value=100,
-        value=st.session_state.personality_traits["humor"],
-        key="trait_humor"
-    )
-    st.session_state.personality_traits["empathy"] = st.slider(
-        "Empathy",
-        min_value=0,
-        max_value=100,
-        value=st.session_state.personality_traits["empathy"],
-        key="trait_empathy"
-    )
-    st.session_state.personality_traits["logic"] = st.slider(
-        "Logic",
-        min_value=0,
-        max_value=100,
-        value=st.session_state.personality_traits["logic"],
-        key="trait_logic"
+        value=value,
+        key=f"trait_{trait}"
     )
 
 # === Mirror Tagline Section ===
@@ -289,7 +250,6 @@ st.pyplot(fig)
 # === Save Button ===
 if st.button("💾 Save Settings", key="save_settings"):
     try:
-        # Prepare settings data
         settings = {
             "core_values": st.session_state.core_values,
             "personality_traits": st.session_state.personality_traits,
@@ -297,20 +257,14 @@ if st.button("💾 Save Settings", key="save_settings"):
             "updated_at": datetime.now().isoformat()
         }
         
-        # Save to Firestore
-        success = save_doc("settings", user_id, settings)
-        
-        if success:
+        if save_doc("settings", user_id, settings):
             st.success("✅ Settings saved successfully!")
             # Redirect to Home after successful save
             st.switch_page("Home.py")
         else:
-            st.error("❌ Failed to save settings. Please check your connection and try again.")
-            st.info("If the problem persists, try refreshing the page or logging out and back in.")
-            
+            st.error("❌ Failed to save settings. Please try again.")
     except Exception as e:
         st.error(f"❌ Error saving settings: {str(e)}")
-        st.info("Please try again or contact support if the issue persists.")
 
 st.markdown('</div>', unsafe_allow_html=True)
 

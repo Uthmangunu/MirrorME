@@ -7,7 +7,7 @@ from components.topbar import topbar
 st.set_page_config(
     page_title="MirrorMe - Login",
     page_icon="🔐",
-    layout="centered",
+    layout="wide",
     initial_sidebar_state="collapsed"
 )
 
@@ -29,10 +29,13 @@ st.markdown("""
 }
 
 .login-title {
-    text-align: center;
     font-size: 2rem;
+    font-weight: bold;
+    text-align: center;
     margin-bottom: 2rem;
-    color: white;
+    background: linear-gradient(45deg, #FF4B4B, #FF6B6B);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .stTextInput>div>div>input {
@@ -62,69 +65,87 @@ st.markdown("""
     box-shadow: 0 4px 15px rgba(255, 75, 75, 0.3);
 }
 
-.error-message {
-    color: #FF4B4B;
-    text-align: center;
+.remember-me {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     margin: 1rem 0;
+}
+
+.error-message {
+    color: #f44336;
+    padding: 1rem;
+    border-radius: 8px;
+    background: rgba(244, 67, 54, 0.1);
+    margin-top: 1rem;
+}
+
+.success-message {
+    color: #4CAF50;
+    padding: 1rem;
+    border-radius: 8px;
+    background: rgba(76, 175, 80, 0.1);
+    margin-top: 1rem;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# === Check if already logged in ===
-if "user" in st.session_state and st.session_state.user:
-    st.switch_page("pages/Clarity.py")
+# === Initialize Session State ===
+if "user" not in st.session_state:
+    st.session_state.user = None
+if "remember_me" not in st.session_state:
+    st.session_state.remember_me = False
 
-# === Login Form ===
+# === Check for Remembered Login ===
+if "remembered_user" in st.session_state and st.session_state.remembered_user:
+    try:
+        user = sign_in_with_email_and_password(
+            st.session_state.remembered_user["email"],
+            st.session_state.remembered_user["password"]
+        )
+        st.session_state.user = user
+        st.switch_page("Home.py")
+    except:
+        st.session_state.remembered_user = None
+        st.session_state.remember_me = False
+
+# === Main UI ===
 st.markdown('<div class="login-container">', unsafe_allow_html=True)
+
+# Title
 st.markdown('<div class="login-title">🔐 Login to MirrorMe</div>', unsafe_allow_html=True)
 
-# Email input
-email = st.text_input("Email", key="email_input")
+# Login Form
+email = st.text_input("📧 Email", key="login_email")
+password = st.text_input("🔑 Password", type="password", key="login_password")
 
-# Password input
-password = st.text_input("Password", type="password", key="password_input")
+# Remember Me Checkbox
+st.session_state.remember_me = st.checkbox("Remember Me", key="remember_me")
 
-# Login button
-if st.button("Login"):
-    if not email or not password:
-        st.error("Please enter both email and password.")
-    else:
-        try:
-            # Firebase Authentication
-            response = requests.post(
-                "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword",
-                params={"key": st.secrets["FIREBASE_API_KEY"]},
-                json={"email": email, "password": password}
-            )
-            
-            if response.status_code == 200:
-                user_data = response.json()
-                st.session_state.user = user_data
-                st.session_state.user_id = user_data["localId"]
-                
-                # Save to session state
-                st.session_state["logged_in"] = True
-                
-                # Redirect to Clarity page
-                st.switch_page("pages/Clarity.py")
-            else:
-                error_data = response.json()
-                error_message = error_data.get("error", {}).get("message", "Invalid email or password.")
-                if "INVALID_PASSWORD" in error_message:
-                    st.error("Incorrect password. Please try again.")
-                elif "EMAIL_NOT_FOUND" in error_message:
-                    st.error("Email not found. Please check your email or register.")
-                else:
-                    st.error(f"Login failed: {error_message}")
-        except Exception as e:
-            st.error(f"Login failed: {str(e)}")
+# Login Button
+if st.button("🔐 Login"):
+    try:
+        user = sign_in_with_email_and_password(email, password)
+        st.session_state.user = user
+        
+        # Handle Remember Me
+        if st.session_state.remember_me:
+            st.session_state.remembered_user = {
+                "email": email,
+                "password": password
+            }
+        else:
+            st.session_state.remembered_user = None
+        
+        st.success("✅ Login successful!")
+        st.switch_page("Home.py")
+    except Exception as e:
+        st.error(f"❌ Login failed: {str(e)}")
 
-# Register link
+# Register Link
 st.markdown("""
 <div style="text-align: center; margin-top: 1rem;">
-    <a href="/Register" style="color: #FF4B4B; text-decoration: none;">
-        Don't have an account? Register here
-    </a>
+    Don't have an account? <a href="Register" style="color: #FF4B4B; text-decoration: none;">Register</a>
 </div>
 """, unsafe_allow_html=True)
 

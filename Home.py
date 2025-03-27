@@ -65,6 +65,43 @@ st.markdown("""
     border-radius: 8px;
     margin-bottom: 1rem;
 }
+
+.title-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.chat-title {
+    font-size: 3rem;
+    font-weight: bold;
+    margin: 0;
+    background: linear-gradient(45deg, #FF4B4B, #FF6B6B);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.mood-orb {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.mood-orb.mood-changed {
+    animation: pulse 1s ease-in-out;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -227,12 +264,17 @@ if "last_mood_change_time" not in st.session_state:
 
 # === Chat Interface ===
 # Title and Mood Indicator
-col1, col2 = st.columns([20, 1])
-with col1:
-    st.title("🪞 Chat with Your Mirror")
-with col2:
-    animation_class = "mood-changed" if (time.time() - st.session_state.last_mood_change_time) < 1 else ""
-    render_mood_indicator(st.session_state.current_mood, size=40, animation_class=animation_class)
+st.markdown("""
+<div class="title-container">
+    <h1 class="chat-title">🪞 Chat with Your Mirror</h1>
+    <div class="mood-orb {}">
+        {}
+    </div>
+</div>
+""".format(
+    "mood-changed" if (time.time() - st.session_state.last_mood_change_time) < 1 else "",
+    render_mood_indicator(st.session_state.current_mood, size=40, animation_class="")
+), unsafe_allow_html=True)
 
 # Chat Messages
 st.markdown('<div class="chat-container">', unsafe_allow_html=True)
