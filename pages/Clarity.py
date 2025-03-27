@@ -151,44 +151,40 @@ st.caption("Share What Matters Most to You")
 
 # Core Values
 st.markdown("#### Core Values")
-core_values = st.session_state.values.get("core_values", [])
 selected_core_values = create_value_checkbox(
     "What Are Your Core Values?",
     ["Honesty", "Integrity", "Creativity", "Growth", "Connection", "Freedom", "Justice", "Balance"],
-    core_values,
+    st.session_state.values["core_values"],
     key="core_values"
 )
 st.session_state.values["core_values"] = selected_core_values
 
 # Beliefs
 st.markdown("#### Beliefs")
-beliefs = st.session_state.values.get("beliefs", [])
 selected_beliefs = create_value_checkbox(
     "What Do You Believe In?",
     ["Personal Growth", "Social Justice", "Environmental Care", "Scientific Progress", "Spiritual Growth", "Community", "Innovation", "Tradition"],
-    beliefs,
+    st.session_state.values["beliefs"],
     key="beliefs"
 )
 st.session_state.values["beliefs"] = selected_beliefs
 
 # Goals
 st.markdown("#### Goals")
-goals = st.session_state.values.get("goals", [])
 selected_goals = create_value_checkbox(
     "What Are Your Goals?",
     ["Career Growth", "Personal Development", "Health & Wellness", "Relationships", "Learning", "Financial Success", "Creative Expression", "Social Impact"],
-    goals,
+    st.session_state.values["goals"],
     key="goals"
 )
 st.session_state.values["goals"] = selected_goals
 
 # Interests
 st.markdown("#### Interests")
-interests = st.session_state.values.get("interests", [])
 selected_interests = create_value_checkbox(
     "What Are Your Interests?",
     ["Technology", "Arts", "Science", "Philosophy", "Sports", "Travel", "Music", "Literature"],
-    interests,
+    st.session_state.values["interests"],
     key="interests"
 )
 st.session_state.values["interests"] = selected_interests
