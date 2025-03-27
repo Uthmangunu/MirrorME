@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from components.topbar import topbar
 from firebase_client import get_doc, save_doc
 import json
+from datetime import datetime
 
 # === Page Config === (Must be first Streamlit command)
 st.set_page_config(
@@ -218,15 +219,29 @@ st.pyplot(fig)
 
 # === Save Button ===
 if st.button("💾 Save Settings"):
-    settings = {
-        "core_values": st.session_state.core_values,
-        "personality_traits": st.session_state.personality_traits
-    }
-    
-    if save_doc("settings", user_id, settings):
-        st.success("✅ Settings saved successfully!")
-    else:
-        st.error("Failed to save settings. Please try again.")
+    try:
+        # Prepare settings data
+        settings = {
+            "core_values": st.session_state.core_values,
+            "personality_traits": st.session_state.personality_traits,
+            "updated_at": datetime.now().isoformat()
+        }
+        
+        # Save to Firestore
+        success = save_doc("settings", user_id, settings)
+        
+        if success:
+            st.success("✅ Settings saved successfully!")
+            # Update local state to match saved data
+            st.session_state.core_values = settings["core_values"]
+            st.session_state.personality_traits = settings["personality_traits"]
+        else:
+            st.error("❌ Failed to save settings. Please check your connection and try again.")
+            st.info("If the problem persists, try refreshing the page or logging out and back in.")
+            
+    except Exception as e:
+        st.error(f"❌ Error saving settings: {str(e)}")
+        st.info("Please try again or contact support if the issue persists.")
 
 st.markdown("""
 This system helps us build a digital version of you that's **not just smart**, but deeply **you**. 

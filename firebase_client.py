@@ -90,13 +90,20 @@ def get_doc(collection, doc_id):
     return doc.to_dict() if doc.exists else {}
 
 def save_doc(collection, user_id, data, append_to_array=None):
-    db = init_firestore()
-    if db:
+    try:
+        db = init_firestore()
+        if not db:
+            return False
+            
         doc_ref = db.collection(collection).document(user_id)
         if append_to_array:
             doc_ref.set({append_to_array: firestore.ArrayUnion([data])}, merge=True)
         else:
-            doc_ref.set(data)
+            doc_ref.set(data, merge=True)
+        return True
+    except Exception as e:
+        st.error(f"❌ Error saving document: {str(e)}")
+        return False
 
 def update_doc(collection, doc_id, data):
     db = init_firestore()
