@@ -148,7 +148,14 @@ st.markdown("""
 
 # === Redirect if Logged In ===
 if "user" in st.session_state and st.session_state.user:
-    st.switch_page("pages/Clarity.py")
+    # Check if user has completed Clarity setup
+    user_id = st.session_state.user["localId"]
+    current = get_doc("settings", user_id) or {}
+    
+    # Only redirect to Clarity if core values or personality traits are not set
+    if not current.get("core_values") or not current.get("personality_traits"):
+        st.switch_page("pages/Clarity.py")
+    # Otherwise, stay on Home page
 
 # === Hero Section ===
 st.markdown('<div class="hero-container">', unsafe_allow_html=True)
