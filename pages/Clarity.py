@@ -211,17 +211,24 @@ st.pyplot(fig)
 st.subheader("💫 Core Values & Beliefs")
 st.caption("Share What Matters Most to You")
 
+# Ensure values dictionary exists
+if "values" not in st.session_state:
+    st.session_state.values = {
+        "core_values": [],
+        "beliefs": [],
+        "goals": [],
+        "interests": []
+    }
+
 # Core Values
 st.markdown("#### Core Values")
 core_values_options = ["Honesty", "Integrity", "Creativity", "Growth", "Connection", "Freedom", "Justice", "Balance"]
 selected_core_values = create_value_checkbox(
     "What Are Your Core Values?",
     core_values_options,
-    st.session_state.get("values", {}).get("core_values", []),
+    st.session_state.values.get("core_values", []),
     key="core_values"
 )
-if "values" not in st.session_state:
-    st.session_state.values = {}
 st.session_state.values["core_values"] = selected_core_values
 
 # Beliefs
@@ -230,11 +237,9 @@ beliefs_options = ["Personal Growth", "Social Justice", "Environmental Care", "S
 selected_beliefs = create_value_checkbox(
     "What Do You Believe In?",
     beliefs_options,
-    st.session_state.get("values", {}).get("beliefs", []),
+    st.session_state.values.get("beliefs", []),
     key="beliefs"
 )
-if "values" not in st.session_state:
-    st.session_state.values = {}
 st.session_state.values["beliefs"] = selected_beliefs
 
 # Goals
@@ -243,11 +248,9 @@ goals_options = ["Career Growth", "Personal Development", "Health & Wellness", "
 selected_goals = create_value_checkbox(
     "What Are Your Goals?",
     goals_options,
-    st.session_state.get("values", {}).get("goals", []),
+    st.session_state.values.get("goals", []),
     key="goals"
 )
-if "values" not in st.session_state:
-    st.session_state.values = {}
 st.session_state.values["goals"] = selected_goals
 
 # Interests
@@ -256,11 +259,9 @@ interests_options = ["Technology", "Arts", "Science", "Philosophy", "Sports", "T
 selected_interests = create_value_checkbox(
     "What Are Your Interests?",
     interests_options,
-    st.session_state.get("values", {}).get("interests", []),
+    st.session_state.values.get("interests", []),
     key="interests"
 )
-if "values" not in st.session_state:
-    st.session_state.values = {}
 st.session_state.values["interests"] = selected_interests
 
 # Save personality data
