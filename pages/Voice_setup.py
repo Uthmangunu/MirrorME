@@ -11,6 +11,7 @@ import soundfile as sf
 from io import BytesIO
 import numpy as np
 from firebase_client import get_doc, save_doc
+import plotly.graph_objects as go
 
 # === Page Config ===
 st.set_page_config(page_title="MirrorMe - Voice Setup", page_icon="🎙️")
@@ -30,6 +31,9 @@ if "recording_start_time" not in st.session_state:
 
 if "is_recording" not in st.session_state:
     st.session_state.is_recording = False
+
+if "audio_levels" not in st.session_state:
+    st.session_state.audio_levels = []
 
 if not st.session_state.user:
     st.warning("⚠️ Please Log In to Access This Page.")
@@ -59,36 +63,80 @@ if st.session_state.voice_id:
 tab1, tab2 = st.tabs(["🎤 Record Voice", "📁 Upload File"])
 
 with tab1:
-    st.subheader("🎤 Record Your Voice")
-    st.markdown("Click 'Start' to begin recording. Speak naturally for 30-60 seconds.")
+    col1, col2 = st.columns([2, 1])
     
-    # Recording timer
-    if st.session_state.is_recording:
-        elapsed_time = time.time() - st.session_state.recording_start_time
-        minutes = int(elapsed_time // 60)
-        seconds = int(elapsed_time % 60)
-        st.markdown(f"### ⏱️ Recording Time: {minutes:02d}:{seconds:02d}")
+    with col1:
+        st.subheader("🎤 Record Your Voice")
+        st.markdown("Click 'Start' to begin recording. Speak naturally for 30-60 seconds.")
         
-        # Show recording status
-        st.markdown("🔴 Recording in progress...")
+        # Create a container for the recording UI
+        recording_container = st.container()
+        
+        with recording_container:
+            # Recording status and timer
+            if st.session_state.is_recording:
+                elapsed_time = time.time() - st.session_state.recording_start_time
+                minutes = int(elapsed_time // 60)
+                seconds = int(elapsed_time % 60)
+                
+                # Create a nice status card
+                st.markdown(f"""
+                    <div style='background-color: #ff4b4b; color: white; padding: 15px; border-radius: 10px; text-align: center; margin: 10px 0;'>
+                        <h3 style='margin: 0;'>⏱️ {minutes:02d}:{seconds:02d}</h3>
+                        <p style='margin: 5px 0 0 0;'>Recording in progress...</p>
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                # Audio level visualization
+                if st.session_state.audio_levels:
+                    fig = go.Figure()
+                    fig.add_trace(go.Scatter(
+                        y=st.session_state.audio_levels[-50:],
+                        mode='lines',
+                        line=dict(color='#ff4b4b', width=2),
+                        fill='tozeroy',
+                        fillcolor='rgba(255, 75, 75, 0.2)'
+                    ))
+                    fig.update_layout(
+                        height=100,
+                        margin=dict(l=0, r=0, t=0, b=0),
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        showlegend=False,
+                        xaxis=dict(showgrid=False, showticklabels=False),
+                        yaxis=dict(showgrid=False, showticklabels=False, range=[0, 1])
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
     
-    # WebRTC recorder
-    rec = webrtc_streamer(
-        key="voice_recorder",
-        mode=WebRtcMode.SENDONLY,
-        audio_receiver_size=1024,
-        media_stream_constraints={"audio": True, "video": False},
-        async_processing=True
-    )
-    
-    # Handle recording state
-    if rec.state.playing and not st.session_state.is_recording:
-        st.session_state.is_recording = True
-        st.session_state.recording_start_time = time.time()
-    elif not rec.state.playing and st.session_state.is_recording:
-        st.session_state.is_recording = False
-        st.session_state.recording_start_time = None
-    
+    with col2:
+        # WebRTC recorder
+        rec = webrtc_streamer(
+            key="voice_recorder",
+            mode=WebRtcMode.SENDONLY,
+            audio_receiver_size=1024,
+            media_stream_constraints={"audio": True, "video": False},
+            async_processing=True
+        )
+        
+        # Handle recording state
+        if rec.state.playing and not st.session_state.is_recording:
+            st.session_state.is_recording = True
+            st.session_state.recording_start_time = time.time()
+            st.session_state.audio_levels = []
+        elif not rec.state.playing and st.session_state.is_recording:
+            st.session_state.is_recording = False
+            st.session_state.recording_start_time = None
+        
+        # Update audio levels
+        if rec.audio_receiver and st.session_state.is_recording:
+            try:
+                frame = rec.audio_receiver.get_frames(timeout=0.1)[0]
+                audio_data = frame.to_ndarray()
+                level = np.abs(audio_data).mean()
+                st.session_state.audio_levels.append(level)
+            except:
+                pass
+
     # Process recorded audio
     if rec.audio_receiver:
         audio_frames = []
