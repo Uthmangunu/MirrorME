@@ -8,49 +8,42 @@ import streamlit as st
 # === 🔥 Initialize Firestore ===
 def init_firestore():
     try:
-        # ✅ Hosted (Streamlit Cloud) — load credentials from st.secrets
+        # Debug: Print available secrets
+        st.write("Available secrets:", list(st.secrets.keys()))
+        
+        # Check if we have the service account credentials
         if "GOOGLE_APPLICATION_CREDENTIALS" in st.secrets:
             try:
-                creds_path = st.secrets["GOOGLE_APPLICATION_CREDENTIALS"]
+                # Get the credentials from secrets
+                creds_data = st.secrets["GOOGLE_APPLICATION_CREDENTIALS"]
                 
-                # If it's a path to a file
-                if isinstance(creds_path, str) and os.path.isfile(creds_path):
+                # If it's a string, try to parse it as JSON
+                if isinstance(creds_data, str):
                     try:
-                        with open(creds_path, 'r') as f:
-                            creds_dict = json.load(f)
-                    except Exception as e:
-                        st.error(f"❌ Error reading credentials file: {e}")
-                        return None
-                # If it's a JSON string
-                elif isinstance(creds_path, str):
-                    try:
-                        creds_dict = json.loads(creds_path)
+                        creds_dict = json.loads(creds_data)
                     except json.JSONDecodeError as e:
-                        st.error(f"❌ Invalid JSON in credentials string: {e}")
+                        st.error(f"❌ Invalid JSON in credentials: {e}")
                         return None
-                # If it's already a dictionary
                 else:
-                    creds_dict = creds_path
+                    creds_dict = creds_data
                 
                 # Clean the credentials dictionary
                 creds_dict = {k: v for k, v in creds_dict.items() if v is not None}
                 
+                # Ensure private_key is properly formatted
+                if "private_key" in creds_dict:
+                    creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+                
+                # Create credentials object
                 creds = service_account.Credentials.from_service_account_info(creds_dict)
+                
+                # Initialize Firestore client
                 return firestore.Client(credentials=creds, project=creds_dict.get("project_id"))
             except Exception as e:
                 st.error(f"❌ Error processing credentials: {e}")
                 return None
-
-        # ✅ Local environment — use path to service account JSON file
-        elif os.getenv("GOOGLE_APPLICATION_CREDENTIALS"):
-            try:
-                return firestore.Client()
-            except Exception as e:
-                st.error(f"❌ Error initializing Firestore client: {e}")
-                return None
-
         else:
-            st.error("❌ Firestore credentials not found. Please check your secrets or environment variable.")
+            st.error("❌ Service account credentials not found in secrets. Please add GOOGLE_APPLICATION_CREDENTIALS to your secrets.")
             return None
 
     except Exception as e:
