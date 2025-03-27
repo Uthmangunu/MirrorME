@@ -102,17 +102,20 @@ if st.button("Login"):
                 st.session_state.user = user_data
                 st.session_state.user_id = user_data["localId"]
                 
-                # Save to local storage
-                st.markdown(f"""
-                    <script>
-                        localStorage.setItem('mirror_user', '{json.dumps(user_data)}');
-                    </script>
-                """, unsafe_allow_html=True)
+                # Save to session state
+                st.session_state["logged_in"] = True
                 
-                st.success("Login successful!")
+                # Redirect to Clarity page
                 st.switch_page("pages/Clarity.py")
             else:
-                st.error("Invalid email or password.")
+                error_data = response.json()
+                error_message = error_data.get("error", {}).get("message", "Invalid email or password.")
+                if "INVALID_PASSWORD" in error_message:
+                    st.error("Incorrect password. Please try again.")
+                elif "EMAIL_NOT_FOUND" in error_message:
+                    st.error("Email not found. Please check your email or register.")
+                else:
+                    st.error(f"Login failed: {error_message}")
         except Exception as e:
             st.error(f"Login failed: {str(e)}")
 
