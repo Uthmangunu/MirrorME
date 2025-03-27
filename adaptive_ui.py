@@ -312,3 +312,138 @@ def render_mood_indicator(mood, size=20, animation_class=""):
         <div class="mood-indicator {animation_class}" title="{mood.title()}"></div>
         <div class="mood-tooltip">{mood.title()}</div>
     """, unsafe_allow_html=True)
+
+def create_animated_input(mood, size=20, animation_class=""):
+    """Creates an animated input box with mood indicator."""
+    mood_colors = {
+        "happy": "#FFD700",  # Gold
+        "sad": "#4682B4",    # Steel Blue
+        "angry": "#FF4500",  # Orange Red
+        "neutral": "#808080", # Gray
+        "excited": "#FF69B4", # Hot Pink
+        "calm": "#98FB98",   # Pale Green
+        "anxious": "#DDA0DD", # Plum
+        "confident": "#FFA500", # Orange
+        "curious": "#20B2AA",  # Light Sea Green
+        "playful": "#FFB6C1",  # Light Pink
+        "thoughtful": "#B0C4DE", # Light Steel Blue
+        "energetic": "#FFD700",  # Gold
+        "focused": "#4B0082",    # Indigo
+        "creative": "#FF69B4",   # Hot Pink
+        "determined": "#FF4500", # Orange Red
+        "default": "#808080"     # Gray
+    }
+    
+    color = mood_colors.get(mood.lower(), mood_colors["default"])
+    
+    st.markdown(f"""
+        <style>
+        .animated-input-container {{
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }}
+        
+        .mood-indicator {{
+            width: {size}px;
+            height: {size}px;
+            background: {color};
+            border-radius: 50%;
+            display: inline-block;
+            position: relative;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: 0 0 10px {color}40;
+            flex-shrink: 0;
+        }}
+        
+        .mood-indicator:hover {{
+            transform: scale(1.2);
+            box-shadow: 0 0 20px {color}80;
+        }}
+        
+        .mood-indicator::before {{
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: inherit;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), transparent);
+            opacity: 0.5;
+            transition: opacity 0.3s ease;
+        }}
+        
+        .mood-indicator:hover::before {{
+            opacity: 0.8;
+        }}
+        
+        .mood-indicator::after {{
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60%;
+            height: 60%;
+            border-radius: inherit;
+            background: radial-gradient(circle at center, transparent, {color}40);
+            animation: pulse 2s infinite;
+        }}
+        
+        .mood-indicator:hover::after {{
+            animation: pulse 1s infinite;
+        }}
+        
+        .mood-indicator.mood-changed {{
+            animation: moodChange 1s ease-in-out;
+        }}
+        
+        @keyframes pulse {{
+            0% {{ transform: translate(-50%, -50%) scale(1); opacity: 0.5; }}
+            50% {{ transform: translate(-50%, -50%) scale(1.2); opacity: 0.3; }}
+            100% {{ transform: translate(-50%, -50%) scale(1); opacity: 0.5; }}
+        }}
+        
+        @keyframes moodChange {{
+            0% {{ transform: scale(1); }}
+            50% {{ transform: scale(1.5); }}
+            100% {{ transform: scale(1); }}
+        }}
+        
+        .mood-tooltip {{
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }}
+        
+        .mood-indicator:hover + .mood-tooltip {{
+            opacity: 1;
+        }}
+        
+        .stTextInput>div>div>input {{
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            background: transparent !important;
+        }}
+        </style>
+        <div class="animated-input-container">
+            <div class="mood-indicator {animation_class}" title="{mood.title()}"></div>
+            <div class="mood-tooltip">{mood.title()}</div>
+        </div>
+    """, unsafe_allow_html=True)

@@ -231,16 +231,14 @@ if "last_mood_change_time" not in st.session_state:
 # Create a container for the title and mood indicator
 title_container = st.container()
 with title_container:
-    col1, col2 = st.columns([20, 1])
-    with col1:
-        st.title("🪞 MirrorMe — Live Chat with Your Mirror")
-    with col2:
-        # Only show animation class if mood changed recently
-        animation_class = "mood-changed" if (time.time() - st.session_state.last_mood_change_time) < 1 else ""
-        render_mood_indicator(st.session_state.current_mood, size=30, animation_class=animation_class)
+    st.title("🪞 MirrorMe — Live Chat with Your Mirror")
 
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "system", "content": generate_prompt_from_clarity(user_id)}]
+
+# Create the animated input box with mood indicator
+animation_class = "mood-changed" if (time.time() - st.session_state.last_mood_change_time) < 1 else ""
+create_animated_input(st.session_state.current_mood, size=20, animation_class=animation_class)
 
 user_input = st.chat_input("Send a message...")
 if user_input:
@@ -280,7 +278,9 @@ with st.sidebar:
     st.markdown("### 🧹 Tools")
     if st.button("🔁 Reset Mirror"):
         st.session_state.messages = [{"role": "system", "content": generate_prompt_from_clarity(user_id)}]
-        st.experimental_rerun()
+        st.session_state.current_mood = "neutral"
+        st.session_state.last_mood_change_time = 0
+        st.rerun()
     if st.button("📤 Export Chat"):
         text = "\n\n".join([f"{m['role'].title()}: {m['content']}" for m in st.session_state["messages"][1:]])
         st.download_button("💾 Save Chat", text, file_name="mirror_chat.txt")
