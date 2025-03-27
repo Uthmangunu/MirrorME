@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 import tempfile
 import time
 from components.feedback_button import feedback_button
-from streamlit_webrtc import webrtc_streamer
+from streamlit_webrtc import webrtc_streamer, WebRtcMode
 import soundfile as sf
 from io import BytesIO
 import numpy as np
@@ -59,7 +59,7 @@ with tab1:
     # WebRTC recorder
     rec = webrtc_streamer(
         key="voice_recorder",
-        mode="sendonly",
+        mode=WebRtcMode.SENDONLY,
         audio_receiver_size=1024,
         media_stream_constraints={"audio": True, "video": False},
         async_processing=True
