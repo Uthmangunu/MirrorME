@@ -22,7 +22,11 @@ st.set_page_config(page_title="MirrorMe - Clarity", page_icon="🧠")
 if "user" not in st.session_state or not st.session_state.user:
     st.warning("⚠️ Please log in to access this page.")
     if st.button("🔐 Login"):
-        st.switch_page("Login.py")
+        st.markdown("""
+            <script>
+                window.location.href = "Login";
+            </script>
+        """, unsafe_allow_html=True)
     st.stop()
 
 # Get user ID from session state
