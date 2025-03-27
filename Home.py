@@ -53,6 +53,25 @@ user_id = st.session_state["user"]["localId"]
 clarity_data = load_clarity()
 settings = load_user_settings(user_id)
 
+if not clarity_data:
+    clarity_data = {
+        "traits": {
+            "humor": {"score": 50, "xp": 0},
+            "empathy": {"score": 50, "xp": 0},
+            "ambition": {"score": 50, "xp": 0},
+            "flirtiness": {"score": 50, "xp": 0},
+            "logic": {"score": 50, "xp": 0},
+            "boldness": {"score": 50, "xp": 0},
+            "memory": {"score": 50, "xp": 0},
+            "depth": {"score": 50, "xp": 0},
+            "adaptability": {"score": 50, "xp": 0}
+        },
+        "clarity_level": 0,
+        "total_xp": 0,
+        "xp_to_next_level": 100
+    }
+    save_clarity(clarity_data)
+
 if "traits" not in clarity_data:
     st.warning("🔧 Mirror not initialized. Please complete setup.")
     st.stop()
@@ -228,8 +247,13 @@ with st.sidebar:
     st.text(get_user_memory_as_string(user_id))
     st.markdown("---")
     st.markdown("### 🪞 Mirror Clarity Traits")
-    for trait, values in clarity_data["traits"].items():
-        st.text(f"{trait.title()}: {int(values['score'])}")
+    try:
+        for trait, values in clarity_data.get("traits", {}).items():
+            score = values.get("score", 50)
+            st.text(f"{trait.title()}: {int(score)}")
+    except Exception as e:
+        st.error(f"Error displaying traits: {str(e)}")
+        st.text("Traits data unavailable")
     st.markdown("---")
     st.markdown("### 🧹 Tools")
     if st.button("🔁 Reset Mirror"):

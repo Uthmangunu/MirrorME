@@ -46,14 +46,39 @@ def load_clarity():
                 },
                 "traits": {
                     trait: {"xp": 0, "score": 50} 
-                    for trait in ["humor", "empathy", "logic", "boldness", "memory", "depth", "adaptability"]
+                    for trait in ["humor", "empathy", "logic", "boldness", "memory", "depth", "adaptability", "ambition", "flirtiness"]
                 }
             }
             save_clarity(default_data)
             return default_data
             
         with open(CLARITY_DATA_PATH, "r") as f:
-            return json.load(f)
+            data = json.load(f)
+            
+            # Ensure all required fields exist
+            if "traits" not in data:
+                data["traits"] = {}
+                
+            # Ensure all required traits exist with default values
+            required_traits = ["humor", "empathy", "logic", "boldness", "memory", "depth", "adaptability", "ambition", "flirtiness"]
+            for trait in required_traits:
+                if trait not in data["traits"]:
+                    data["traits"][trait] = {"xp": 0, "score": 50}
+                    
+            # Ensure other required fields exist
+            if "total_xp" not in data:
+                data["total_xp"] = 0
+            if "clarity_level" not in data:
+                data["clarity_level"] = 0
+            if "xp_to_next_level" not in data:
+                data["xp_to_next_level"] = XP_THRESHOLDS[1]
+            if "evolution" not in data:
+                data["evolution"] = {
+                    "level_history": {},
+                    "last_updated": datetime.utcnow().isoformat()
+                }
+                
+            return data
     except Exception as e:
         print(f"Error loading clarity data: {e}")
         return None
