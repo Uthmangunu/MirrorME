@@ -15,7 +15,10 @@ from user_memory import (
     update_user_memory, get_user_memory_as_string
 )
 from clarity_tracker import log_clarity_change 
-from adaptive_ui import detect_mood, set_mood_background, render_mood_indicator
+from adaptive_ui import (
+    detect_mood, set_mood_background, render_mood_indicator,
+    create_animated_input
+)
 from long_memory import load_long_memory
 from clarity_core import load_clarity, save_clarity, apply_trait_xp
 from user_settings import load_user_settings
