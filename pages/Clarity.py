@@ -16,8 +16,154 @@ from components.feedback_button import feedback_button
 from google.cloud import firestore
 from datetime import datetime
 import time
+import json
+from components.topbar import topbar
+from firebase_client import get_doc, save_doc
 
-# Set page config first (must be the first Streamlit command)
+# === Page Config ===
+st.set_page_config(
+    page_title="MirrorMe - Clarity",
+    page_icon="🧠",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
+# === Custom CSS ===
+st.markdown("""
+<style>
+.main {
+    background-color: #0E1117;
+    color: white;
+}
+
+.clarity-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.clarity-title {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    color: white;
+}
+
+.stButton>button {
+    width: 100%;
+    background: #FF4B4B;
+    color: white;
+    border: none;
+    padding: 0.8rem;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+}
+
+.stButton>button:hover {
+    background: #e03e3e;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 75, 75, 0.3);
+}
+
+.stCheckbox>label {
+    color: white;
+}
+
+.stRadio>label {
+    color: white;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# === Require Login ===
+if "user" not in st.session_state or not st.session_state.user:
+    st.warning("⚠️ Please Log In to Access This Page.")
+    if st.button("🔐 Login"):
+        st.switch_page("pages/Login.py")
+    st.stop()
+
+user_id = st.session_state.user["localId"]
+username = st.session_state.user.get("displayName", "User")
+
+# Add topbar
+topbar(username)
+
+# === Load Current Settings ===
+current = get_doc("settings", user_id) or {}
+st.session_state.core_values = current.get("core_values", [])
+st.session_state.mirror_tagline = current.get("mirror_tagline", "")
+
+# === Main UI ===
+st.markdown('<div class="clarity-container">', unsafe_allow_html=True)
+st.markdown('<div class="clarity-title">🧠 Mirror Clarity</div>', unsafe_allow_html=True)
+
+# Core Values Selection
+st.markdown("### Select Your Core Values")
+st.markdown("Choose the values that best reflect your personality and beliefs.")
+
+# Core values options
+core_values_options = [
+    "Authenticity", "Empathy", "Growth", "Integrity", "Creativity",
+    "Resilience", "Curiosity", "Compassion", "Excellence", "Balance",
+    "Innovation", "Harmony", "Leadership", "Wisdom", "Joy"
+]
+
+# Create three columns for core values
+col1, col2, col3 = st.columns(3)
+
+selected_core_values = []
+with col1:
+    for value in core_values_options[:5]:
+        if st.checkbox(value, key=f"value_{value}", value=value in st.session_state.core_values):
+            selected_core_values.append(value)
+
+with col2:
+    for value in core_values_options[5:10]:
+        if st.checkbox(value, key=f"value_{value}", value=value in st.session_state.core_values):
+            selected_core_values.append(value)
+
+with col3:
+    for value in core_values_options[10:]:
+        if st.checkbox(value, key=f"value_{value}", value=value in st.session_state.core_values):
+            selected_core_values.append(value)
+
+# Update session state
+st.session_state.core_values = selected_core_values
+
+# Mirror Tagline
+st.markdown("### 🪞 Mirror Identity Tagline")
+tagline = st.text_input(
+    "Describe how your Mirror should behave (tone, attitude, etc.):",
+    value=st.session_state.mirror_tagline,
+    max_chars=150
+)
+
+if tagline:
+    st.session_state.mirror_tagline = tagline
+
+# Save button
+if st.button("💾 Save Settings"):
+    settings = {
+        "core_values": st.session_state.core_values,
+        "mirror_tagline": st.session_state.mirror_tagline
+    }
+    
+    if save_doc("settings", user_id, settings):
+        st.success("✅ Settings saved successfully!")
+    else:
+        st.error("Failed to save settings. Please try again.")
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+# === Footer ===
+st.markdown("---")
+feedback_button(user_id)
+
+# === Page Config ===
 st.set_page_config(page_title="MirrorMe - Clarity", page_icon="🧠")
 
 # Initialize session state
@@ -58,13 +204,6 @@ if "last_mood_change_time" not in st.session_state:
 
 if "show_settings" not in st.session_state:
     st.session_state.show_settings = False
-
-# Check if user is logged in
-if not st.session_state.user:
-    st.warning("⚠️ Please Log In to Access This Page.")
-    if st.button("🔐 Login"):
-        st.switch_page("pages/Login.py")
-    st.stop()
 
 # Get user ID from session state
 user_id = st.session_state.user["localId"]
