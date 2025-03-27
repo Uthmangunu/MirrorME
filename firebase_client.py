@@ -11,20 +11,32 @@ def init_firestore():
         # ✅ Hosted (Streamlit Cloud) — load credentials from st.secrets
         if "GOOGLE_APPLICATION_CREDENTIALS" in st.secrets:
             try:
-                # Handle both string and dict formats
-                if isinstance(st.secrets["GOOGLE_APPLICATION_CREDENTIALS"], str):
-                    creds_dict = json.loads(st.secrets["GOOGLE_APPLICATION_CREDENTIALS"])
+                creds_path = st.secrets["GOOGLE_APPLICATION_CREDENTIALS"]
+                
+                # If it's a path to a file
+                if isinstance(creds_path, str) and os.path.isfile(creds_path):
+                    try:
+                        with open(creds_path, 'r') as f:
+                            creds_dict = json.load(f)
+                    except Exception as e:
+                        st.error(f"❌ Error reading credentials file: {e}")
+                        return None
+                # If it's a JSON string
+                elif isinstance(creds_path, str):
+                    try:
+                        creds_dict = json.loads(creds_path)
+                    except json.JSONDecodeError as e:
+                        st.error(f"❌ Invalid JSON in credentials string: {e}")
+                        return None
+                # If it's already a dictionary
                 else:
-                    creds_dict = st.secrets["GOOGLE_APPLICATION_CREDENTIALS"]
+                    creds_dict = creds_path
                 
                 # Clean the credentials dictionary
                 creds_dict = {k: v for k, v in creds_dict.items() if v is not None}
                 
                 creds = service_account.Credentials.from_service_account_info(creds_dict)
                 return firestore.Client(credentials=creds, project=creds_dict.get("project_id"))
-            except json.JSONDecodeError as e:
-                st.error(f"❌ Invalid JSON in credentials: {e}")
-                return None
             except Exception as e:
                 st.error(f"❌ Error processing credentials: {e}")
                 return None
