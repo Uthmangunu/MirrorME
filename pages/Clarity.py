@@ -29,28 +29,31 @@ if "user" not in st.session_state or not st.session_state.user:
 user_id = st.session_state.user["localId"]
 
 # Initialize session state for traits and values if not exists
-if 'traits' not in st.session_state:
+if "traits" not in st.session_state:
     st.session_state.traits = {
-        'humor': 0.5,
-        'empathy': 0.5,
-        'logic': 0.5,
-        'boldness': 0.5,
-        'memory': 0.5,
-        'depth': 0.5,
-        'adaptability': 0.5
+        "humor": 50,
+        "empathy": 50,
+        "logic": 50,
+        "boldness": 50,
+        "memory": 50,
+        "depth": 50,
+        "adaptability": 50
     }
-
-if 'values' not in st.session_state:
-    st.session_state.values = {}
-
-if 'mood' not in st.session_state:
-    st.session_state.mood = 'neutral'
-
-if 'persona_mode' not in st.session_state:
-    st.session_state.persona_mode = 'Professional'
-
-if 'recent_messages' not in st.session_state:
-    st.session_state.recent_messages = []
+if "values" not in st.session_state:
+    st.session_state.values = {
+        "core_values": [],
+        "beliefs": [],
+        "goals": [],
+        "interests": []
+    }
+if "persona_mode" not in st.session_state:
+    st.session_state.persona_mode = "balanced"
+if "current_mood" not in st.session_state:
+    st.session_state.current_mood = "neutral"
+if "mood_changed" not in st.session_state:
+    st.session_state.mood_changed = False
+if "last_mood_change_time" not in st.session_state:
+    st.session_state.last_mood_change_time = 0
 
 # Sidebar for persona selection and mood display
 with st.sidebar:
@@ -64,13 +67,13 @@ with st.sidebar:
     )
     
     # Display current mood
-    st.markdown(f"### Current Mood: {st.session_state.mood.capitalize()}")
+    st.markdown(f"### Current Mood: {st.session_state.current_mood.capitalize()}")
     
     # Mood detection from recent messages
     if 'recent_messages' in st.session_state:
         current_mood = detect_mood_from_text(" ".join(st.session_state.recent_messages[-3:]))
-        if current_mood != st.session_state.mood:
-            st.session_state.mood = current_mood
+        if current_mood != st.session_state.current_mood:
+            st.session_state.current_mood = current_mood
             st.experimental_rerun()
 
 # Main content
@@ -78,7 +81,7 @@ st.title("MirrorMe Personality Mirror")
 
 # Apply UI adjustments based on persona and mood
 adjust_ui_for_persona(st.session_state.persona_mode)
-set_mood_background(st.session_state.mood)
+set_mood_background(st.session_state.current_mood)
 
 # Trait Engine 2.0
 st.header("🎭 Trait Engine 2.0")
@@ -155,7 +158,9 @@ if st.button("Save Personality Profile"):
             "traits": st.session_state.traits,
             "values": st.session_state.values,
             "persona_mode": st.session_state.persona_mode,
-            "mood": st.session_state.mood,
+            "current_mood": st.session_state.current_mood,
+            "mood_changed": st.session_state.mood_changed,
+            "last_mood_change_time": st.session_state.last_mood_change_time,
             "last_updated": datetime.now().isoformat()
         }
         

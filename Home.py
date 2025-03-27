@@ -216,9 +216,10 @@ def get_reply(messages):
         response = client.chat.completions.create(
             model="gpt-4",
             messages=messages,
-            max_tokens=150
+            max_tokens=150,
+            stream=True  # Enable streaming
         )
-        return response.choices[0].message.content.strip()
+        return response
     except Exception as e:
         st.error(f"❌ OpenAI Error: {e}")
         return None
@@ -240,32 +241,83 @@ with title_container:
     with col1:
         st.title("🪞 MirrorMe — Live Chat with Your Mirror")
     with col2:
+        # Add CSS to align the mood indicator with the text
+        st.markdown("""
+            <style>
+            .mood-container {
+                margin-top: 1.5rem;
+            }
+            </style>
+            <div class="mood-container">
+        """, unsafe_allow_html=True)
         # Only show animation class if mood changed recently
         animation_class = "mood-changed" if (time.time() - st.session_state.last_mood_change_time) < 1 else ""
         render_mood_indicator(st.session_state.current_mood, size=40, animation_class=animation_class)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+# Add typewriter styling
+st.markdown("""
+    <style>
+    .typewriter {
+        overflow: hidden;
+        border-right: 2px solid #90EE90;
+        white-space: nowrap;
+        margin: 0;
+        animation: 
+            typing 3.5s steps(40, end),
+            blink-caret .75s step-end infinite;
+    }
+    
+    @keyframes typing {
+        from { width: 0 }
+        to { width: 100% }
+    }
+    
+    @keyframes blink-caret {
+        from, to { border-color: transparent }
+        50% { border-color: #90EE90 }
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 # Handle user input and mood updates
 user_input = st.chat_input("Send a message...")
 if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
     clarity_data = apply_trait_xp(clarity_data, "dm")
-    reply = get_reply(st.session_state.messages)
-    if reply:
-        st.session_state.messages.append({"role": "assistant", "content": reply})
-        update_user_memory(user_id, user_input, reply)
-        mood = detect_mood(user_input + " " + reply)
+    
+    # Create a placeholder for the streaming response
+    response_placeholder = st.empty()
+    full_response = ""
+    
+    # Get streaming response
+    response = get_reply(st.session_state.messages)
+    if response:
+        for chunk in response:
+            if chunk.choices[0].delta.content is not None:
+                full_response += chunk.choices[0].delta.content
+                # Update the placeholder with the current text
+                response_placeholder.markdown(f"<div class='message-box ai-msg'>🧠 {full_response}</div>", unsafe_allow_html=True)
+        
+        # Add the complete response to messages
+        st.session_state.messages.append({"role": "assistant", "content": full_response})
+        update_user_memory(user_id, user_input, full_response)
+        mood = detect_mood(user_input + " " + full_response)
         if mood != st.session_state.current_mood:
             st.session_state.current_mood = mood
             st.session_state.last_mood_change_time = time.time()
         set_mood_background(mood)
         save_clarity(clarity_data)
+        
+        # Speak the complete response
+        speak_text(full_response)
 
+# Display previous messages
 for msg in st.session_state.messages[1:]:
     if msg["role"] == "user":
         st.markdown(f"<div class='message-box user-msg'>👤 {msg['content']}</div>", unsafe_allow_html=True)
     else:
         st.markdown(f"<div class='message-box ai-msg'>🧠 {msg['content']}</div>", unsafe_allow_html=True)
-        speak_text(msg["content"])
 
 with st.sidebar:
     st.markdown("### 🧠 Memory Log")
