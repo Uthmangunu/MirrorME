@@ -15,7 +15,84 @@ import plotly.graph_objects as go
 from scipy.io import wavfile
 
 # === Page Config ===
-st.set_page_config(page_title="MirrorMe - Voice Setup", page_icon="🎙️")
+st.set_page_config(page_title="MirrorMe - Voice Setup", page_icon="🎙️", layout="wide")
+
+# Add custom CSS
+st.markdown("""
+<style>
+.recording-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: linear-gradient(145deg, #ffffff, #f0f0f0);
+    border-radius: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin: 2rem auto;
+    max-width: 600px;
+}
+
+.recording-button {
+    font-size: 80px;
+    text-align: center;
+    padding: 30px;
+    border-radius: 100%;
+    background-color: #FF4B4B;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 1rem 0;
+}
+
+.recording-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(255, 75, 75, 0.3);
+}
+
+.recording-button.recording {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(255,75,75, 0.7); }
+    70% { box-shadow: 0 0 0 30px rgba(255,75,75, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255,75,75, 0); }
+}
+
+.timer {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #FF4B4B;
+    margin: 1rem 0;
+    font-family: 'Helvetica Neue', sans-serif;
+}
+
+.recording-text {
+    font-size: 1.2rem;
+    color: #666;
+    margin: 0.5rem 0;
+    font-family: 'Helvetica Neue', sans-serif;
+}
+
+.waveform-container {
+    width: 100%;
+    height: 100px;
+    margin: 1rem 0;
+    background: rgba(255, 75, 75, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.tab-content {
+    padding: 2rem;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin: 1rem 0;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # === 🔐 Require Login ===
 if "user" not in st.session_state:
@@ -67,93 +144,94 @@ if st.session_state.voice_id:
     st.success("✅ You already have a voice profile set up!")
 
 # === Create tabs for recording and uploading ===
-tab1, tab2 = st.tabs(["🎤 Record Voice", "📁 Upload File"])
+tab1, tab2 = st.tabs(["🎙️ Record", "📁 Upload"])
 
 with tab1:
-    col1, col2 = st.columns([2, 1])
+    st.markdown('<div class="tab-content">', unsafe_allow_html=True)
     
-    with col1:
-        st.subheader("🎤 Record Your Voice")
-        st.markdown("Click 'Start' to begin recording. Speak naturally for 30-60 seconds.")
-        
-        # Create a container for the recording UI
-        recording_container = st.container()
-        
-        with recording_container:
-            # Recording status and timer
-            if st.session_state.is_recording:
-                elapsed_time = time.time() - st.session_state.recording_start_time
-                minutes = int(elapsed_time // 60)
-                seconds = int(elapsed_time % 60)
-                
-                # Create a nice status card
-                st.markdown(f"""
-                    <div style='background-color: #ff4b4b; color: white; padding: 15px; border-radius: 10px; text-align: center; margin: 10px 0;'>
-                        <h3 style='margin: 0;'>⏱️ {minutes:02d}:{seconds:02d}</h3>
-                        <p style='margin: 5px 0 0 0;'>Recording in progress...</p>
-                    </div>
-                """, unsafe_allow_html=True)
-                
-                # Audio level visualization
-                if st.session_state.audio_levels:
-                    fig = go.Figure()
-                    fig.add_trace(go.Scatter(
-                        y=st.session_state.audio_levels[-50:],
-                        mode='lines',
-                        line=dict(color='#ff4b4b', width=2),
-                        fill='tozeroy',
-                        fillcolor='rgba(255, 75, 75, 0.2)'
-                    ))
-                    fig.update_layout(
-                        height=100,
-                        margin=dict(l=0, r=0, t=0, b=0),
-                        paper_bgcolor='rgba(0,0,0,0)',
-                        plot_bgcolor='rgba(0,0,0,0)',
-                        showlegend=False,
-                        xaxis=dict(showgrid=False, showticklabels=False),
-                        yaxis=dict(showgrid=False, showticklabels=False, range=[0, 1])
-                    )
-                    st.plotly_chart(fig, use_container_width=True)
+    # Create centered recording container
+    st.markdown('<div class="recording-container">', unsafe_allow_html=True)
     
-    with col2:
-        # WebRTC recorder
-        rec = webrtc_streamer(
-            key="voice_recorder",
-            mode=WebRtcMode.SENDONLY,
-            audio_receiver_size=1024,
-            media_stream_constraints={"audio": True, "video": False},
-            async_processing=True
+    # Title and instructions
+    st.markdown("### 🎙️ Record Your Voice")
+    st.markdown("Speak naturally for 30-60 seconds to create your Mirror voice")
+    
+    # Recording button and status
+    recording_class = "recording-button recording" if st.session_state.is_recording else "recording-button"
+    st.markdown(f'<div class="{recording_class}">🎙️</div>', unsafe_allow_html=True)
+    
+    # Timer display
+    if st.session_state.is_recording:
+        elapsed_time = time.time() - st.session_state.recording_start_time
+        minutes = int(elapsed_time // 60)
+        seconds = int(elapsed_time % 60)
+        st.markdown(f'<div class="timer">{minutes:02d}:{seconds:02d}</div>', unsafe_allow_html=True)
+        st.markdown('<div class="recording-text">Recording in progress...</div>', unsafe_allow_html=True)
+    
+    # Waveform visualization
+    if st.session_state.is_recording and st.session_state.audio_levels:
+        st.markdown('<div class="waveform-container">', unsafe_allow_html=True)
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            y=st.session_state.audio_levels[-50:],
+            mode='lines',
+            line=dict(color='#ff4b4b', width=2),
+            fill='tozeroy',
+            fillcolor='rgba(255, 75, 75, 0.2)'
+        ))
+        fig.update_layout(
+            height=100,
+            margin=dict(l=0, r=0, t=0, b=0),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            showlegend=False,
+            xaxis=dict(showgrid=False, showticklabels=False),
+            yaxis=dict(showgrid=False, showticklabels=False, range=[0, 1])
         )
-        
-        # Handle recording state
-        if rec.state.playing and not st.session_state.is_recording:
-            st.session_state.is_recording = True
-            st.session_state.recording_start_time = time.time()
-            st.session_state.audio_levels = []
-            st.session_state.audio_data = []
-        elif not rec.state.playing and st.session_state.is_recording:
-            st.session_state.is_recording = False
-            st.session_state.recording_start_time = None
-            st.session_state.show_preview = True
-        
-        # Update audio levels and collect data
-        if rec.audio_receiver and st.session_state.is_recording:
-            try:
-                frame = rec.audio_receiver.get_frames(timeout=0.1)[0]
-                audio_data = frame.to_ndarray()
-                level = np.abs(audio_data).mean()
-                st.session_state.audio_levels.append(level)
-                st.session_state.audio_data.extend(audio_data.flatten())
-            except:
-                pass
-
-    # Show preview after recording
+        st.plotly_chart(fig, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    # WebRTC recorder (hidden)
+    rec = webrtc_streamer(
+        key="voice_recorder",
+        mode=WebRtcMode.SENDONLY,
+        audio_receiver_size=1024,
+        media_stream_constraints={"audio": True, "video": False},
+        async_processing=True
+    )
+    
+    # Handle recording state
+    if rec.state.playing and not st.session_state.is_recording:
+        st.session_state.is_recording = True
+        st.session_state.recording_start_time = time.time()
+        st.session_state.audio_levels = []
+        st.session_state.audio_data = []
+    elif not rec.state.playing and st.session_state.is_recording:
+        st.session_state.is_recording = False
+        st.session_state.recording_start_time = None
+        st.session_state.show_preview = True
+    
+    # Update audio levels and collect data
+    if rec.audio_receiver and st.session_state.is_recording:
+        try:
+            frame = rec.audio_receiver.get_frames(timeout=0.1)[0]
+            audio_data = frame.to_ndarray()
+            level = np.abs(audio_data).mean()
+            st.session_state.audio_levels.append(level)
+            st.session_state.audio_data.extend(audio_data.flatten())
+        except:
+            pass
+    
+    # Close recording container
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Preview section
     if st.session_state.show_preview and st.session_state.audio_data:
         st.markdown("### 🎵 Preview Recording")
         
         # Convert audio data to WAV format
         audio_data = np.array(st.session_state.audio_data)
-        sample_rate = 48000  # WebRTC default sample rate
+        sample_rate = 48000
         
         # Create a temporary WAV file
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_file:
@@ -174,6 +252,9 @@ with tab1:
                     st.session_state.audio_data = []
                     st.session_state.audio_levels = []
                     st.experimental_rerun()
+    
+    # Close tab content
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with tab2:
     st.subheader("📁 Upload Voice Sample")
