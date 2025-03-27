@@ -200,91 +200,115 @@ def create_value_checkbox(value: str, key: str = None) -> bool:
         help=f"Select if {value.lower()} is one of your core values"
     )
 
-def render_mood_indicator(mood: str, size: int = 20) -> None:
-    """
-    Render a small, colored circle indicator for the current mood.
-    Includes hover effect and animation.
-    """
-    colors = MOOD_COLORS.get(mood, MOOD_COLORS["neutral"])
+def render_mood_indicator(mood, size=20, animation_class=""):
+    """Renders a morphable mood indicator with enhanced animations."""
+    mood_colors = {
+        "happy": "#FFD700",  # Gold
+        "sad": "#4682B4",    # Steel Blue
+        "angry": "#FF4500",  # Orange Red
+        "neutral": "#808080", # Gray
+        "excited": "#FF69B4", # Hot Pink
+        "calm": "#98FB98",   # Pale Green
+        "anxious": "#DDA0DD", # Plum
+        "confident": "#FFA500", # Orange
+        "curious": "#20B2AA",  # Light Sea Green
+        "playful": "#FFB6C1",  # Light Pink
+        "thoughtful": "#B0C4DE", # Light Steel Blue
+        "energetic": "#FFD700",  # Gold
+        "focused": "#4B0082",    # Indigo
+        "creative": "#FF69B4",   # Hot Pink
+        "determined": "#FF4500", # Orange Red
+        "default": "#808080"     # Gray
+    }
+    
+    color = mood_colors.get(mood.lower(), mood_colors["default"])
     
     st.markdown(f"""
         <style>
         .mood-indicator {{
-            display: inline-block;
             width: {size}px;
             height: {size}px;
-            background-color: {colors['color']};
+            background: {color};
             border-radius: 50%;
-            margin: 0 10px;
+            display: inline-block;
             position: relative;
-            animation: morph 4s infinite, pulse 2s infinite;
             transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: 0 0 10px {color}40;
         }}
+        
+        .mood-indicator:hover {{
+            transform: scale(1.2);
+            box-shadow: 0 0 20px {color}80;
+        }}
+        
         .mood-indicator::before {{
-            content: "";
+            content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, {colors['color']}ff, {colors['color']}00);
-            animation: glow 2s infinite;
+            border-radius: inherit;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), transparent);
+            opacity: 0.5;
+            transition: opacity 0.3s ease;
         }}
+        
+        .mood-indicator:hover::before {{
+            opacity: 0.8;
+        }}
+        
         .mood-indicator::after {{
-            content: "Mood: {mood.capitalize()}";
+            content: '';
             position: absolute;
-            bottom: 100%;
+            top: 50%;
             left: 50%;
-            transform: translateX(-50%);
-            background-color: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 12px;
-            white-space: nowrap;
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
+            transform: translate(-50%, -50%);
+            width: 60%;
+            height: 60%;
+            border-radius: inherit;
+            background: radial-gradient(circle at center, transparent, {color}40);
+            animation: pulse 2s infinite;
         }}
-        .mood-indicator:hover {{
-            transform: scale(1.1);
-            box-shadow: 0 0 20px {colors['glow']};
-        }}
+        
         .mood-indicator:hover::after {{
-            opacity: 1;
+            animation: pulse 1s infinite;
         }}
-        @keyframes morph {{
-            0% {{ border-radius: 50%; }}
-            25% {{ border-radius: 60% 40% 30% 70%; }}
-            50% {{ border-radius: 30% 60% 70% 40%; }}
-            75% {{ border-radius: 40% 30% 60% 70%; }}
-            100% {{ border-radius: 50%; }}
+        
+        .mood-indicator.mood-changed {{
+            animation: moodChange 1s ease-in-out;
         }}
+        
         @keyframes pulse {{
-            0% {{
-                box-shadow: 0 0 0 0 {colors['glow']};
-            }}
-            70% {{
-                box-shadow: 0 0 0 10px {colors['glow']}00;
-            }}
-            100% {{
-                box-shadow: 0 0 0 0 {colors['glow']}00;
-            }}
+            0% {{ transform: translate(-50%, -50%) scale(1); opacity: 0.5; }}
+            50% {{ transform: translate(-50%, -50%) scale(1.2); opacity: 0.3; }}
+            100% {{ transform: translate(-50%, -50%) scale(1); opacity: 0.5; }}
         }}
-        @keyframes glow {{
-            0% {{ opacity: 0.5; }}
-            50% {{ opacity: 0.8; }}
-            100% {{ opacity: 0.5; }}
-        }}
+        
         @keyframes moodChange {{
             0% {{ transform: scale(1); }}
             50% {{ transform: scale(1.5); }}
             100% {{ transform: scale(1); }}
         }}
-        .mood-indicator.mood-changed {{
-            animation: moodChange 1s ease-out;
+        
+        .mood-tooltip {{
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }}
+        
+        .mood-indicator:hover + .mood-tooltip {{
+            opacity: 1;
         }}
         </style>
-        <div class="mood-indicator mood-changed"></div>
+        <div class="mood-indicator {animation_class}" title="{mood.title()}"></div>
+        <div class="mood-tooltip">{mood.title()}</div>
     """, unsafe_allow_html=True)

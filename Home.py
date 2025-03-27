@@ -5,6 +5,7 @@ import requests
 import json
 import tempfile
 from dotenv import load_dotenv
+import time
 
 # Set page config first (must be the first Streamlit command)
 st.set_page_config(page_title="MirrorMe", page_icon="🪞")
@@ -224,17 +225,19 @@ if "current_mood" not in st.session_state:
     st.session_state.current_mood = "neutral"
 if "mood_changed" not in st.session_state:
     st.session_state.mood_changed = False
+if "last_mood_change_time" not in st.session_state:
+    st.session_state.last_mood_change_time = 0
 
 # Create a container for the title and mood indicator
 title_container = st.container()
 with title_container:
-    col1, col2, col3 = st.columns([1, 20, 1])
+    col1, col2 = st.columns([20, 1])
     with col1:
-        render_mood_indicator(st.session_state.current_mood, size=30)
-    with col2:
         st.title("🪞 MirrorMe — Live Chat with Your Mirror")
-    with col3:
-        render_mood_indicator(st.session_state.current_mood, size=30)
+    with col2:
+        # Only show animation class if mood changed recently
+        animation_class = "mood-changed" if (time.time() - st.session_state.last_mood_change_time) < 1 else ""
+        render_mood_indicator(st.session_state.current_mood, size=30, animation_class=animation_class)
 
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "system", "content": generate_prompt_from_clarity(user_id)}]
@@ -250,10 +253,9 @@ if user_input:
         mood = detect_mood(user_input + " " + reply)
         if mood != st.session_state.current_mood:
             st.session_state.current_mood = mood
-            st.session_state.mood_changed = True
+            st.session_state.last_mood_change_time = time.time()
         set_mood_background(mood)
         save_clarity(clarity_data)
-        st.experimental_rerun()  # Rerun to update the mood indicator
 
 for msg in st.session_state.messages[1:]:
     if msg["role"] == "user":
