@@ -20,8 +20,43 @@ import time
 # Set page config first (must be the first Streamlit command)
 st.set_page_config(page_title="MirrorMe - Clarity", page_icon="🧠")
 
+# Initialize session state
+if "user" not in st.session_state:
+    st.session_state.user = None
+
+if "traits" not in st.session_state:
+    st.session_state.traits = {
+        "Humor": 50,
+        "Empathy": 50,
+        "Logic": 50,
+        "Boldness": 50,
+        "Memory": 50,
+        "Depth": 50,
+        "Adaptability": 50
+    }
+
+if "values" not in st.session_state:
+    st.session_state.values = {
+        "core_values": [],
+        "beliefs": [],
+        "goals": [],
+        "interests": []
+    }
+
+if "persona_mode" not in st.session_state:
+    st.session_state.persona_mode = "Balanced"
+
+if "current_mood" not in st.session_state:
+    st.session_state.current_mood = "Neutral"
+
+if "mood_changed" not in st.session_state:
+    st.session_state.mood_changed = False
+
+if "last_mood_change_time" not in st.session_state:
+    st.session_state.last_mood_change_time = time.time()
+
 # Check if user is logged in
-if "user" not in st.session_state or not st.session_state.user:
+if not st.session_state.user:
     st.warning("⚠️ Please Log In to Access This Page.")
     if st.button("🔐 Login"):
         st.markdown("""
@@ -33,33 +68,6 @@ if "user" not in st.session_state or not st.session_state.user:
 
 # Get user ID from session state
 user_id = st.session_state.user["localId"]
-
-# Initialize session state for traits and values if not exists
-if "traits" not in st.session_state:
-    st.session_state.traits = {
-        "Humor": 50,
-        "Empathy": 50,
-        "Logic": 50,
-        "Boldness": 50,
-        "Memory": 50,
-        "Depth": 50,
-        "Adaptability": 50
-    }
-if "values" not in st.session_state:
-    st.session_state.values = {
-        "core_values": [],
-        "beliefs": [],
-        "goals": [],
-        "interests": []
-    }
-if "persona_mode" not in st.session_state:
-    st.session_state.persona_mode = "Balanced"  # Set default to match available options
-if "current_mood" not in st.session_state:
-    st.session_state.current_mood = "Neutral"
-if "mood_changed" not in st.session_state:
-    st.session_state.mood_changed = False
-if "last_mood_change_time" not in st.session_state:
-    st.session_state.last_mood_change_time = time.time()
 
 # Load existing clarity data
 clarity_data = load_clarity()
