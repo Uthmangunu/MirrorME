@@ -219,20 +219,22 @@ def get_reply(messages):
         st.error(f"❌ OpenAI Error: {e}")
         return None
 
-# Initialize session state for current_mood if not exists
+# Initialize session state for current_mood and animation if not exists
 if "current_mood" not in st.session_state:
     st.session_state.current_mood = "neutral"
+if "mood_changed" not in st.session_state:
+    st.session_state.mood_changed = False
 
 # Create a container for the title and mood indicator
 title_container = st.container()
 with title_container:
     col1, col2, col3 = st.columns([1, 20, 1])
     with col1:
-        render_mood_indicator(st.session_state.current_mood, size=30)  # Increased size
+        render_mood_indicator(st.session_state.current_mood, size=30)
     with col2:
         st.title("🪞 MirrorMe — Live Chat with Your Mirror")
     with col3:
-        render_mood_indicator(st.session_state.current_mood, size=30)  # Mirror effect
+        render_mood_indicator(st.session_state.current_mood, size=30)
 
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "system", "content": generate_prompt_from_clarity(user_id)}]
@@ -246,7 +248,9 @@ if user_input:
         st.session_state.messages.append({"role": "assistant", "content": reply})
         update_user_memory(user_id, user_input, reply)
         mood = detect_mood(user_input + " " + reply)
-        st.session_state.current_mood = mood
+        if mood != st.session_state.current_mood:
+            st.session_state.current_mood = mood
+            st.session_state.mood_changed = True
         set_mood_background(mood)
         save_clarity(clarity_data)
         st.experimental_rerun()  # Rerun to update the mood indicator

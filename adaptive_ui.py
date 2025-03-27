@@ -277,6 +277,14 @@ def render_mood_indicator(mood: str, size: int = 20) -> None:
             50% {{ opacity: 0.8; }}
             100% {{ opacity: 0.5; }}
         }}
+        @keyframes moodChange {{
+            0% {{ transform: scale(1); }}
+            50% {{ transform: scale(1.5); }}
+            100% {{ transform: scale(1); }}
+        }}
+        .mood-indicator.mood-changed {{
+            animation: moodChange 1s ease-out;
+        }}
         </style>
-        <div class="mood-indicator"></div>
+        <div class="mood-indicator mood-changed"></div>
     """, unsafe_allow_html=True)
