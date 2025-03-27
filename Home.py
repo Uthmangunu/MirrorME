@@ -230,19 +230,15 @@ if "mood_changed" not in st.session_state:
     st.session_state.mood_changed = False
 if "last_mood_change_time" not in st.session_state:
     st.session_state.last_mood_change_time = 0
+if "messages" not in st.session_state:
+    st.session_state.messages = [{"role": "system", "content": generate_prompt_from_clarity(user_id)}]
 
 # Create a container for the title and mood indicator
 title_container = st.container()
 with title_container:
     st.title("🪞 MirrorMe — Live Chat with Your Mirror")
 
-if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "system", "content": generate_prompt_from_clarity(user_id)}]
-
-# Create the animated input box with mood indicator
-animation_class = "mood-changed" if (time.time() - st.session_state.last_mood_change_time) < 1 else ""
-create_animated_input(st.session_state.current_mood, size=20, animation_class=animation_class)
-
+# Handle user input and mood updates first
 user_input = st.chat_input("Send a message...")
 if user_input:
     st.session_state.messages.append({"role": "user", "content": user_input})
@@ -257,6 +253,10 @@ if user_input:
             st.session_state.last_mood_change_time = time.time()
         set_mood_background(mood)
         save_clarity(clarity_data)
+
+# Create the animated input box with mood indicator after mood is updated
+animation_class = "mood-changed" if (time.time() - st.session_state.last_mood_change_time) < 1 else ""
+create_animated_input(st.session_state.current_mood, size=20, animation_class=animation_class)
 
 for msg in st.session_state.messages[1:]:
     if msg["role"] == "user":
