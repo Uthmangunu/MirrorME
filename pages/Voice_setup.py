@@ -12,6 +12,7 @@ from io import BytesIO
 import numpy as np
 from firebase_client import get_doc, save_doc
 import plotly.graph_objects as go
+from scipy.io import wavfile
 
 # === Page Config ===
 st.set_page_config(page_title="MirrorMe - Voice Setup", page_icon="🎙️")
@@ -34,6 +35,12 @@ if "is_recording" not in st.session_state:
 
 if "audio_levels" not in st.session_state:
     st.session_state.audio_levels = []
+
+if "audio_data" not in st.session_state:
+    st.session_state.audio_data = []
+
+if "show_preview" not in st.session_state:
+    st.session_state.show_preview = False
 
 if not st.session_state.user:
     st.warning("⚠️ Please Log In to Access This Page.")
@@ -123,62 +130,50 @@ with tab1:
             st.session_state.is_recording = True
             st.session_state.recording_start_time = time.time()
             st.session_state.audio_levels = []
+            st.session_state.audio_data = []
         elif not rec.state.playing and st.session_state.is_recording:
             st.session_state.is_recording = False
             st.session_state.recording_start_time = None
+            st.session_state.show_preview = True
         
-        # Update audio levels
+        # Update audio levels and collect data
         if rec.audio_receiver and st.session_state.is_recording:
             try:
                 frame = rec.audio_receiver.get_frames(timeout=0.1)[0]
                 audio_data = frame.to_ndarray()
                 level = np.abs(audio_data).mean()
                 st.session_state.audio_levels.append(level)
+                st.session_state.audio_data.extend(audio_data.flatten())
             except:
                 pass
 
-    # Process recorded audio
-    if rec.audio_receiver:
-        audio_frames = []
-        while True:
-            try:
-                frame = rec.audio_receiver.get_frames(timeout=1)[0]
-                audio_frames.append(frame)
-            except:
-                break
-
-        if audio_frames:
-            # Convert frames to audio data
-            pcm_audio = b''.join([f.to_ndarray().tobytes() for f in audio_frames])
+    # Show preview after recording
+    if st.session_state.show_preview and st.session_state.audio_data:
+        st.markdown("### 🎵 Preview Recording")
+        
+        # Convert audio data to WAV format
+        audio_data = np.array(st.session_state.audio_data)
+        sample_rate = 48000  # WebRTC default sample rate
+        
+        # Create a temporary WAV file
+        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_file:
+            wavfile.write(temp_file.name, sample_rate, audio_data)
             
-            # Save as WAV
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as tmp_file:
-                sf.write(tmp_file.name, np.frombuffer(pcm_audio, dtype=np.float32), samplerate=44100)
-                st.session_state.recording_path = tmp_file.name
+            # Display audio player
+            st.audio(temp_file.name)
             
-            # Show recording stats
-            duration = len(audio_frames) / 44100  # Duration in seconds
-            st.markdown(f"### 📊 Recording Stats")
-            st.markdown(f"- Duration: {duration:.1f} seconds")
-            st.markdown(f"- Sample Rate: 44.1 kHz")
-            st.markdown(f"- Channels: 1 (Mono)")
-            
-            # Play preview with waveform
-            st.markdown("### 🎵 Preview Your Recording")
-            st.audio(st.session_state.recording_path)
-            
-            # Upload button
-            if st.button("🚀 Upload Recording to ElevenLabs"):
-                with st.spinner("Processing your voice sample..."):
-                    voice_id = create_voice_in_elevenlabs(user_id, st.session_state.recording_path)
-                    if voice_id:
-                        if save_voice_id_to_firestore(user_id, voice_id):
-                            st.session_state.voice_id = voice_id
-                            st.success("✅ Voice profile created successfully!")
-                            # Clean up temporary file
-                            os.unlink(st.session_state.recording_path)
-                        else:
-                            st.error("Failed to save voice ID to database.")
+            # Add buttons for actions
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("✅ Use This Recording"):
+                    st.session_state.recording_path = temp_file.name
+                    st.success("Recording saved! You can now proceed with voice setup.")
+            with col2:
+                if st.button("🔄 Record Again"):
+                    st.session_state.show_preview = False
+                    st.session_state.audio_data = []
+                    st.session_state.audio_levels = []
+                    st.experimental_rerun()
 
 with tab2:
     st.subheader("📁 Upload Voice Sample")
