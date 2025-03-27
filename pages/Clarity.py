@@ -8,7 +8,8 @@ from clarity_core import (
     detect_mood_from_text, 
     apply_trait_xp,
     analyze_feedback,
-    load_clarity
+    load_clarity,
+    save_clarity
 )
 from adaptive_ui import set_mood_background, adjust_ui_for_persona, create_trait_slider, create_value_checkbox
 from components.feedback_button import feedback_button
@@ -163,30 +164,38 @@ def get_firestore_client():
         return None
 
 # Save personality data
-if st.button("Save Personality Profile"):
+if st.button("💾 Save Profile"):
     try:
-        # Get current user's data
-        user_data = {
-            "user_id": user_id,
-            "traits": dict(st.session_state.traits),  # Convert to regular dict
-            "values": dict(st.session_state.values),  # Convert to regular dict
-            "persona_mode": st.session_state.persona_mode,
-            "current_mood": st.session_state.current_mood,
-            "mood_changed": st.session_state.mood_changed,
-            "last_mood_change_time": st.session_state.last_mood_change_time,
-            "last_updated": datetime.now().isoformat()
+        # Get values from session state
+        core_values = st.session_state.core_values if hasattr(st.session_state, "core_values") else []
+        beliefs = st.session_state.beliefs if hasattr(st.session_state, "beliefs") else []
+        goals = st.session_state.goals if hasattr(st.session_state, "goals") else []
+        interests = st.session_state.interests if hasattr(st.session_state, "interests") else []
+        
+        # Create values dictionary
+        values = {
+            "core_values": core_values,
+            "beliefs": beliefs,
+            "goals": goals,
+            "interests": interests
         }
         
         # Save to Firestore
         db = get_firestore_client()
         if db:
-            user_ref = db.collection('users').document(user_id)
-            user_ref.set(user_data, merge=True)
-            st.success("Personality profile saved successfully!")
+            personality_ref = db.collection("users").document(user_id).collection("personality").document("values")
+            personality_ref.set(values)
+            
+            # Update clarity data
+            clarity_data = load_clarity()
+            clarity_data["values"] = values
+            save_clarity(clarity_data)
+            
+            st.success("✅ Profile saved successfully!")
         else:
             st.error("Failed to connect to database. Please try again later.")
     except Exception as e:
-        st.error(f"Error saving profile: {str(e)}")
+        st.error(f"❌ Error saving profile: {str(e)}")
 
 # Feedback system
 st.header("💡 Feedback")
