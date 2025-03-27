@@ -3,15 +3,25 @@ import matplotlib.pyplot as plt
 import os
 from dotenv import load_dotenv
 from components.feedback_button import feedback_button
-feedback_button(user_id)
 
+# Set page config first (must be the first Streamlit command)
+st.set_page_config(page_title="Mirror Clarity System", page_icon="🫠")
+
+# === AUTH HANDLING ===
+if "user" not in st.session_state:
+    st.warning("🔒 You must be logged in to access this page.")
+    st.stop()
+
+user_id = st.session_state["user"]["localId"]
 
 # Load environment variables (optional for backend use)
 load_dotenv()
 
-st.set_page_config(page_title="Mirror Clarity System", page_icon="🫠")
 st.title("🫠 MirrorMe Clarity System")
 st.subheader("Let us calibrate your Mirror")
+
+# Add feedback button after user authentication
+feedback_button(user_id)
 
 st.markdown("""
 This system helps us build a digital version of you that's **not just smart**, but deeply **you**. Answer honestly — the better the data, the more _you_ your Mirror becomes.
