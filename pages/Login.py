@@ -95,9 +95,11 @@ if "user" not in st.session_state:
     st.session_state.user = None
 if "remember_me" not in st.session_state:
     st.session_state.remember_me = False
+if "remembered_user" not in st.session_state:
+    st.session_state.remembered_user = None
 
 # === Check for Remembered Login ===
-if "remembered_user" in st.session_state and st.session_state.remembered_user:
+if st.session_state.remembered_user:
     try:
         user = sign_in_with_email_and_password(
             st.session_state.remembered_user["email"],
@@ -120,7 +122,7 @@ email = st.text_input("📧 Email", key="login_email")
 password = st.text_input("🔑 Password", type="password", key="login_password")
 
 # Remember Me Checkbox
-st.session_state.remember_me = st.checkbox("Remember Me", key="remember_me")
+remember_me = st.checkbox("Remember Me", key="remember_me_checkbox")
 
 # Login Button
 if st.button("🔐 Login"):
@@ -129,12 +131,14 @@ if st.button("🔐 Login"):
         st.session_state.user = user
         
         # Handle Remember Me
-        if st.session_state.remember_me:
+        if remember_me:
+            st.session_state.remember_me = True
             st.session_state.remembered_user = {
                 "email": email,
                 "password": password
             }
         else:
+            st.session_state.remember_me = False
             st.session_state.remembered_user = None
         
         st.success("✅ Login successful!")
