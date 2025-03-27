@@ -223,36 +223,39 @@ if rec.audio_receiver and st.session_state.is_recording:
     
     while st.session_state.is_recording:
         try:
-            frame = rec.audio_receiver.get_frames(timeout=0.1)[0]
-            audio_data = frame.to_ndarray()
-            level = np.abs(audio_data).mean()
-            st.session_state.audio_levels.append(level)
-            st.session_state.audio_data.extend(audio_data.flatten())
+            frames = rec.audio_receiver.get_frames(timeout=0.1)
+            if frames:
+                frame = frames[0]
+                audio_data = frame.to_ndarray()
+                level = np.abs(audio_data).mean()
+                st.session_state.audio_levels.append(level)
+                st.session_state.audio_data.extend(audio_data.flatten())
 
-            # Only update waveform if we have enough data
-            if len(st.session_state.audio_levels) >= 50:
-                # Live waveform display
-                fig = go.Figure()
-                fig.add_trace(go.Scatter(
-                    y=st.session_state.audio_levels[-50:],
-                    mode='lines',
-                    line=dict(color='#ff4b4b', width=2),
-                    fill='tozeroy',
-                    fillcolor='rgba(255, 75, 75, 0.2)'
-                ))
-                fig.update_layout(
-                    height=60,
-                    margin=dict(l=0, r=0, t=0, b=0),
-                    paper_bgcolor='rgba(0,0,0,0)',
-                    plot_bgcolor='rgba(0,0,0,0)',
-                    showlegend=False,
-                    xaxis=dict(showgrid=False, showticklabels=False),
-                    yaxis=dict(showgrid=False, showticklabels=False, range=[0, 1])
-                )
-                waveform_container.plotly_chart(fig, use_container_width=True)
+                # Only update waveform if we have enough data
+                if len(st.session_state.audio_levels) >= 50:
+                    # Live waveform display
+                    fig = go.Figure()
+                    fig.add_trace(go.Scatter(
+                        y=st.session_state.audio_levels[-50:],
+                        mode='lines',
+                        line=dict(color='#ff4b4b', width=2),
+                        fill='tozeroy',
+                        fillcolor='rgba(255, 75, 75, 0.2)'
+                    ))
+                    fig.update_layout(
+                        height=60,
+                        margin=dict(l=0, r=0, t=0, b=0),
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        showlegend=False,
+                        xaxis=dict(showgrid=False, showticklabels=False),
+                        yaxis=dict(showgrid=False, showticklabels=False, range=[0, 1])
+                    )
+                    waveform_container.plotly_chart(fig, use_container_width=True)
 
             time.sleep(0.1)  # Reduced update frequency for better performance
-        except:
+        except Exception as e:
+            st.error(f"Error during recording: {str(e)}")
             continue
 
 st.markdown('</div>', unsafe_allow_html=True)
