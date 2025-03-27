@@ -21,11 +21,22 @@ from style_analyzer import analyze_user_style
 load_dotenv()
 
 # === Firebase Admin SDK Credential Setup ===
+st.write("Available secrets:", list(st.secrets.keys()))  # Debug: Show available secrets
+
 if "GOOGLE_APPLICATION_CREDENTIALS" in st.secrets:
-    service_account_info = json.loads(st.secrets["GOOGLE_APPLICATION_CREDENTIALS"])
-    with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
-        json.dump(service_account_info, f)
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = f.name
+    try:
+        st.write("Found GOOGLE_APPLICATION_CREDENTIALS in secrets")  # Debug: Confirm credentials found
+        service_account_info = json.loads(st.secrets["GOOGLE_APPLICATION_CREDENTIALS"])
+        st.write("Successfully parsed credentials JSON")  # Debug: Confirm JSON parsing
+        
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
+            json.dump(service_account_info, f)
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = f.name
+            st.write(f"Created temporary credentials file at: {f.name}")  # Debug: Show temp file location
+    except json.JSONDecodeError as e:
+        st.error(f"❌ Failed to parse credentials JSON: {e}")
+    except Exception as e:
+        st.error(f"❌ Error setting up credentials: {e}")
 else:
     st.error("❌ GOOGLE_APPLICATION_CREDENTIALS not found in secrets.")
 
