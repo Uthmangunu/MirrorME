@@ -25,6 +25,12 @@ if "voice_id" not in st.session_state:
 if "recording_path" not in st.session_state:
     st.session_state.recording_path = None
 
+if "recording_start_time" not in st.session_state:
+    st.session_state.recording_start_time = None
+
+if "is_recording" not in st.session_state:
+    st.session_state.is_recording = False
+
 if not st.session_state.user:
     st.warning("⚠️ Please Log In to Access This Page.")
     if st.button("🔐 Login"):
@@ -56,6 +62,16 @@ with tab1:
     st.subheader("🎤 Record Your Voice")
     st.markdown("Click 'Start' to begin recording. Speak naturally for 30-60 seconds.")
     
+    # Recording timer
+    if st.session_state.is_recording:
+        elapsed_time = time.time() - st.session_state.recording_start_time
+        minutes = int(elapsed_time // 60)
+        seconds = int(elapsed_time % 60)
+        st.markdown(f"### ⏱️ Recording Time: {minutes:02d}:{seconds:02d}")
+        
+        # Show recording status
+        st.markdown("🔴 Recording in progress...")
+    
     # WebRTC recorder
     rec = webrtc_streamer(
         key="voice_recorder",
@@ -64,6 +80,14 @@ with tab1:
         media_stream_constraints={"audio": True, "video": False},
         async_processing=True
     )
+    
+    # Handle recording state
+    if rec.state.playing and not st.session_state.is_recording:
+        st.session_state.is_recording = True
+        st.session_state.recording_start_time = time.time()
+    elif not rec.state.playing and st.session_state.is_recording:
+        st.session_state.is_recording = False
+        st.session_state.recording_start_time = None
     
     # Process recorded audio
     if rec.audio_receiver:
@@ -84,20 +108,29 @@ with tab1:
                 sf.write(tmp_file.name, np.frombuffer(pcm_audio, dtype=np.float32), samplerate=44100)
                 st.session_state.recording_path = tmp_file.name
             
-            # Play preview
+            # Show recording stats
+            duration = len(audio_frames) / 44100  # Duration in seconds
+            st.markdown(f"### 📊 Recording Stats")
+            st.markdown(f"- Duration: {duration:.1f} seconds")
+            st.markdown(f"- Sample Rate: 44.1 kHz")
+            st.markdown(f"- Channels: 1 (Mono)")
+            
+            # Play preview with waveform
+            st.markdown("### 🎵 Preview Your Recording")
             st.audio(st.session_state.recording_path)
             
             # Upload button
             if st.button("🚀 Upload Recording to ElevenLabs"):
-                voice_id = create_voice_in_elevenlabs(user_id, st.session_state.recording_path)
-                if voice_id:
-                    if save_voice_id_to_firestore(user_id, voice_id):
-                        st.session_state.voice_id = voice_id
-                        st.success("✅ Voice profile created successfully!")
-                        # Clean up temporary file
-                        os.unlink(st.session_state.recording_path)
-                    else:
-                        st.error("Failed to save voice ID to database.")
+                with st.spinner("Processing your voice sample..."):
+                    voice_id = create_voice_in_elevenlabs(user_id, st.session_state.recording_path)
+                    if voice_id:
+                        if save_voice_id_to_firestore(user_id, voice_id):
+                            st.session_state.voice_id = voice_id
+                            st.success("✅ Voice profile created successfully!")
+                            # Clean up temporary file
+                            os.unlink(st.session_state.recording_path)
+                        else:
+                            st.error("Failed to save voice ID to database.")
 
 with tab2:
     st.subheader("📁 Upload Voice Sample")
@@ -110,17 +143,25 @@ with tab2:
                 tmp_file.write(uploaded_file.read())
                 tmp_file_path = tmp_file.name
             
+            # Show file info
+            st.markdown("### 📊 File Information")
+            st.markdown(f"- File Name: {uploaded_file.name}")
+            st.markdown(f"- File Size: {uploaded_file.size / 1024:.1f} KB")
+            st.markdown(f"- File Type: {uploaded_file.type}")
+            
             # Preview uploaded file
+            st.markdown("### 🎵 Preview Your Audio")
             st.audio(tmp_file_path)
             
             if st.button("🚀 Upload to ElevenLabs"):
-                voice_id = create_voice_in_elevenlabs(user_id, tmp_file_path)
-                if voice_id:
-                    if save_voice_id_to_firestore(user_id, voice_id):
-                        st.session_state.voice_id = voice_id
-                        st.success("✅ Voice profile created successfully!")
-                    else:
-                        st.error("Failed to save voice ID to database.")
+                with st.spinner("Processing your voice sample..."):
+                    voice_id = create_voice_in_elevenlabs(user_id, tmp_file_path)
+                    if voice_id:
+                        if save_voice_id_to_firestore(user_id, voice_id):
+                            st.session_state.voice_id = voice_id
+                            st.success("✅ Voice profile created successfully!")
+                        else:
+                            st.error("Failed to save voice ID to database.")
                 
                 # Clean up temporary file
                 os.unlink(tmp_file_path)
