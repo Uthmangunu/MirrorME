@@ -152,7 +152,8 @@ st.pyplot(fig)
 def get_firestore_client():
     """Initialize and return a Firestore client."""
     try:
-        return firestore.client()
+        from google.cloud import firestore
+        return firestore.Client()
     except Exception as e:
         st.error(f"Failed to initialize Firestore client: {str(e)}")
         return None
