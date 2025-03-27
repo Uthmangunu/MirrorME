@@ -151,9 +151,11 @@ core_values_options = ["Honesty", "Integrity", "Creativity", "Growth", "Connecti
 selected_core_values = create_value_checkbox(
     "What Are Your Core Values?",
     core_values_options,
-    st.session_state.values["core_values"],
+    st.session_state.get("values", {}).get("core_values", []),
     key="core_values"
 )
+if "values" not in st.session_state:
+    st.session_state.values = {}
 st.session_state.values["core_values"] = selected_core_values
 
 # Beliefs
@@ -162,9 +164,11 @@ beliefs_options = ["Personal Growth", "Social Justice", "Environmental Care", "S
 selected_beliefs = create_value_checkbox(
     "What Do You Believe In?",
     beliefs_options,
-    st.session_state.values["beliefs"],
+    st.session_state.get("values", {}).get("beliefs", []),
     key="beliefs"
 )
+if "values" not in st.session_state:
+    st.session_state.values = {}
 st.session_state.values["beliefs"] = selected_beliefs
 
 # Goals
@@ -173,9 +177,11 @@ goals_options = ["Career Growth", "Personal Development", "Health & Wellness", "
 selected_goals = create_value_checkbox(
     "What Are Your Goals?",
     goals_options,
-    st.session_state.values["goals"],
+    st.session_state.get("values", {}).get("goals", []),
     key="goals"
 )
+if "values" not in st.session_state:
+    st.session_state.values = {}
 st.session_state.values["goals"] = selected_goals
 
 # Interests
@@ -184,20 +190,31 @@ interests_options = ["Technology", "Arts", "Science", "Philosophy", "Sports", "T
 selected_interests = create_value_checkbox(
     "What Are Your Interests?",
     interests_options,
-    st.session_state.values["interests"],
+    st.session_state.get("values", {}).get("interests", []),
     key="interests"
 )
+if "values" not in st.session_state:
+    st.session_state.values = {}
 st.session_state.values["interests"] = selected_interests
 
 # Save personality data
 if st.button("💾 Save Profile"):
     try:
-        # Get values directly from session state
+        # Ensure values dictionary exists
+        if "values" not in st.session_state:
+            st.session_state.values = {
+                "core_values": [],
+                "beliefs": [],
+                "goals": [],
+                "interests": []
+            }
+        
+        # Get values from session state
         values = {
-            "core_values": st.session_state.values["core_values"],
-            "beliefs": st.session_state.values["beliefs"],
-            "goals": st.session_state.values["goals"],
-            "interests": st.session_state.values["interests"]
+            "core_values": st.session_state.values.get("core_values", []),
+            "beliefs": st.session_state.values.get("beliefs", []),
+            "goals": st.session_state.values.get("goals", []),
+            "interests": st.session_state.values.get("interests", [])
         }
         
         # Save to Firestore
