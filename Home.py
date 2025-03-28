@@ -42,7 +42,7 @@ st.markdown("""
 .chat-container {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 2rem;
     margin-top: 1rem;
     max-width: 800px;
     margin-left: auto;
@@ -51,11 +51,14 @@ st.markdown("""
 }
 
 .message {
-    font-size: 1.1rem;
-    line-height: 1.6;
-    color: #e0e0e0;
+    font-size: 1.2rem;
+    line-height: 1.8;
+    color: white;
     opacity: 0.9;
     transition: opacity 0.3s ease;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
 }
 
 .message:hover {
@@ -63,11 +66,20 @@ st.markdown("""
 }
 
 .message.user-msg {
-    color: #FF4B4B;
+    color: white;
 }
 
 .message.ai-msg {
-    color: #4CAF50;
+    color: white;
+}
+
+.message-icon {
+    font-size: 1.2rem;
+    margin-top: 0.2rem;
+}
+
+.message-content {
+    flex: 1;
 }
 
 .title-container {
@@ -85,20 +97,20 @@ st.markdown("""
     font-size: 2.5rem;
     font-weight: bold;
     margin: 0;
-    background: linear-gradient(45deg, #FF4B4B, #FF6B6B);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .mood-orb {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 60px;
-    height: 60px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.1);
     transition: all 0.3s ease;
+    flex-shrink: 0;
 }
 
 .mood-orb.mood-changed {
@@ -140,11 +152,11 @@ st.markdown("""
 }
 
 .trait-name {
-    color: #a0a0a0;
+    color: white;
 }
 
 .trait-value {
-    color: #FF4B4B;
+    color: white;
     font-weight: bold;
 }
 
@@ -160,7 +172,7 @@ st.markdown("""
     background: transparent !important;
     color: white !important;
     border: none !important;
-    font-size: 1.1rem !important;
+    font-size: 1.2rem !important;
 }
 
 .stChatInputContainer input:focus {
@@ -411,16 +423,31 @@ st.markdown("""
 st.markdown('<div class="chat-container">', unsafe_allow_html=True)
 for msg in st.session_state.messages[1:]:
     if msg["role"] == "user":
-        st.markdown(f"<div class='message user-msg'>👤 {msg['content']}</div>", unsafe_allow_html=True)
+        st.markdown(f"""
+            <div class='message user-msg'>
+                <span class='message-icon'>👤</span>
+                <span class='message-content'>{msg['content']}</span>
+            </div>
+        """, unsafe_allow_html=True)
     else:
-        st.markdown(f"<div class='message ai-msg'>🧠 {msg['content']}</div>", unsafe_allow_html=True)
+        st.markdown(f"""
+            <div class='message ai-msg'>
+                <span class='message-icon'>🧠</span>
+                <span class='message-content'>{msg['content']}</span>
+            </div>
+        """, unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Chat Input
 user_input = st.chat_input("Send a message...")
 if user_input:
     # Add user message
-    st.markdown(f"<div class='message user-msg'>👤 {user_input}</div>", unsafe_allow_html=True)
+    st.markdown(f"""
+        <div class='message user-msg'>
+            <span class='message-icon'>👤</span>
+            <span class='message-content'>{user_input}</span>
+        </div>
+    """, unsafe_allow_html=True)
     st.session_state.messages.append({"role": "user", "content": user_input})
     
     # Update clarity data
@@ -446,7 +473,12 @@ if user_input:
         for chunk in response:
             if chunk.choices[0].delta.content is not None:
                 full_response += chunk.choices[0].delta.content
-                response_placeholder.markdown(f"<div class='message ai-msg'>🧠 {full_response}</div>", unsafe_allow_html=True)
+                response_placeholder.markdown(f"""
+                    <div class='message ai-msg'>
+                        <span class='message-icon'>🧠</span>
+                        <span class='message-content'>{full_response}</span>
+                    </div>
+                """, unsafe_allow_html=True)
         
         # Update state
         st.session_state.messages.append({"role": "assistant", "content": full_response})
