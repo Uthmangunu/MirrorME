@@ -86,7 +86,7 @@ st.markdown("""
 .title-container {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    justify-content: space-between;
     margin-bottom: 2rem;
     padding: 0;
 }
@@ -97,9 +97,6 @@ st.markdown("""
     margin: 0;
     color: white;
     letter-spacing: -0.5px;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
 }
 
 .mood-orb {
@@ -410,12 +407,10 @@ if "last_mood_change_time" not in st.session_state:
 # Title and Mood Indicator
 st.markdown("""
 <div class="title-container">
-    <h1 class="chat-title">
-        🪞 Chat with Your Mirror
-        <div class="mood-orb {}">
-            {}
-        </div>
-    </h1>
+    <h1 class="chat-title">🪞 Chat with Your Mirror</h1>
+    <div class="mood-orb {}">
+        {}
+    </div>
 </div>
 """.format(
     "mood-changed" if (time.time() - st.session_state.last_mood_change_time) < 1 else "",
