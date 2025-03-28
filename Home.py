@@ -42,36 +42,32 @@ st.markdown("""
 .chat-container {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.5rem;
     margin-top: 1rem;
     max-width: 800px;
     margin-left: auto;
     margin-right: auto;
-}
-
-.message-box {
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
     padding: 1rem;
-    background-color: rgba(255, 255, 255, 0.05);
-    color: white;
-    margin-bottom: 0.5rem;
-    transition: all 0.3s ease;
 }
 
-.message-box:hover {
-    background-color: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 75, 75, 0.3);
+.message {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #e0e0e0;
+    opacity: 0.9;
+    transition: opacity 0.3s ease;
 }
 
-.message-box.user-msg {
-    margin-left: 2rem;
-    border-left: 3px solid #FF4B4B;
+.message:hover {
+    opacity: 1;
 }
 
-.message-box.ai-msg {
-    margin-right: 2rem;
-    border-left: 3px solid #4CAF50;
+.message.user-msg {
+    color: #FF4B4B;
+}
+
+.message.ai-msg {
+    color: #4CAF50;
 }
 
 .title-container {
@@ -164,6 +160,7 @@ st.markdown("""
     background: transparent !important;
     color: white !important;
     border: none !important;
+    font-size: 1.1rem !important;
 }
 
 .stChatInputContainer input:focus {
@@ -414,16 +411,16 @@ st.markdown("""
 st.markdown('<div class="chat-container">', unsafe_allow_html=True)
 for msg in st.session_state.messages[1:]:
     if msg["role"] == "user":
-        st.markdown(f"<div class='message-box user-msg'>👤 {msg['content']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='message user-msg'>👤 {msg['content']}</div>", unsafe_allow_html=True)
     else:
-        st.markdown(f"<div class='message-box ai-msg'>🧠 {msg['content']}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='message ai-msg'>🧠 {msg['content']}</div>", unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Chat Input
 user_input = st.chat_input("Send a message...")
 if user_input:
     # Add user message
-    st.markdown(f"<div class='message-box user-msg'>👤 {user_input}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='message user-msg'>👤 {user_input}</div>", unsafe_allow_html=True)
     st.session_state.messages.append({"role": "user", "content": user_input})
     
     # Update clarity data
@@ -449,7 +446,7 @@ if user_input:
         for chunk in response:
             if chunk.choices[0].delta.content is not None:
                 full_response += chunk.choices[0].delta.content
-                response_placeholder.markdown(f"<div class='message-box ai-msg'>🧠 {full_response}</div>", unsafe_allow_html=True)
+                response_placeholder.markdown(f"<div class='message ai-msg'>🧠 {full_response}</div>", unsafe_allow_html=True)
         
         # Update state
         st.session_state.messages.append({"role": "assistant", "content": full_response})
