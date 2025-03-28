@@ -37,6 +37,7 @@ st.markdown("""
 .main {
     background-color: #0E1117;
     color: white;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
 .chat-container {
@@ -87,26 +88,26 @@ st.markdown("""
     align-items: center;
     gap: 1rem;
     margin-bottom: 2rem;
-    padding: 1rem 2rem;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0;
 }
 
 .chat-title {
     font-size: 2.5rem;
-    font-weight: bold;
+    font-weight: 300;
     margin: 0;
     color: white;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    letter-spacing: -0.5px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
 }
 
 .mood-orb {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.1);
     transition: all 0.3s ease;
@@ -409,14 +410,16 @@ if "last_mood_change_time" not in st.session_state:
 # Title and Mood Indicator
 st.markdown("""
 <div class="title-container">
-    <h1 class="chat-title">🪞 Chat with Your Mirror</h1>
-    <div class="mood-orb {}">
-        {}
-    </div>
+    <h1 class="chat-title">
+        🪞 Chat with Your Mirror
+        <div class="mood-orb {}">
+            {}
+        </div>
+    </h1>
 </div>
 """.format(
     "mood-changed" if (time.time() - st.session_state.last_mood_change_time) < 1 else "",
-    render_mood_indicator(st.session_state.current_mood, size=40, animation_class="")
+    render_mood_indicator(st.session_state.current_mood, size=32, animation_class="")
 ), unsafe_allow_html=True)
 
 # Chat Messages
